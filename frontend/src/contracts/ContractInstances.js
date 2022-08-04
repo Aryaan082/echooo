@@ -3,7 +3,7 @@ import { useContract, useNetwork, useSigner } from "wagmi";
 import EchoJSON from "./Echo.sol/Echo.json";
 
 const contractEchoAddress = {
-  43113: "0x79DD6a9aF59dE8911E5Bd83835E960010Ff6887A", // AVAX FUJI
+  43113: "0x13aeAe99bA955A20Cd8d64bd3e5eFAb08388D738", // AVAX FUJI
   80001: "0xb1b7467ae050C9CF91C71d8cb51c6Acc672D5157", // POLYGON MUMBAI
 };
 

@@ -6,9 +6,7 @@ import NewChatModal from "./startNewChat/NewChatModal";
 import MessagingPage from "./messaging/MessagingPage";
 import CommAddressModal from "./changeKeys/CommAddressModal";
 
-import gradientOne from "../assets/gradient-one.svg";
-import gradientTwo from "../assets/gradient-two.svg";
-import logo from "../assets/echooo.svg";
+import {gradientOneSVG, gradientTwoSVG, echoooLogoSVG} from "../assets/";
 
 const BURNER_ADDRESS = "0x0000000000000000000000000000000000000000";
 
@@ -66,7 +64,7 @@ export default function App() {
   return (
     <div
       style={{
-        backgroundImage: `url(${!connectedWallet ? gradientOne : gradientTwo})`,
+        backgroundImage: `url(${!connectedWallet ? gradientOneSVG : gradientTwoSVG})`,
         backgroundSize: "cover",
       }}
     >
@@ -78,7 +76,7 @@ export default function App() {
         <div className="flex justify-center items-center h-[100vh]">
           <div className="flex justify-center h-[290px] w-[630px] border-[4px] border-[#333333] rounded-2xl bg-white">
             <div className="flex flex-col justify-center items-center gap-7">
-              <img className="w-[170px]" src={logo}></img>
+              <img className="w-[170px]" src={echoooLogoSVG}></img>
               <code>Connect your wallet to start chatting, anon.</code>
               <button
                 className="px-5 py-3 bg-gradient-to-r from-[#00FFD1] to-[#FF007A] via-[#9b649c] text-white font-bold rounded-[30px] border-[3px] border-[#333333]"

@@ -4,9 +4,9 @@ schema:
 dataSources:
   - kind: ethereum
     name: Echo
-    network: mumbai
+    network: fuji
     source:
-      address: "0xb1b7467ae050C9CF91C71d8cb51c6Acc672D5157"
+      address: "0x13aeAe99bA955A20Cd8d64bd3e5eFAb08388D738"
       abi: Echo
     mapping:
       kind: ethereum/events

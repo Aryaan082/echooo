@@ -1,11 +1,9 @@
-import avalanche from "../assets/avalanche-icon.svg";
-import ethereum from "../assets/ethereum-icon.svg";
-import polygon from "../assets/polygon-icon.svg";
+import { avalancheIconSVG, ethereumIconSVG, polygonIconSVG } from "../assets";
 
 const ChainLogoMetadata = {
-  43113: { logo: avalanche, name: "Avalanche Fuji" },
-  80001: { logo: polygon, name: "Polygon Mumbai" },
-  3: { logo: ethereum, name: "Ethereum Ropsten" },
+  43113: { logo: avalancheIconSVG, name: "Avalanche Fuji" },
+  80001: { logo: polygonIconSVG, name: "Polygon Mumbai" },
+  3: { logo: ethereumIconSVG, name: "Ethereum Ropsten" },
 };
 
 export { ChainLogoMetadata };

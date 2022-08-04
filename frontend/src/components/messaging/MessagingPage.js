@@ -18,29 +18,31 @@ import ChatBox from "./ChatBox";
 import { ChainLogoMetadata } from "../../utils/ChainLogoMetadata.js";
 
 // TODO: create an index.js file that allows for multi imports in one line
-import logout from "../../assets/logout-icon.svg";
-import textBubble from "../../assets/text-bubble-icon.svg";
-import selectedAddressEllipse from "../../assets/selected-address-ellipse.png";
-import continueIconColor from "../../assets/continue-icon-color.svg";
-import dropdown from "../../assets/dropdown-icon.svg";
-import logo from "../../assets/echooo.svg";
-import errorIcon from "../../assets/error-icon.svg";
-import plusIcon from "../../assets/plus-icon.svg";
-import resetIcon from "../../assets/reset-icon.svg";
-import changeKeysIcon from "../../assets/change-keys-icon.svg";
-import sendMessagesIcon from "../../assets/send-message-icon.svg";
-import "../../styles/receivers.css";
+import {
+  logoutIconSVG,
+  textBubbleSVG, 
+  addressEllipsePNG, 
+  continueIconSVG, 
+  dropdownIconSVG, 
+  echoooLogoSVG, 
+  errorIconSVG, 
+  plusIconSVG, 
+  resetIconSVG, 
+  changeKeysIconSVG, 
+  sendMessagesIconSVG
+} from "../../assets";
+import "../../assets/receivers.css";
 
 // TODO: move to util functions
 // A promise that has a time out -> used for tx.wait() since it doesn't throw an error
 const promiseTimeout = (millis, promise) => {
   const timeout = new Promise((resolve, reject) =>
-      setTimeout(
-          () => reject(`Timed out after ${millis} ms.`),
-          millis));
+    setTimeout(
+      () => reject(`Timed out after ${millis} ms.`),
+      millis));
   return Promise.race([
-      promise,
-      timeout
+    promise,
+    timeout
   ]);
 };
 
@@ -64,7 +66,7 @@ const initGraphClient = async () => {
 const SendMessagesInterface = ({ receiverAddress, messages, setMessageLog, messagesState, setMessagesState }) => {
   const [senderMessage, setSenderMessage] = useState("");
   const { address } = useAccount();
-  const echoContract = ContractInstances();  
+  const echoContract = ContractInstances();
   const handleSubmitMessage = async (e) => {
     e.preventDefault();
     setMessagesState({ [receiverAddress]: true })
@@ -102,35 +104,35 @@ const SendMessagesInterface = ({ receiverAddress, messages, setMessageLog, messa
       const tx = await echoContract.logMessage(receiverAddress, messageEncryptedSender, messageEncryptedReceiver);
       await tx.wait();
       // await promiseTimeout(60 * 1000, );
-      
+
     }
 
     const newMessageState = { ...messagesState, [receiverAddress]: false }
     sendMessage(receiverAddress, messages).then(() => {
       const newReceiverMessageLog = [...messages[receiverAddress], {
-        from: address,        
+        from: address,
         message: senderMessage,
         timestamp: `${moment().unix()}`
-      }]    
-      
+      }]
+
       const newMessageLog = messages
-      newMessageLog[receiverAddress] = newReceiverMessageLog   
-      setMessageLog(newMessageLog);      
+      newMessageLog[receiverAddress] = newReceiverMessageLog
+      setMessageLog(newMessageLog);
       setMessagesState(newMessageState)
-      
+
     }).catch((err) => {
       console.log("Sending Message Error:", err)
       // TODO: make message indicative of error by changing color 
       const newReceiverMessageLog = [...messages[receiverAddress], {
-        from: address,        
+        from: address,
         message: "Error: Message failed please try again ...",
         timestamp: `${moment().unix()}`
-      }]    
-      
+      }]
+
       const newMessageLog = messages
-      newMessageLog[receiverAddress] = newReceiverMessageLog   
-      setMessageLog(newMessageLog);      
-      setMessagesState(newMessageState)      
+      newMessageLog[receiverAddress] = newReceiverMessageLog
+      setMessageLog(newMessageLog);
+      setMessagesState(newMessageState)
     })
     setSenderMessage("");
   };
@@ -153,7 +155,7 @@ const SendMessagesInterface = ({ receiverAddress, messages, setMessageLog, messa
           class="flex flex-row justify-center items-center gap-[10px] text-white text-lg bg-[#333333] rounded-[30px] hover:bg-[#555555] font-medium px-[13.1px] disabled:opacity-25"
           disabled={true}
         >
-          <img height="35" width="35" src={plusIcon}></img>
+          <img height="35" width="35" src={plusIconSVG}></img>
         </button>
         {messagesState[receiverAddress] ?
           <div className="flex flex-row w-[384px] items-center justify-center gap-[20px]">
@@ -173,7 +175,7 @@ const SendMessagesInterface = ({ receiverAddress, messages, setMessageLog, messa
             class="flex flex-row justify-center items-center gap-[10px] text-white text-lg bg-[#333333] rounded-[30px] hover:bg-[#555555] font-medium px-6"
           >
             Send
-            <img className="h-[25px]" src={sendMessagesIcon}></img>
+            <img className="h-[25px]" src={sendMessagesIconSVG}></img>
           </button>}
 
       </form>
@@ -224,7 +226,7 @@ export default function MessagingPage({
         localStorage.getItem("private-communication-address")
       );
       senderPrivateKey = senderPrivateKey[address];
-      if (messages[activeReceiverAddress] == null) {                      
+      if (messages[activeReceiverAddress] == null) {
         console.log("local private key >>", senderPrivateKey);
 
         // TODO: query validation using native library to prevent query injection vulnerability
@@ -291,7 +293,7 @@ export default function MessagingPage({
 
           console.log(`Decrypted message ${idx} >>>`, decryptedMessage);
         }
-        const newMessageLog = { ...messages, [activeReceiverAddress]: messageLog }     
+        const newMessageLog = { ...messages, [activeReceiverAddress]: messageLog }
         setMessageLog(newMessageLog);
         const interval = setInterval(async (newMessage, activeReceiverAddress) => {
           console.log("messages >>>", newMessage)
@@ -317,41 +319,41 @@ export default function MessagingPage({
             }
           }
         `;
-        const graphClient = await initGraphClient();
-        const dataMessages = await graphClient.query(messagesQuery).toPromise();
-        const dataMessagesParsed = dataMessages.data.messages;
-        console.log("data messages parsed >>>", dataMessages);
-        const messageLog = dataMessagesParsed;
-        console.log("message log >>>", messageLog)
-        for (let idx = 0; idx < dataMessagesParsed.length; idx++) {
-          let metaDataMessages = await dataMessagesParsed[idx];
-          let message = "";
-  
-          // Decrypt sender message
-          if (metaDataMessages.from === senderAddress) {
-            message = metaDataMessages.senderMessage;
-          } else {
-            // Decrypt receiver message
-            message = metaDataMessages.receiverMessage;
+          const graphClient = await initGraphClient();
+          const dataMessages = await graphClient.query(messagesQuery).toPromise();
+          const dataMessagesParsed = dataMessages.data.messages;
+          console.log("data messages parsed >>>", dataMessages);
+          const messageLog = dataMessagesParsed;
+          console.log("message log >>>", messageLog)
+          for (let idx = 0; idx < dataMessagesParsed.length; idx++) {
+            let metaDataMessages = await dataMessagesParsed[idx];
+            let message = "";
+
+            // Decrypt sender message
+            if (metaDataMessages.from === senderAddress) {
+              message = metaDataMessages.senderMessage;
+            } else {
+              // Decrypt receiver message
+              message = metaDataMessages.receiverMessage;
+            }
+
+            const decryptedMessage = await EthCrypto.decryptWithPrivateKey(
+              senderPrivateKey,
+              EthCrypto.cipher.parse(message)
+            );
+            messageLog[idx].message = decryptedMessage;
+
+            console.log(`Decrypted message ${idx} >>>`, decryptedMessage);
           }
-  
-          const decryptedMessage = await EthCrypto.decryptWithPrivateKey(
-            senderPrivateKey,
-            EthCrypto.cipher.parse(message)
-          );
-          messageLog[idx].message = decryptedMessage;
-  
-          console.log(`Decrypted message ${idx} >>>`, decryptedMessage);
-        }
-        const newReceiverMessages = [...newMessage[activeReceiverAddress], ...messageLog]
-        const newMessageLog = { ...newMessage, [activeReceiverAddress]: newReceiverMessages }
-        setMessageLog(newMessageLog);
-        console.log("running")
-          }, 5 * 1000, newMessageLog, activeReceiverAddress);
-          return () => clearInterval(interval)
-      }         
+          const newReceiverMessages = [...newMessage[activeReceiverAddress], ...messageLog]
+          const newMessageLog = { ...newMessage, [activeReceiverAddress]: newReceiverMessages }
+          setMessageLog(newMessageLog);
+          console.log("running")
+        }, 5 * 1000, newMessageLog, activeReceiverAddress);
+        return () => clearInterval(interval)
       }
-      
+    }
+
     if (activeReceiverAddress !== "") {
       getMessagesAsync();
     }
@@ -372,7 +374,7 @@ export default function MessagingPage({
               <code className="text-xl font-semibold">Your anon chats</code>
               <img
                 className="h-[25px] hover:cursor-pointer"
-                src={resetIcon}
+                src={resetIconSVG}
                 alt=""
                 onClick={() => setChatAddresses([])}
               ></img>
@@ -390,10 +392,10 @@ export default function MessagingPage({
                   >
                     {console.log("index", index)}
                     <code className="flex flex-row items-center gap-4 text-lg">
-                      <img src={selectedAddressEllipse} alt=""></img>
+                      <img src={addressEllipsePNG} alt=""></img>
                       {`${address.substring(0, 4)}...${address.substring(38)}`}
                     </code>
-                    <img src={continueIconColor} alt=""></img>
+                    <img src={continueIconSVG} alt=""></img>
                   </button>
                 );
               })}
@@ -413,7 +415,7 @@ export default function MessagingPage({
         <div>
           <div className="flex flex-row justify-between items-center px-[20px] py-[40px] h-[100px]">
             {/* Logo */}
-            <img className="h-[30px]" src={logo} alt=""></img>
+            <img className="h-[30px]" src={echoooLogoSVG} alt=""></img>
             {/* Buttons
           1. Chain Selector - Displays Chain
           2. Disconnect - Displays Address
@@ -427,9 +429,9 @@ export default function MessagingPage({
               >
                 {!chains.map((value) => value.id).includes(chain.id) ? (
                   <>
-                    <img className="w-[25px]" src={errorIcon} alt=""></img>
+                    <img className="w-[25px]" src={errorIconSVG} alt=""></img>
                     Unsupported Chain
-                    <img src={dropdown} alt=""></img>
+                    <img src={dropdownIconSVG} alt=""></img>
                   </>
                 ) : (
                   <>
@@ -439,7 +441,7 @@ export default function MessagingPage({
                       alt=""
                     ></img>
                     {ChainLogoMetadata[chain.id].name}
-                    <img src={dropdown} alt=""></img>
+                    <img src={dropdownIconSVG} alt=""></img>
                   </>
                 )}
               </button>
@@ -448,7 +450,7 @@ export default function MessagingPage({
                 onClick={() => disconnect()}
               >
                 {`${address.substring(0, 4)}...${address.substring(38)}`}
-                <img src={logout} alt=""></img>
+                <img src={logoutIconSVG} alt=""></img>
               </button>
               <button
                 className="flex flex-row justify-center items-center gap-[10px] px-5 py-3 bg-[rgb(44,157,218)] text-white font-bold rounded-[30px] border-[3px] border-[#333333]"
@@ -457,7 +459,7 @@ export default function MessagingPage({
                 Change keys
                 <img
                   className="h-[20px] w-[20px]"
-                  src={changeKeysIcon}
+                  src={changeKeysIconSVG}
                   alt=""
                 ></img>
               </button>
@@ -468,7 +470,7 @@ export default function MessagingPage({
                     onClick={toggleOpenNewChatModal}
                   >
                     Start new chat
-                    <img src={textBubble} alt=""></img>
+                    <img src={textBubbleSVG} alt=""></img>
                   </button>
                 </>
               ) : (
@@ -494,12 +496,12 @@ export default function MessagingPage({
         {chatAddresses.length > 0 ? (
           <div className="flex flex-col overflow-y-auto">
             <div className="overflow-y-auto">
-              <ChatBox              
+              <ChatBox
                 messages={messages}
                 setMessageLog={setMessageLog}
                 receiverAddress={activeReceiverAddress}
               />
-            </div>            
+            </div>
             <SendMessagesInterface
               messages={messages}
               setMessageLog={setMessageLog}
