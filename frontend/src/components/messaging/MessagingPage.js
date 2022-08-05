@@ -12,11 +12,9 @@ import { Oval } from "react-loader-spinner";
 import moment from "moment";
 import "isomorphic-unfetch"; // required for urql: https://github.com/FormidableLabs/urql/issues/283
 
-import {ContractInstance} from "../../hooks";
 import ChatBox from "./ChatBox";
-
+import {ContractInstance} from "../../hooks";
 import { CONTRACT_META_DATA } from "../../constants";
-// TODO: create an index.js file that allows for multi imports in one line
 import {
   logoutIconSVG,
   textBubbleSVG, 
@@ -32,18 +30,6 @@ import {
 } from "../../assets";
 import "./receivers.css";
 
-// TODO: move to util functions
-// A promise that has a time out -> used for tx.wait() since it doesn't throw an error
-const promiseTimeout = (millis, promise) => {
-  const timeout = new Promise((resolve, reject) =>
-    setTimeout(
-      () => reject(`Timed out after ${millis} ms.`),
-      millis));
-  return Promise.race([
-    promise,
-    timeout
-  ]);
-};
 
 // TODO: change init code so object is only instantiated once & make constants
 const initGraphClient = async () => {
