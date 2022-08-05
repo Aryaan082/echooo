@@ -1,17 +1,12 @@
-// import * as dotenv from "dotenv";
 import React, { useEffect, useState } from "react";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
-import WalletModal from "./wallet/WalletModal";
-import ChainSelectorModal from "./chain/ChainSelectorModal";
-import NewChatModal from "./startNewChat/NewChatModal";
-import MessagingPage from "./messaging/MessagingPage";
-import CommAddressModal from "./changeKeys/CommAddressModal";
+import WalletModal from "./Wallet/WalletModal";
+import ChainSelectorModal from "./Chain/ChainSelectorModal";
+import NewChatModal from "./StartChat/NewChatModal";
+import MessagingPage from "./Messaging/MessagingPage";
+import CommAddressModal from "./ChangeKeys/CommAddressModal";
 
-import gradientOne from "../assets/gradient-one.svg";
-import gradientTwo from "../assets/gradient-two.svg";
-import logo from "../assets/echooo.svg";
-
-// dotenv.config();
+import {gradientOneSVG, gradientTwoSVG, echoooLogoSVG} from "../assets/";
 
 export default function App() {
   const [connectedWallet, setConnectedWallet] = useState(false);
@@ -23,7 +18,8 @@ export default function App() {
   const [activeReceiverAddress, setActiveReceiver] = useState(
     "0x0000000000000000000000000000000000000000"
   );
-  const [broadcasting, setBroadcasting] = React.useState(false);
+  const [broadcasting, setBroadcasting] = useState(false);
+  const [messagesState, setMessagesState] = useState({})
   const [chatAddresses, setChatAddresses] = useState(
     JSON.parse(localStorage.getItem("chats")) || []
   );
@@ -66,7 +62,7 @@ export default function App() {
   return (
     <div
       style={{
-        backgroundImage: `url(${!connectedWallet ? gradientOne : gradientTwo})`,
+        backgroundImage: `url(${!connectedWallet ? gradientOneSVG : gradientTwoSVG})`,
         backgroundSize: "cover",
       }}
     >
@@ -78,7 +74,7 @@ export default function App() {
         <div className="flex justify-center items-center h-[100vh]">
           <div className="flex justify-center h-[290px] w-[630px] border-[4px] border-[#333333] rounded-2xl bg-white">
             <div className="flex flex-col justify-center items-center gap-7">
-              <img className="w-[170px]" src={logo}></img>
+              <img className="w-[170px]" src={echoooLogoSVG}></img>
               <code>Connect your wallet to start chatting, anon.</code>
               <button
                 className="px-5 py-3 bg-gradient-to-r from-[#00FFD1] to-[#FF007A] via-[#9b649c] text-white font-bold rounded-[30px] border-[3px] border-[#333333]"
@@ -124,6 +120,8 @@ export default function App() {
             setActiveReceiver={setActiveReceiver}
             communicationAddress={communicationAddress}
             setChatAddresses={setChatAddresses}
+            messagesState={messagesState}
+            setMessagesState={setMessagesState}
           />
         </div>
       )}

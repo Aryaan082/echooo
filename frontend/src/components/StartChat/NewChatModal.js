@@ -1,9 +1,9 @@
 import Modal from "react-modal";
 import React from "react";
 
-import "../../styles/receivers.css";
 
-import continueIcon from "../../assets/continue-icon.svg";
+import "./chat.css";
+import {continueIconSVG} from "../../assets";
 
 const modalStyles = {
   content: {
@@ -74,7 +74,7 @@ export default function NewChatModal({
             }
           >
             Start
-            <img src={continueIcon}></img>
+            <img src={continueIconSVG}></img>
           </button>
         </div>
         {chatAddresses.includes(newChatAddress) ? (

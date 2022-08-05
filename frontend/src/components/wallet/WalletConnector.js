@@ -1,17 +1,15 @@
 import { useConnect } from "wagmi";
 import { Oval } from "react-loader-spinner";
 
-import metamask from "../../assets/metamask-wallet-logo.png";
-import coinbase from "../../assets/coinbase-wallet-logo.svg";
-import walletConnect from "../../assets/wallet-connect-wallet-logo.svg";
+import {metamaskLogoPNG, coinbaseLogoSVG, walletConnectLogoSVG} from "../../assets";
 
 export default function WalletConnector() {
   const { connect, connectors, error, isLoading } = useConnect();
 
   const walletOptionLogos = {
-    metaMask: metamask,
-    coinbaseWallet: coinbase,
-    walletConnect: walletConnect,
+    metaMask: metamaskLogoPNG,
+    coinbaseWallet: coinbaseLogoSVG,
+    walletConnect: walletConnectLogoSVG,
     injected: "",
   };
 

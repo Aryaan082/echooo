@@ -2,16 +2,13 @@ import { useConnect, useNetwork, useSwitchNetwork } from "wagmi";
 import { Oval } from "react-loader-spinner";
 
 import ChainSelectorButton from "./ChainSelectorButton.js";
-
-import avalanche from "../../assets/avalanche-icon.svg";
-import ethereum from "../../assets/ethereum-icon.svg";
-import polygon from "../../assets/polygon-icon.svg";
+import { CONTRACT_META_DATA } from "../../constants/constants.js";
 
 export default function ChainSelector() {
-  const { connect, connectors, error, isLoading, pendingConnector } =
+  const { error, isLoading } =
     useConnect();
   const { chain } = useNetwork();
-  const { chains, pendingChainId, switchNetwork } = useSwitchNetwork();
+  const { chains, switchNetwork } = useSwitchNetwork();
 
   return (
     <div>
@@ -21,27 +18,15 @@ export default function ChainSelector() {
             Select a blockchain
           </div>
           <div className="flex flex-col gap-[10px] items-center">
-            <ChainSelectorButton
-              name="Avalanche Fuji"
-              logo={avalanche}
-              chainId={chains[0].id}
-              selectedChainId={chain.id}
-              switchNetwork={switchNetwork}
-            />
-            <ChainSelectorButton
-              name="Polygon Mumbai"
-              logo={polygon}
-              chainId={chains[1].id}
-              selectedChainId={chain.id}
-              switchNetwork={switchNetwork}
-            />
-            <ChainSelectorButton
-              name="Ethereum Ropsten"
-              logo={ethereum}
-              chainId={chains[2].id}
-              selectedChainId={chain.id}
-              switchNetwork={switchNetwork}
-            />
+            {chains.map((c) => {
+              return <ChainSelectorButton
+                name={CONTRACT_META_DATA[c.id].name}
+                logo={CONTRACT_META_DATA[c.id].logo}
+                chainId={c.id}
+                selectedChainId={chain.id}
+                switchNetwork={switchNetwork}
+              />
+            })}  
             {error && <div>{error.message}</div>}
           </div>
         </>

@@ -1,7 +1,7 @@
 import moment from "moment";
-import "../../styles/message.css";
+import "./message.css";
 
-const ReceiveMessageContainer = (receiverAddress, message, timestamp) => {
+const ReceiveMessageContainer = ({receiverAddress, message, timestamp}) => {
   const messageTimestamp = moment.unix(timestamp).format("DD-MM-YYYY HH:mm");
   return (
     <div className="pl-3">

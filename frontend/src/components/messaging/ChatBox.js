@@ -1,16 +1,31 @@
 import SendMessageContainer from "./SendMessageContainer";
 import ReceiveMessageContainer from "./ReceiveMessageContainer";
 
-const ChatBox = ({ receiverAddress, messages, setMessages }) => {
-  // TODO: replace hardcoded data with dynamic data from messages metadata
-  console.log("receiver address >>>", receiverAddress);
+const renderChat = (receiverAddress, messages) => {
+  const chatJSX = [];
+  const receiverAddressLowerCase = receiverAddress.toLowerCase();
+  const messageLog = messages[receiverAddress];
+
+  if (messageLog == null) {
+    return [];
+  }
+  
+  for (let idx = 0; idx < messageLog.length; idx++) {
+      let messageMetaData = messageLog[idx];
+      if (receiverAddressLowerCase === messageMetaData.from) {
+          chatJSX.push(<ReceiveMessageContainer receiverAddress={receiverAddressLowerCase} message={messageMetaData.message} timestamp={messageMetaData.timestamp} key={idx}/>)
+      } else {
+          chatJSX.push(<SendMessageContainer message={messageMetaData.message} timestamp={messageMetaData.timestamp} key={idx}/>)
+      }
+  }
+  return chatJSX;
+}
+const ChatBox = ({ receiverAddress, messages, setMessageLog }) => {
+  const chat = renderChat(receiverAddress, messages);
+  console.log("chat >>>", chat)
   return (
     <>
-      {/* Chat box */}
-      {/* Sender */}
-      {SendMessageContainer("hello sender", 1658733755)}
-      {/* Reciever */}
-      {ReceiveMessageContainer(receiverAddress, "hello receiver", 1658733755)}
+      {chat}
     </>
   );
 };
