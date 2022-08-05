@@ -1,8 +1,8 @@
 import Modal from "react-modal";
 import React from "react";
 
-import "../../assets/receivers.css";
 
+import "./chat.css";
 import {continueIconSVG} from "../../assets";
 
 const modalStyles = {

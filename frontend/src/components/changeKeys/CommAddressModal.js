@@ -4,7 +4,7 @@ import EthCrypto from "eth-crypto";
 import { useAccount } from "wagmi";
 import { Oval } from "react-loader-spinner";
 
-import ContractInstances from "../../contracts/ContractInstances";
+import {ContractInstance} from "../../hooks";
 
 const modalStyles = {
   content: {
@@ -67,7 +67,7 @@ export default function CommAddressModal({
 }) {
   const { address } = useAccount();
 
-  const echoContract = ContractInstances();
+  const echoContract = ContractInstance();
 
   const handleSetCommunicationAddress = (e) => {
     setBroadcasting(true);

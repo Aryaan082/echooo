@@ -12,11 +12,10 @@ import { Oval } from "react-loader-spinner";
 import moment from "moment";
 import "isomorphic-unfetch"; // required for urql: https://github.com/FormidableLabs/urql/issues/283
 
-import ContractInstances from "../../contracts/ContractInstances";
+import {ContractInstance} from "../../hooks";
 import ChatBox from "./ChatBox";
 
-import { ChainLogoMetadata } from "../../utils/ChainLogoMetadata.js";
-
+import { CONTRACT_META_DATA } from "../../constants";
 // TODO: create an index.js file that allows for multi imports in one line
 import {
   logoutIconSVG,
@@ -31,7 +30,7 @@ import {
   changeKeysIconSVG, 
   sendMessagesIconSVG
 } from "../../assets";
-import "../../assets/receivers.css";
+import "./receivers.css";
 
 // TODO: move to util functions
 // A promise that has a time out -> used for tx.wait() since it doesn't throw an error
@@ -51,7 +50,7 @@ const initGraphClient = async () => {
   const chainID = parseInt(window.ethereum.networkVersion);
   let graphApiUrl;
 
-  if (ChainLogoMetadata[chainID].name === "Avalanche Fuji") {
+  if (CONTRACT_META_DATA[chainID].name === "Avalanche Fuji") {
     graphApiUrl = "https://api.thegraph.com/subgraphs/name/mtwichan/echofuji";
   } else {
     graphApiUrl = "https://api.thegraph.com/subgraphs/name/mtwichan/echo";
@@ -66,7 +65,7 @@ const initGraphClient = async () => {
 const SendMessagesInterface = ({ receiverAddress, messages, setMessageLog, messagesState, setMessagesState }) => {
   const [senderMessage, setSenderMessage] = useState("");
   const { address } = useAccount();
-  const echoContract = ContractInstances();
+  const echoContract = ContractInstance();
   const handleSubmitMessage = async (e) => {
     e.preventDefault();
     setMessagesState({ [receiverAddress]: true })
@@ -437,10 +436,10 @@ export default function MessagingPage({
                   <>
                     <img
                       className="w-[25px]"
-                      src={ChainLogoMetadata[chain.id].logo}
+                      src={CONTRACT_META_DATA[chain.id].logo}
                       alt=""
                     ></img>
-                    {ChainLogoMetadata[chain.id].name}
+                    {CONTRACT_META_DATA[chain.id].name}
                     <img src={dropdownIconSVG} alt=""></img>
                   </>
                 )}

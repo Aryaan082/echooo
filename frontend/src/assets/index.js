@@ -1,6 +1,5 @@
 export {default as logoutIconSVG} from "./imgs/logout-icon.svg";
 export {default as textBubbleSVG} from "./imgs/text-bubble-icon.svg";
-export {default as addressEllipsePNG} from "./imgs/selected-address-ellipse.png";
 export {default as continueIconSVG} from "./imgs/continue-icon-color.svg";
 export {default as dropdownIconSVG} from "./imgs/dropdown-icon.svg";
 export {default as echoooLogoSVG} from "./imgs/echooo.svg";
@@ -14,6 +13,7 @@ export {default as gradientTwoSVG} from "./imgs/gradient-two.svg";
 export {default as avalancheIconSVG} from "./imgs/avalanche-icon.svg";
 export {default as ethereumIconSVG} from "./imgs/ethereum-icon.svg";
 export {default as polygonIconSVG} from "./imgs/polygon-icon.svg";
-export {default as metamaskLogoPNG} from "./imgs/metamask-wallet-logo.png";
 export {default as coinbaseLogoSVG} from "./imgs/coinbase-wallet-logo.svg";
 export {default as walletConnectLogoSVG} from "./imgs/wallet-connect-wallet-logo.svg";
+export {default as addressEllipsePNG} from "./imgs/selected-address-ellipse.png";
+export {default as metamaskLogoPNG} from "./imgs/metamask-wallet-logo.png";

@@ -1,0 +1,1 @@
+export {CONTRACT_META_DATA} from "./constants";

@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
-import WalletModal from "./wallet/WalletModal";
-import ChainSelectorModal from "./chain/ChainSelectorModal";
-import NewChatModal from "./startNewChat/NewChatModal";
-import MessagingPage from "./messaging/MessagingPage";
-import CommAddressModal from "./changeKeys/CommAddressModal";
+import WalletModal from "./Wallet/WalletModal";
+import ChainSelectorModal from "./Chain/ChainSelectorModal";
+import NewChatModal from "./StartChat/NewChatModal";
+import MessagingPage from "./Messaging/MessagingPage";
+import CommAddressModal from "./ChangeKeys/CommAddressModal";
 
 import {gradientOneSVG, gradientTwoSVG, echoooLogoSVG} from "../assets/";
-
-const BURNER_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 export default function App() {
   const [connectedWallet, setConnectedWallet] = useState(false);
@@ -18,7 +16,7 @@ export default function App() {
   const [openCommAddressModal, setOpenCommAddressModal] = useState(false);
   const [newChatAddress, setNewChatAddress] = useState("");
   const [activeReceiverAddress, setActiveReceiver] = useState(
-    BURNER_ADDRESS
+    "0x0000000000000000000000000000000000000000"
   );
   const [broadcasting, setBroadcasting] = useState(false);
   const [messagesState, setMessagesState] = useState({})
