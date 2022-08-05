@@ -7,13 +7,10 @@ import {
   useSwitchNetwork,
 } from "wagmi";
 import EthCrypto from "eth-crypto";
-import { createClient } from "urql";
-import { Oval } from "react-loader-spinner";
-import moment from "moment";
-import "isomorphic-unfetch"; // required for urql: https://github.com/FormidableLabs/urql/issues/283
+import { initGraphClient } from "../../config/theGraphClient";
 
+import MessageSender from "./MessageSender";
 import ChatBox from "./ChatBox";
-import {ContractInstance} from "../../hooks";
 import { CONTRACT_META_DATA } from "../../constants";
 import {
   logoutIconSVG,
@@ -23,150 +20,12 @@ import {
   dropdownIconSVG, 
   echoooLogoSVG, 
   errorIconSVG, 
-  plusIconSVG, 
   resetIconSVG, 
   changeKeysIconSVG, 
-  sendMessagesIconSVG
 } from "../../assets";
 import "./receivers.css";
 
 
-// TODO: change init code so object is only instantiated once & make constants
-const initGraphClient = async () => {
-  const chainID = parseInt(window.ethereum.networkVersion);
-  let graphApiUrl;
-
-  if (CONTRACT_META_DATA[chainID].name === "Avalanche Fuji") {
-    graphApiUrl = "https://api.thegraph.com/subgraphs/name/mtwichan/echofuji";
-  } else {
-    graphApiUrl = "https://api.thegraph.com/subgraphs/name/mtwichan/echo";
-  }
-  const graphClient = createClient({
-    url: graphApiUrl,
-  });
-  return graphClient;
-};
-
-// TODO: make into own component once backend logic is complete
-const SendMessagesInterface = ({ receiverAddress, messages, setMessageLog, messagesState, setMessagesState }) => {
-  const [senderMessage, setSenderMessage] = useState("");
-  const { address } = useAccount();
-  const echoContract = ContractInstance();
-  const handleSubmitMessage = async (e) => {
-    e.preventDefault();
-    setMessagesState({ [receiverAddress]: true })
-
-    let senderPublicKey = JSON.parse(localStorage.getItem("public-communication-address"))
-    senderPublicKey = senderPublicKey[address]
-
-    // TODO: break up into smaller functions
-    const sendMessage = async (receiverAddress, messages) => {
-      // TODO: If user has no communication address, need to create it on the fly for them... Check if public key exists within cache
-      // TODO: sanitize graphQL queries b/c currently dynamic and exposes injection vulnerability
-      const identitiesQuery = `
-      query {
-        identities(where: {from: "${receiverAddress}"}, first: 1, orderBy: timestamp, orderDirection: desc) {
-          communicationAddress,
-          timestamp     
-        }
-      }
-    `;
-      const graphClient = await initGraphClient();
-      const data = await graphClient.query(identitiesQuery).toPromise();
-      const receieverPublicKey = data.data.identities[0].communicationAddress;
-
-      let messageEncryptedSender = await EthCrypto.encryptWithPublicKey(
-        senderPublicKey,
-        senderMessage
-      );
-      let messageEncryptedReceiver = await EthCrypto.encryptWithPublicKey(
-        receieverPublicKey,
-        senderMessage
-      );
-      messageEncryptedSender = EthCrypto.cipher.stringify(messageEncryptedSender);
-      messageEncryptedReceiver = EthCrypto.cipher.stringify(messageEncryptedReceiver);
-
-      const tx = await echoContract.logMessage(receiverAddress, messageEncryptedSender, messageEncryptedReceiver);
-      await tx.wait();
-      // await promiseTimeout(60 * 1000, );
-
-    }
-
-    const newMessageState = { ...messagesState, [receiverAddress]: false }
-    sendMessage(receiverAddress, messages).then(() => {
-      const newReceiverMessageLog = [...messages[receiverAddress], {
-        from: address,
-        message: senderMessage,
-        timestamp: `${moment().unix()}`
-      }]
-
-      const newMessageLog = messages
-      newMessageLog[receiverAddress] = newReceiverMessageLog
-      setMessageLog(newMessageLog);
-      setMessagesState(newMessageState)
-
-    }).catch((err) => {
-      console.log("Sending Message Error:", err)
-      // TODO: make message indicative of error by changing color 
-      const newReceiverMessageLog = [...messages[receiverAddress], {
-        from: address,
-        message: "Error: Message failed please try again ...",
-        timestamp: `${moment().unix()}`
-      }]
-
-      const newMessageLog = messages
-      newMessageLog[receiverAddress] = newReceiverMessageLog
-      setMessageLog(newMessageLog);
-      setMessagesState(newMessageState)
-    })
-    setSenderMessage("");
-  };
-
-  return (
-    <>
-      <form
-        onSubmit={handleSubmitMessage}
-        className="flex flex-row align-center justify-center w-full gap-2 px-4 py-4"
-      >
-        <input
-          onChange={(event) => setSenderMessage(event.target.value)}
-          value={senderMessage}
-          id="sender_message"
-          class="drop-shadow-md bg-gray-50 rounded-[30px] text-gray-900 text-md w-full p-4"
-          placeholder="Type your message..."
-          required
-        />
-        <button
-          class="flex flex-row justify-center items-center gap-[10px] text-white text-lg bg-[#333333] rounded-[30px] hover:bg-[#555555] font-medium px-[13.1px] disabled:opacity-25"
-          disabled={true}
-        >
-          <img height="35" width="35" src={plusIconSVG}></img>
-        </button>
-        {messagesState[receiverAddress] ?
-          <div className="flex flex-row w-[384px] items-center justify-center gap-[20px]">
-            <Oval
-              ariaLabel="loading-indicator"
-              height={40}
-              width={40}
-              strokeWidth={3}
-              strokeWidthSecondary={3}
-              color="black"
-              secondaryColor="white"
-            />
-            <div className="text-xl font-medium">Sending message...</div>
-          </div>
-          : <button
-            type="submit"
-            class="flex flex-row justify-center items-center gap-[10px] text-white text-lg bg-[#333333] rounded-[30px] hover:bg-[#555555] font-medium px-6"
-          >
-            Send
-            <img className="h-[25px]" src={sendMessagesIconSVG}></img>
-          </button>}
-
-      </form>
-    </>
-  );
-};
 export default function MessagingPage({
   toggleOpenModalChainSelect,
   toggleOpenCommAddressModal,
@@ -192,13 +51,6 @@ export default function MessagingPage({
     setActiveReceiver(address);
   };
 
-  // const getRecentMessages = useCallback(async () => {
-  //   try {
-
-  //   } catch (err) {
-  //     console.log("Error getRecentMessages:", err)
-  //   }
-  // })
   useEffect(() => {
     // TODO: cache messages
     // TODO: if messages already populates check if there's new messages, if so append state with new messages, else do not continue
@@ -327,13 +179,10 @@ export default function MessagingPage({
               EthCrypto.cipher.parse(message)
             );
             messageLog[idx].message = decryptedMessage;
-
-            console.log(`Decrypted message ${idx} >>>`, decryptedMessage);
           }
           const newReceiverMessages = [...newMessage[activeReceiverAddress], ...messageLog]
           const newMessageLog = { ...newMessage, [activeReceiverAddress]: newReceiverMessages }
           setMessageLog(newMessageLog);
-          console.log("running")
         }, 5 * 1000, newMessageLog, activeReceiverAddress);
         return () => clearInterval(interval)
       }
@@ -351,7 +200,6 @@ export default function MessagingPage({
       className="flex flex-row h-[100vh] w-[100vw] bg-gradient-bg"
       style={{ backgroundRepeat: "round" }}
     >
-      {console.log(chatAddresses.length)}
       {chatAddresses.length > 0 ? (
         <>
           <div className="border-r-[3px] border-[#333333] border-opacity-10 w-[30%] pt-[4vh]">
@@ -375,7 +223,6 @@ export default function MessagingPage({
                       handleActiveReceiver(event, index, address)
                     }
                   >
-                    {console.log("index", index)}
                     <code className="flex flex-row items-center gap-4 text-lg">
                       <img src={addressEllipsePNG} alt=""></img>
                       {`${address.substring(0, 4)}...${address.substring(38)}`}
@@ -487,7 +334,7 @@ export default function MessagingPage({
                 receiverAddress={activeReceiverAddress}
               />
             </div>
-            <SendMessagesInterface
+            <MessageSender
               messages={messages}
               setMessageLog={setMessageLog}
               receiverAddress={activeReceiverAddress}
