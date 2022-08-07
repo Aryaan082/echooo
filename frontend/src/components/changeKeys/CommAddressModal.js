@@ -76,7 +76,6 @@ export default function CommAddressModal({
         const localPublicKeys = JSON.parse(
           localStorage.getItem("public-communication-address")
         );
-        console.log("local address >>>", address);
         const signerPublicKey = localPublicKeys[address];
         setCommunicationAddress(signerPublicKey);
         setBroadcasting(false);

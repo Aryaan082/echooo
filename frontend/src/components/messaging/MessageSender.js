@@ -9,32 +9,23 @@ import { ContractInstance } from "../../hooks";
 import { plusIconSVG, sendMessagesIconSVG } from "../../assets";
 import "./receivers.css";
 
-const MessageSender = ({
-  receiverAddress,
-  messages,
-  setMessageLog,
-  messagesState,
-  setMessagesState,
-}) => {
-  const [senderMessage, setSenderMessage] = useState("");
-  const { address } = useAccount();
-  const echoContract = ContractInstance();
-  const handleSubmitMessage = async (e) => {
-    e.preventDefault();
-    setMessagesState({ [receiverAddress]: true });
-
-    let senderPublicKey = JSON.parse(
-      localStorage.getItem("public-communication-address")
-    );
-    senderPublicKey = senderPublicKey[address];
-
-    // TODO: break up into smaller functions
-    const sendMessage = async (receiverAddress) => {
-      // TODO: sanitize graphQL queries b/c currently dynamic and exposes injection vulnerability
-      // TODO: error if receiver did not emit public key
-
-      // Query receiver address
-      const identitiesQuery = `
+const MessageSender = ({ receiverAddress, messages, setMessageLog, messagesState, setMessagesState }) => {
+    const [senderMessage, setSenderMessage] = useState("");
+    const { address } = useAccount();
+    const echoContract = ContractInstance();
+    const handleSubmitMessage = async (e) => {
+      e.preventDefault();
+      setMessagesState({ [receiverAddress]: true })
+  
+      let senderPublicKey = JSON.parse(localStorage.getItem("public-communication-address"))
+      senderPublicKey = senderPublicKey[address]
+      
+  
+      // TODO: break up into smaller functions
+      const sendMessage = async (receiverAddress, messages) => {
+        // TODO: If user has no communication address, need to create it on the fly for them... Check if public key exists within cache
+        // TODO: sanitize graphQL queries b/c currently dynamic and exposes injection vulnerability
+        const identitiesQuery = `
         query {
           identities(where: {from: "${receiverAddress}"}, first: 1, orderBy: timestamp, orderDirection: desc) {
             communicationAddress,
@@ -42,50 +33,63 @@ const MessageSender = ({
           }
         }
       `;
-      const graphClient = await initGraphClient();
-      const data = await graphClient.query(identitiesQuery).toPromise();
-      console.log(data);
-      const receiverPublicKey = data.data.identities[0].communicationAddress;
 
-      // Encrypt message with sender and receiver public keys so messages can be read from graph by both
-      let messageEncryptedSender = await EthCrypto.encryptWithPublicKey(
-        senderPublicKey,
-        senderMessage
-      );
-      let messageEncryptedReceiver = await EthCrypto.encryptWithPublicKey(
-        receiverPublicKey,
-        senderMessage
-      );
-      messageEncryptedSender = EthCrypto.cipher.stringify(
-        messageEncryptedSender
-      );
-      messageEncryptedReceiver = EthCrypto.cipher.stringify(
-        messageEncryptedReceiver
-      );
-
-      const tx = await echoContract.logMessage(
-        receiverAddress,
-        messageEncryptedSender,
-        messageEncryptedReceiver
-      );
-      await tx.wait();
-    };
-
-    const newMessageState = { ...messagesState, [receiverAddress]: false };
-    console.log("New" + newMessageState);
-    sendMessage(receiverAddress)
-      .then(() => {
-        const newReceiverMessageLog = [
-          ...messages[receiverAddress],
-          {
+        const graphClient = await initGraphClient();
+        const data = await graphClient.query(identitiesQuery).toPromise();
+        const receieverPublicKey = data.data.identities[0].communicationAddress;
+        
+        let messageEncryptedSender = await EthCrypto.encryptWithPublicKey(
+          senderPublicKey,
+          senderMessage
+        );
+        let messageEncryptedReceiver = await EthCrypto.encryptWithPublicKey(
+          receieverPublicKey,
+          senderMessage
+        );
+        messageEncryptedSender = EthCrypto.cipher.stringify(messageEncryptedSender);
+        messageEncryptedReceiver = EthCrypto.cipher.stringify(messageEncryptedReceiver);
+  
+        const tx = await echoContract.logMessage(receiverAddress, messageEncryptedSender, messageEncryptedReceiver);
+        await tx.wait();
+        // await promiseTimeout(60 * 1000, );
+  
+      }
+  
+      const newMessageState = { ...messagesState, [receiverAddress]: false }
+      sendMessage(receiverAddress, messages).then(() => {
+        const newReceiverMessageLog = [...messages[receiverAddress], {
+          from: address,
+          message: senderMessage,
+          timestamp: `${moment().unix()}`
+        }]
+  
+        const newMessageLog = messages
+        newMessageLog[receiverAddress] = newReceiverMessageLog
+        setMessageLog(newMessageLog);
+        setMessagesState(newMessageState)
+  
+      }).catch((err) => {
+        console.log("Sending Message Error:", err)
+        // TODO: make message indicative of error by changing color 
+        
+        let newReceiverMessageLog;
+        if (Object.keys(messages).length === 0 || messages == null || !(receiverAddress in messages)) {
+          newReceiverMessageLog = [{
             from: address,
-            message: senderMessage,
-            timestamp: `${moment().unix()}`,
-          },
-        ];
+            message: "Error: Message failed please try again ...",
+            timestamp: `${moment().unix()}`
+          }]
+        } else {
+          newReceiverMessageLog = [...messages[receiverAddress], {
+            from: address,
+            message: "Error: Message failed please try again ...",
+            timestamp: `${moment().unix()}`
+          }]
+        }
 
-        const newMessageLog = messages;
-        newMessageLog[receiverAddress] = newReceiverMessageLog;
+  
+        const newMessageLog = messages
+        newMessageLog[receiverAddress] = newReceiverMessageLog
         setMessageLog(newMessageLog);
         setMessagesState(newMessageState);
       })
