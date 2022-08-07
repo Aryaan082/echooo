@@ -24,6 +24,7 @@ const MessageSender = ({ receiverAddress, messages, setMessageLog, messagesState
   
       let senderPublicKey = JSON.parse(localStorage.getItem("public-communication-address"))
       senderPublicKey = senderPublicKey[address]
+      
   
       // TODO: break up into smaller functions
       const sendMessage = async (receiverAddress, messages) => {
@@ -40,7 +41,7 @@ const MessageSender = ({ receiverAddress, messages, setMessageLog, messagesState
         const graphClient = await initGraphClient();
         const data = await graphClient.query(identitiesQuery).toPromise();
         const receieverPublicKey = data.data.identities[0].communicationAddress;
-  
+        
         let messageEncryptedSender = await EthCrypto.encryptWithPublicKey(
           senderPublicKey,
           senderMessage
@@ -74,11 +75,22 @@ const MessageSender = ({ receiverAddress, messages, setMessageLog, messagesState
       }).catch((err) => {
         console.log("Sending Message Error:", err)
         // TODO: make message indicative of error by changing color 
-        const newReceiverMessageLog = [...messages[receiverAddress], {
-          from: address,
-          message: "Error: Message failed please try again ...",
-          timestamp: `${moment().unix()}`
-        }]
+        
+        let newReceiverMessageLog;
+        if (Object.keys(messages).length === 0 || messages == null || !(receiverAddress in messages)) {
+          newReceiverMessageLog = [{
+            from: address,
+            message: "Error: Message failed please try again ...",
+            timestamp: `${moment().unix()}`
+          }]
+        } else {
+          newReceiverMessageLog = [...messages[receiverAddress], {
+            from: address,
+            message: "Error: Message failed please try again ...",
+            timestamp: `${moment().unix()}`
+          }]
+        }
+
   
         const newMessageLog = messages
         newMessageLog[receiverAddress] = newReceiverMessageLog

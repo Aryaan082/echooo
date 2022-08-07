@@ -64,7 +64,6 @@ export default function MessagingPage({
       );
       senderPrivateKey = senderPrivateKey[address];
       if (messages[activeReceiverAddress] == null) {
-        console.log("local private key >>", senderPrivateKey);
 
         // TODO: query validation using native library to prevent query injection vulnerability
         const identitiesTimestampQuery = `
@@ -108,7 +107,7 @@ export default function MessagingPage({
         `;
         const dataMessages = await graphClient.query(messagesQuery).toPromise();
         const dataMessagesParsed = dataMessages.data.messages;
-        console.log("data messages parsed >>>", dataMessages);
+        console.log("data messages parsed init query >>>", dataMessagesParsed);
         const messageLog = dataMessagesParsed;
         for (let idx = 0; idx < dataMessagesParsed.length; idx++) {
           let metaDataMessages = await dataMessagesParsed[idx];
@@ -133,10 +132,12 @@ export default function MessagingPage({
         const newMessageLog = { ...messages, [activeReceiverAddress]: messageLog }
         setMessageLog(newMessageLog);
         const interval = setInterval(async (newMessage, activeReceiverAddress) => {
-          console.log("messages >>>", newMessage)
-          console.log(activeReceiverAddress)
+          console.log("new message active interval >>>", newMessage[activeReceiverAddress])
+          if (Object.keys(newMessage).length === 0 || newMessage == null) {
+            return
+          }
           const mostRecentMessageMeta = newMessage[activeReceiverAddress].at(-1);
-          console.log(mostRecentMessageMeta)
+          console.log("most recent message meta interval >>>", mostRecentMessageMeta)
           const messagesQuery = `
           query {
             messages(            
@@ -145,7 +146,7 @@ export default function MessagingPage({
               where: {
                 from_in: ["${senderAddress}", "${activeReceiverAddress}"],
                 receiver_in: ["${senderAddress}", "${activeReceiverAddress}"]
-                timestamp_gte: "${mostRecentMessageMeta.timestamp}"
+                timestamp_gt: "${mostRecentMessageMeta.timestamp}"
               }
           
             ) {
@@ -159,9 +160,8 @@ export default function MessagingPage({
           const graphClient = await initGraphClient();
           const dataMessages = await graphClient.query(messagesQuery).toPromise();
           const dataMessagesParsed = dataMessages.data.messages;
-          console.log("data messages parsed >>>", dataMessages);
+          console.log("data messages parsed interval >>>", dataMessages);
           const messageLog = dataMessagesParsed;
-          console.log("message log >>>", messageLog)
           for (let idx = 0; idx < dataMessagesParsed.length; idx++) {
             let metaDataMessages = await dataMessagesParsed[idx];
             let message = "";

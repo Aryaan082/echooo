@@ -22,7 +22,6 @@ const renderChat = (receiverAddress, messages) => {
 }
 const ChatBox = ({ receiverAddress, messages, setMessageLog }) => {
   const chat = renderChat(receiverAddress, messages);
-  console.log("chat >>>", chat)
   return (
     <>
       {chat}
