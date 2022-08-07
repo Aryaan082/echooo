@@ -1,12 +1,12 @@
 import moment from "moment";
 import "./message.css";
 
-const SendMessageContainer = ({message, timestamp}) => {
+const SendMessageContainer = ({ message, timestamp }) => {
   const messageTimestamp = moment.unix(timestamp).format("DD-MM-YYYY HH:mm");
 
   return (
     <div>
-      <div className="pr-6">
+      <div className="pr-3">
         <div className="flex flex-row justify-end gap-4">
           <div className="message-sender">{message}</div>
         </div>

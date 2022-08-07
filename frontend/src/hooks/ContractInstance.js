@@ -1,7 +1,7 @@
 import { useContract, useNetwork, useSigner } from "wagmi";
 
 import EchoJSON from "../contracts/Echo.sol/Echo.json";
-import {CONTRACT_META_DATA} from "../constants";
+import { CONTRACT_META_DATA } from "../constants";
 
 // TODO: change this to a hook instead of a react component
 const ContractInstance = () => {
@@ -15,6 +15,6 @@ const ContractInstance = () => {
   });
 
   return contractEcho;
-}
+};
 
 export default ContractInstance;

@@ -4,7 +4,7 @@ import EthCrypto from "eth-crypto";
 import { useAccount } from "wagmi";
 import { Oval } from "react-loader-spinner";
 
-import {ContractInstance} from "../../hooks";
+import { ContractInstance } from "../../hooks";
 
 const modalStyles = {
   content: {
@@ -49,7 +49,7 @@ const createCommunicationAddress = async (echoContract, address) => {
     "public-communication-address",
     JSON.stringify(newLocalPublicKeys)
   );
-  
+
   localStorage.setItem(
     "private-communication-address",
     JSON.stringify(newLocalPrivateKeys)
@@ -117,7 +117,7 @@ export default function CommAddressModal({
           </code>
           <div className="flex flex-col gap-2">
             <button
-              className="w-full flex text-lg justify-center items-center px-5 py-3 bg-[rgb(44,156,218)] via-[#9b649c] text-white font-bold rounded-[8px] border-[3px] border-[#333333]"
+              className="w-full flex text-lg justify-center items-center px-5 py-3 bg-[rgb(44,156,218)] via-[#9b649c] text-white font-bold rounded-[8px]"
               onClick={handleSetCommunicationAddress}
             >
               <code>Get your keys</code>
