@@ -36,7 +36,7 @@ const { chains, provider, webSocketProvider } = configureChains(
     [alchemyProvider({ alchemyId }), publicProvider()]
 );
 
-const wagmiClient = createClient({
+export const wagmiClient = createClient({
     autoConnect: true,
     connectors: [
         new MetaMaskConnector({ chains }),
@@ -63,5 +63,3 @@ const wagmiClient = createClient({
     provider,
     webSocketProvider,
 });
-
-export default wagmiClient;

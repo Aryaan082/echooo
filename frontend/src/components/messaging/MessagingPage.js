@@ -1,12 +1,19 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, {useEffect, useState } from "react";
 import { useAccount, useDisconnect, useNetwork, useSwitchNetwork } from "wagmi";
 import EthCrypto from "eth-crypto";
-import { initGraphClient } from "../../config/theGraphClient";
+import { theGraphClient } from "../../config";
 
 import FriendsList from "./MessagingPageFriendsList";
 import MessageSender from "./MessageSender";
 import ChatBox from "./ChatBox";
-import { CONTRACT_META_DATA } from "../../constants";
+import {
+  CONTRACT_META_DATA,
+  BURNER_ADDRESS,
+  GQL_QUERY_IDENTITY_TIMESTAMP_RECENT,
+  GQL_QUERY_MESSAGE_LOG_INTERVAL,
+  GQL_QUERY_MESSAGE_LOG_INIT
+} from "../../constants";
+
 import {
   logoutIconSVG,
   textBubbleSVG,
@@ -16,6 +23,60 @@ import {
   changeKeysIconSVG,
 } from "../../assets";
 import "./receivers.css";
+
+const intervalGetMessages = async (address, newMessage, activeReceiverAddress, setMessageLog) => {
+  const senderAddress = address.toLowerCase();
+  console.log("new message active interval >>>", newMessage[activeReceiverAddress])
+  if (Object.keys(newMessage).length === 0 || newMessage == null) {
+    return;
+  }
+
+  const mostRecentMessageMeta = newMessage[activeReceiverAddress].at(-1);
+  let senderPrivateKey = JSON.parse(
+    localStorage.getItem("private-communication-address")
+  );
+  senderPrivateKey = senderPrivateKey[address];
+
+  console.log("most recent message meta interval >>>", mostRecentMessageMeta)
+
+  const graphClient =  await theGraphClient();
+  const dataMessages = await graphClient.query(GQL_QUERY_MESSAGE_LOG_INTERVAL,
+    {
+      senderAddress: senderAddress,
+      receiverAddress: activeReceiverAddress,
+      recentMessageTimestamp: mostRecentMessageMeta.timestamp
+    }).toPromise();
+  const dataMessagesParsed = dataMessages.data.messages;
+  console.log("data messages parsed interval >>>", dataMessages);
+  const messageLog = dataMessagesParsed;
+  for (let idx = 0; idx < dataMessagesParsed.length; idx++) {
+    let metaDataMessages = await dataMessagesParsed[idx];
+    let message = "";
+
+    // Decrypt sender message
+    if (metaDataMessages.from === senderAddress) {
+      message = metaDataMessages.senderMessage;
+    } else {
+      // Decrypt receiver message
+      message = metaDataMessages.receiverMessage;
+    }
+
+    const decryptedMessage = await EthCrypto.decryptWithPrivateKey(
+      senderPrivateKey,
+      EthCrypto.cipher.parse(message)
+    );
+    messageLog[idx].message = decryptedMessage;
+  }
+  const newReceiverMessages = [
+    ...newMessage[activeReceiverAddress],
+    ...messageLog,
+  ];
+  const newMessageLog = {
+    ...newMessage,
+    [activeReceiverAddress]: newReceiverMessages,
+  };
+  setMessageLog(newMessageLog);
+}
 
 export default function MessagingPage({
   toggleOpenModalChainSelect,
@@ -37,11 +98,10 @@ export default function MessagingPage({
   const { chains } = useSwitchNetwork();
   const [messages, setMessageLog] = useState({});
 
+  
   useEffect(() => {
-    // TODO: cache messages
-    // TODO: if messages already populates check if there's new messages, if so append state with new messages, else do not continue
     if (
-      activeReceiverAddress === "0x0000000000000000000000000000000000000000"
+      activeReceiverAddress === BURNER_ADDRESS
     ) {
       return;
     }
@@ -54,49 +114,21 @@ export default function MessagingPage({
       if (messages[activeReceiverAddress] == null) {
 
         // TODO: query validation using native library to prevent query injection vulnerability
-        const identitiesTimestampQuery = `
-          query {
-            identities(
-              where: {from: "${senderAddress}"}
-              first: 1
-              orderBy: timestamp
-              orderDirection: desc
-            ) {
-              communicationAddress
-              timestamp
-            }
-          }
-        `;
-        const graphClient = await initGraphClient();
-        const dataIdentity = await graphClient
-          .query(identitiesTimestampQuery)
-          .toPromise();
-        const dataIdentityTimestamp = dataIdentity.data.identities[0].timestamp;
-        const dataIdentityCommAddress =
-          dataIdentity.data.identities[0].communicationAddress; // TODO: Use this to check that this address matches our comm address
 
-        const messagesQuery = `
-          query {
-            messages(            
-              orderBy: timestamp
-              orderDirection: asc
-              where: {
-                from_in: ["${senderAddress}", "${activeReceiverAddress}"],
-                receiver_in: ["${senderAddress}", "${activeReceiverAddress}"]
-                timestamp_gte: "${dataIdentityTimestamp}"
-              }
-          
-            ) {
-              from
-              senderMessage
-              receiverMessage
-              timestamp
-            }
-          }
-        `;
-        const dataMessages = await graphClient.query(messagesQuery).toPromise();
+        const graphClient = await theGraphClient();
+        const dataIdentity = await graphClient
+          .query(GQL_QUERY_IDENTITY_TIMESTAMP_RECENT, { senderAddress: senderAddress })
+          .toPromise();
+
+        const dataIdentityTimestamp = dataIdentity.data.identities[0].timestamp;
+
+        const dataMessages = await graphClient.query(GQL_QUERY_MESSAGE_LOG_INIT, {
+          senderAddress: senderAddress,
+          receiverAddress: activeReceiverAddress,
+          recentTimestamp: dataIdentityTimestamp
+        }).toPromise();
         const dataMessagesParsed = dataMessages.data.messages;
-        console.log("data messages parsed init query >>>", dataMessagesParsed);
+
         const messageLog = dataMessagesParsed;
         for (let idx = 0; idx < dataMessagesParsed.length; idx++) {
           let metaDataMessages = await dataMessagesParsed[idx];
@@ -125,70 +157,12 @@ export default function MessagingPage({
 
         console.log(messageLog);
         setMessageLog(newMessageLog);
-        const interval = setInterval(async (newMessage, activeReceiverAddress) => {
-          console.log("new message active interval >>>", newMessage[activeReceiverAddress])
-          if (Object.keys(newMessage).length === 0 || newMessage == null) {
-            return
-          }
-          const mostRecentMessageMeta = newMessage[activeReceiverAddress].at(-1);
-          console.log("most recent message meta interval >>>", mostRecentMessageMeta)
-          const messagesQuery = `
-
-          query {
-            messages(            
-              orderBy: timestamp
-              orderDirection: asc
-              where: {
-                from_in: ["${senderAddress}", "${activeReceiverAddress}"],
-                receiver_in: ["${senderAddress}", "${activeReceiverAddress}"]
-                timestamp_gt: "${mostRecentMessageMeta.timestamp}"
-              }
-          
-            ) {
-              from
-              senderMessage
-              receiverMessage
-              timestamp
-            }
-          }
-        `;
-
-          const graphClient = await initGraphClient();
-          const dataMessages = await graphClient.query(messagesQuery).toPromise();
-          const dataMessagesParsed = dataMessages.data.messages;
-          console.log("data messages parsed interval >>>", dataMessages);
-          const messageLog = dataMessagesParsed;
-          for (let idx = 0; idx < dataMessagesParsed.length; idx++) {
-            let metaDataMessages = await dataMessagesParsed[idx];
-            let message = "";
-
-              // Decrypt sender message
-              if (metaDataMessages.from === senderAddress) {
-                message = metaDataMessages.senderMessage;
-              } else {
-                // Decrypt receiver message
-                message = metaDataMessages.receiverMessage;
-              }
-
-              const decryptedMessage = await EthCrypto.decryptWithPrivateKey(
-                senderPrivateKey,
-                EthCrypto.cipher.parse(message)
-              );
-              messageLog[idx].message = decryptedMessage;
-            }
-            const newReceiverMessages = [
-              ...newMessage[activeReceiverAddress],
-              ...messageLog,
-            ];
-            const newMessageLog = {
-              ...newMessage,
-              [activeReceiverAddress]: newReceiverMessages,
-            };
-            setMessageLog(newMessageLog);
-          },
-          5 * 1000,
-          newMessageLog,
-          activeReceiverAddress
+        const interval = setInterval(async (senderAddress, newMessage, activeReceiverAddress, setMessageLog) => intervalGetMessages(senderAddress, newMessage, activeReceiverAddress, setMessageLog),
+        5 * 1000,
+        address,  
+        newMessageLog,
+        activeReceiverAddress,
+        setMessageLog
         );
         return () => clearInterval(interval);
       }

@@ -1,10 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { WagmiConfig } from "wagmi";
+import { WagmiConfig} from "wagmi";
 
 import "./index.css";
 import App from "./components/App";
-import { wagmiClient } from "./config";
+import { wagmiClient} from "./config";
 import reportWebVitals from "./reportWebVitals";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
