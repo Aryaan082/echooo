@@ -1,1 +1,2 @@
-export {default as wagmiClient} from "./wagmiClient";
+export * from "./wagmiClient";
+export * from "./graphClient";

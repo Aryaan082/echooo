@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import EthCrypto from "eth-crypto";
-import { initGraphClient } from "../../config/theGraphClient";
+import { theGraphClient } from "../../config";
 import { Oval } from "react-loader-spinner";
 import moment from "moment";
 
+import { GQL_QUERY_GET_COMMUNICATION_ADDRESS } from "../../constants";
 import { ContractInstance } from "../../hooks";
 import { plusIconSVG, sendMessagesIconSVG } from "../../assets";
 import "./receivers.css";
@@ -25,17 +26,9 @@ const MessageSender = ({ receiverAddress, messages, setMessageLog, messagesState
       const sendMessage = async (receiverAddress, messages) => {
         // TODO: If user has no communication address, need to create it on the fly for them... Check if public key exists within cache
         // TODO: sanitize graphQL queries b/c currently dynamic and exposes injection vulnerability
-        const identitiesQuery = `
-        query {
-          identities(where: {from: "${receiverAddress}"}, first: 1, orderBy: timestamp, orderDirection: desc) {
-            communicationAddress,
-            timestamp     
-          }
-        }
-      `;
 
-        const graphClient = await initGraphClient();
-        const data = await graphClient.query(identitiesQuery).toPromise();
+        const graphClient = await theGraphClient();
+        const data = await graphClient.query(GQL_QUERY_GET_COMMUNICATION_ADDRESS, {receiverAddress: receiverAddress}).toPromise();
         const receieverPublicKey = data.data.identities[0].communicationAddress;
         
         let messageEncryptedSender = await EthCrypto.encryptWithPublicKey(
@@ -72,22 +65,16 @@ const MessageSender = ({ receiverAddress, messages, setMessageLog, messagesState
         console.log("Sending Message Error:", err)
         // TODO: make message indicative of error by changing color 
         
-        let newReceiverMessageLog;
-        if (Object.keys(messages).length === 0 || messages == null || !(receiverAddress in messages)) {
-          newReceiverMessageLog = [{
-            from: address,
-            message: "Error: Message failed please try again ...",
-            timestamp: `${moment().unix()}`
-          }]
-        } else {
-          newReceiverMessageLog = [...messages[receiverAddress], {
-            from: address,
-            message: "Error: Message failed please try again ...",
-            timestamp: `${moment().unix()}`
-          }]
-        }
+        let newReceiverMessageLog = [{
+          from: address,
+          message: "Error: Message failed please try again ...",
+          timestamp: `${moment().unix()}`
+        }]
 
-  
+        if (Object.keys(messages).length !== 0 || messages != null || receiverAddress in messages) {
+          newReceiverMessageLog = [...messages[receiverAddress],... newReceiverMessageLog]
+        } 
+        
         const newMessageLog = messages
         newMessageLog[receiverAddress] = newReceiverMessageLog
         setMessageLog(newMessageLog);

@@ -1,3 +1,4 @@
+
 const ChainSelectorButton = ({ name, switchNetwork, chainId, selectedChainId, logo }) => {
     return (
         <button
@@ -7,7 +8,7 @@ const ChainSelectorButton = ({ name, switchNetwork, chainId, selectedChainId, lo
                     ? " border-[3px] border-[#E84142]"
                     : " border border-[#c7cad4]")
             }
-            onClick={() => switchNetwork(chainId)}
+            onClick={(e) => switchNetwork(chainId)}
         >
             {name}
             <img className="flex items-center w-[30px]" src={logo}></img>

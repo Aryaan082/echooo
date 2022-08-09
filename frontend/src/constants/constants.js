@@ -21,3 +21,5 @@ export const CONTRACT_META_DATA = {
     name: "Ethereum Ropsten"
   }
 };
+
+export const BURNER_ADDRESS = "0x0000000000000000000000000000000000000000";
