@@ -1,4 +1,5 @@
 {
     "network": "fuji",
-    "address": "0x13aeAe99bA955A20Cd8d64bd3e5eFAb08388D738"
+    "address": "0x13aeAe99bA955A20Cd8d64bd3e5eFAb08388D738",
+    "startBlock": 12405408
 }
