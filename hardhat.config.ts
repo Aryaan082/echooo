@@ -39,14 +39,15 @@ const config: HardhatUserConfig = {
   },
   networks: {
     ropsten: {
-      url: process.env.ROPSTEN_URL || "",
-      accounts: [process.env.PRIVATE_KEY_ROPSTEN || ""]
+      url:
+        "https://ropsten.infura.io/v3/a5adc84c994b4d7bbdec98a637c43304" || "",
+      accounts: [process.env.PRIVATE_KEY_ROPSTEN || ""],
     },
     fuji: {
       url: "https://api.avax-test.network/ext/bc/C/rpc",
       accounts: [process.env.PRIVATE_KEY_FUJI || ""],
     },
-    matic: {
+    mumbai: {
       url: "https://rpc-mumbai.maticvigil.com",
       accounts: [process.env.PRIVATE_KEY_MATIC || ""],
     },

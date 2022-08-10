@@ -5,8 +5,8 @@ import { Echo } from "../typechain";
 import EchoJSON from "../artifacts/contracts/Echo.sol/Echo.json";
 import { Contract, Wallet } from "ethers";
 import EthCrypto from "eth-crypto";
-import {createClient} from "urql";
-import 'isomorphic-unfetch'; // required for urql: https://github.com/FormidableLabs/urql/issues/283
+import { createClient } from "urql";
+import "isomorphic-unfetch"; // required for urql: https://github.com/FormidableLabs/urql/issues/283
 
 dotenv.config();
 const GRAPH_API_URL = "https://api.thegraph.com/subgraphs/name/mtwichan/echo";
@@ -17,17 +17,19 @@ const graphClient = createClient({
 
 describe("Echo Contract", () => {
   let wallet: Wallet;
-  let echoContract: Contract;
+  let contractEcho: Contract;
   let message: string;
   let byteMessage: Uint8Array;
   let originalMessage: string;
 
   beforeEach(async () => {
-    const provider = new ethers.providers.JsonRpcProvider(`https://polygon-mumbai.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`);
+    const provider = new ethers.providers.JsonRpcProvider(
+      `https://polygon-mumbai.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`
+    );
     const privateKey = process.env.PRIVATE_KEY_MATIC || "";
     wallet = new ethers.Wallet(privateKey, provider);
     const contractAddress = "0x21e29E3038AeCC76173103A5cb9711Ced1D23C01";
-    echoContract = await new ethers.Contract(
+    contractEcho = await new ethers.Contract(
       contractAddress,
       EchoJSON.abi,
       provider
@@ -35,7 +37,7 @@ describe("Echo Contract", () => {
   });
 
   it("Can log a message", async () => {
-    const tx = await echoContract
+    const tx = await contractEcho
       .connect(wallet)
       .logMessage("0xcd3b766ccdd6ae721141f452c550ca635964ce71", "hello world");
     const txReceipt = await tx.wait();
@@ -44,7 +46,7 @@ describe("Echo Contract", () => {
   });
 
   it("Can log a identity", async () => {
-    const tx = await echoContract
+    const tx = await contractEcho
       .connect(wallet)
       .logIdentity("0xcd3b766ccdd6ae721141f452c550ca635964ce71");
     const txReceipt = await tx.wait();
@@ -55,7 +57,7 @@ describe("Echo Contract", () => {
   it("Can encrypt and decrypt message", async () => {
     const ethWallet2 = EthCrypto.createIdentity();
 
-    let tx = await echoContract.connect(wallet).logIdentity(ethWallet2.address);
+    let tx = await contractEcho.connect(wallet).logIdentity(ethWallet2.address);
     let txReceipt = await tx.wait();
 
     message = "We're going to win everything!!";
@@ -63,21 +65,24 @@ describe("Echo Contract", () => {
       ethWallet2.publicKey,
       message
     );
-    
+
     console.log("message", message);
     const messageEncryptedString = await EthCrypto.cipher.stringify(
       messageEncrypted
     );
     console.log("message encrypted", messageEncryptedString);
-    tx = await echoContract.connect(wallet).logMessage(ethWallet2.address, messageEncryptedString);
+    tx = await contractEcho
+      .connect(wallet)
+      .logMessage(ethWallet2.address, messageEncryptedString);
     txReceipt = await tx.wait();
-    
+
     console.log(txReceipt.events![0].args!.message);
     expect(
       await EthCrypto.decryptWithPrivateKey(
         ethWallet2.privateKey,
-        EthCrypto.cipher.parse(txReceipt.events![0].args!.message))
-      ).equals(message);
+        EthCrypto.cipher.parse(txReceipt.events![0].args!.message)
+      )
+    ).equals(message);
   });
 
   it("Test utf8byte decryption", async () => {
@@ -117,9 +122,9 @@ describe("Echo Contract", () => {
     console.log("public key >>>", ethWallet.publicKey);
     console.log("private key >>>", ethWallet.privateKey);
     const publicKey = ethWallet.publicKey;
-    const tx = await echoContract.connect(wallet).logIdentity(publicKey);
+    const tx = await contractEcho.connect(wallet).logIdentity(publicKey);
     await tx.wait();
-    // expect(await echoContract.connect(wallet).logIdentity(ethWallet.publicKey)).to.emit(echoContract, "IdentityEvent").withArgs(ethWallet.publicKey);
+    // expect(await contractEcho.connect(wallet).logIdentity(ethWallet.publicKey)).to.emit(contractEcho, "IdentityEvent").withArgs(ethWallet.publicKey);
   });
 
   it("Can send messages", async () => {
@@ -132,7 +137,7 @@ describe("Echo Contract", () => {
           timestamp     
         }
       }
-    `
+    `;
     const data = await graphClient.query(identitiesQuery).toPromise();
     const communicationAddress = data.data.identities[0].communicationAddress;
     console.log("communication address >>>", communicationAddress);
@@ -144,12 +149,15 @@ describe("Echo Contract", () => {
       messageEncrypted
     );
     console.log("message encrypted >>>", messageEncryptedString);
-    await echoContract.connect(wallet).logMessage(BIdentity, messageEncryptedString);
+    await contractEcho
+      .connect(wallet)
+      .logMessage(BIdentity, messageEncryptedString);
   });
 
   it.only("Can receive messages", async () => {
     const BPublicCommuncationAddress = wallet.address;
-    const BPrivateCommunicationAddress = "0x87444924e8cc0783e721c55d13eaf51abf31b5aeda971ffdf05c7b3ae8e646fa";
+    const BPrivateCommunicationAddress =
+      "0x87444924e8cc0783e721c55d13eaf51abf31b5aeda971ffdf05c7b3ae8e646fa";
     const identitiesTimestampQuery = `
       query {
         identities(
@@ -164,10 +172,13 @@ describe("Echo Contract", () => {
           timestamp
         }
       }
-    `
-    const dataIdentity = await graphClient.query(identitiesTimestampQuery).toPromise();
+    `;
+    const dataIdentity = await graphClient
+      .query(identitiesTimestampQuery)
+      .toPromise();
     const dataIdentityTimestamp = dataIdentity.data.identities[0].timestamp;
-    const dataIdentityCommAddress = dataIdentity.data.identities[0].communicationAddress; // TODO: Use this to check that this address matches our comm address
+    const dataIdentityCommAddress =
+      dataIdentity.data.identities[0].communicationAddress; // TODO: Use this to check that this address matches our comm address
 
     const messagesQuery = `
       query {
@@ -176,10 +187,10 @@ describe("Echo Contract", () => {
           timestamp     
         }
       }
-    `
+    `;
     const dataMessages = await graphClient.query(messagesQuery).toPromise();
     const dataMessagesParsed = dataMessages.data.messages;
-    console.log("messages >>>", dataMessagesParsed)
+    console.log("messages >>>", dataMessagesParsed);
     for (let idx = 0; idx < dataMessagesParsed.length; idx++) {
       const message = dataMessagesParsed[idx].message;
       const decryptedMessage = await EthCrypto.decryptWithPrivateKey(

@@ -1,4 +1,4 @@
-import React, {useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAccount, useDisconnect, useNetwork, useSwitchNetwork } from "wagmi";
 import EthCrypto from "eth-crypto";
 import { theGraphClient } from "../../config";
@@ -11,7 +11,7 @@ import {
   BURNER_ADDRESS,
   GQL_QUERY_IDENTITY_TIMESTAMP_RECENT,
   GQL_QUERY_MESSAGE_LOG_INTERVAL,
-  GQL_QUERY_MESSAGE_LOG_INIT
+  GQL_QUERY_MESSAGE_LOG_INIT,
 } from "../../constants";
 
 import {
@@ -21,12 +21,21 @@ import {
   echoooLogoSVG,
   errorIconSVG,
   changeKeysIconSVG,
+  profileIconSVG,
 } from "../../assets";
 import "./receivers.css";
 
-const intervalGetMessages = async (address, newMessage, activeReceiverAddress, setMessageLog) => {
+const intervalGetMessages = async (
+  address,
+  newMessage,
+  activeReceiverAddress,
+  setMessageLog
+) => {
   const senderAddress = address.toLowerCase();
-  console.log("new message active interval >>>", newMessage[activeReceiverAddress])
+  console.log(
+    "new message active interval >>>",
+    newMessage[activeReceiverAddress]
+  );
   if (Object.keys(newMessage).length === 0 || newMessage == null) {
     return;
   }
@@ -37,15 +46,16 @@ const intervalGetMessages = async (address, newMessage, activeReceiverAddress, s
   );
   senderPrivateKey = senderPrivateKey[address];
 
-  console.log("most recent message meta interval >>>", mostRecentMessageMeta)
+  console.log("most recent message meta interval >>>", mostRecentMessageMeta);
 
-  const graphClient =  await theGraphClient();
-  const dataMessages = await graphClient.query(GQL_QUERY_MESSAGE_LOG_INTERVAL,
-    {
+  const graphClient = await theGraphClient();
+  const dataMessages = await graphClient
+    .query(GQL_QUERY_MESSAGE_LOG_INTERVAL, {
       senderAddress: senderAddress,
       receiverAddress: activeReceiverAddress,
-      recentMessageTimestamp: mostRecentMessageMeta.timestamp
-    }).toPromise();
+      recentMessageTimestamp: mostRecentMessageMeta.timestamp,
+    })
+    .toPromise();
   const dataMessagesParsed = dataMessages.data.messages;
   console.log("data messages parsed interval >>>", dataMessages);
   const messageLog = dataMessagesParsed;
@@ -76,12 +86,14 @@ const intervalGetMessages = async (address, newMessage, activeReceiverAddress, s
     [activeReceiverAddress]: newReceiverMessages,
   };
   setMessageLog(newMessageLog);
-}
+};
 
 export default function MessagingPage({
   toggleOpenModalChainSelect,
   toggleOpenCommAddressModal,
   toggleOpenNewChatModal,
+  toggleOpenNFTOfferModal,
+  toggleOpenSendModal,
   chatAddresses,
   activeReceiverAddress,
   setActiveReceiver,
@@ -98,11 +110,8 @@ export default function MessagingPage({
   const { chains } = useSwitchNetwork();
   const [messages, setMessageLog] = useState({});
 
-  
   useEffect(() => {
-    if (
-      activeReceiverAddress === BURNER_ADDRESS
-    ) {
+    if (activeReceiverAddress === BURNER_ADDRESS) {
       return;
     }
     const getMessagesAsync = async () => {
@@ -111,22 +120,31 @@ export default function MessagingPage({
         localStorage.getItem("private-communication-address")
       );
       senderPrivateKey = senderPrivateKey[address];
-      if (messages[activeReceiverAddress] == null) {
 
+      let senderPublicKey = JSON.parse(
+        localStorage.getItem("public-communication-address")
+      );
+      senderPublicKey = senderPublicKey[address];
+
+      if (messages[activeReceiverAddress] == null) {
         // TODO: query validation using native library to prevent query injection vulnerability
 
         const graphClient = await theGraphClient();
         const dataIdentity = await graphClient
-          .query(GQL_QUERY_IDENTITY_TIMESTAMP_RECENT, { senderAddress: senderAddress })
+          .query(GQL_QUERY_IDENTITY_TIMESTAMP_RECENT, {
+            senderAddress: senderAddress,
+          })
           .toPromise();
 
         const dataIdentityTimestamp = dataIdentity.data.identities[0].timestamp;
 
-        const dataMessages = await graphClient.query(GQL_QUERY_MESSAGE_LOG_INIT, {
-          senderAddress: senderAddress,
-          receiverAddress: activeReceiverAddress,
-          recentTimestamp: dataIdentityTimestamp
-        }).toPromise();
+        const dataMessages = await graphClient
+          .query(GQL_QUERY_MESSAGE_LOG_INIT, {
+            senderAddress: senderAddress,
+            receiverAddress: activeReceiverAddress,
+            recentTimestamp: dataIdentityTimestamp,
+          })
+          .toPromise();
         const dataMessagesParsed = dataMessages.data.messages;
 
         const messageLog = dataMessagesParsed;
@@ -150,19 +168,31 @@ export default function MessagingPage({
 
           console.log(`Decrypted message ${idx} >>>`, decryptedMessage);
         }
+
         const newMessageLog = {
           ...messages,
           [activeReceiverAddress]: messageLog,
         };
 
-        console.log(messageLog);
         setMessageLog(newMessageLog);
-        const interval = setInterval(async (senderAddress, newMessage, activeReceiverAddress, setMessageLog) => intervalGetMessages(senderAddress, newMessage, activeReceiverAddress, setMessageLog),
-        5 * 1000,
-        address,  
-        newMessageLog,
-        activeReceiverAddress,
-        setMessageLog
+        const interval = setInterval(
+          async (
+            senderAddress,
+            newMessage,
+            activeReceiverAddress,
+            setMessageLog
+          ) =>
+            intervalGetMessages(
+              senderAddress,
+              newMessage,
+              activeReceiverAddress,
+              setMessageLog
+            ),
+          5 * 1000,
+          address,
+          newMessageLog,
+          activeReceiverAddress,
+          setMessageLog
         );
         return () => clearInterval(interval);
       }
@@ -198,6 +228,7 @@ export default function MessagingPage({
               2. Disconnect - Displays Address
               3. Change Comm Key
               4. Start New Chat
+              5. Edit profile
             */}
             <div className="flex flex-row gap-4">
               <button
@@ -246,8 +277,11 @@ export default function MessagingPage({
                     className="flex flex-row justify-center items-center gap-[15px] px-5 py-3 bg-gradient-to-r from-[#00FFD1] to-[#FF007A] via-[#9b649c] text-white font-bold rounded-[30px]"
                     onClick={toggleOpenNewChatModal}
                   >
-                    Start new chat
+                    New chat
                     <img src={textBubbleSVG} alt=""></img>
+                  </button>
+                  <button className="flex justify-center items-center p-3 bg-white rounded-[30px]">
+                    <img src={profileIconSVG} alt=""></img>
                   </button>
                 </>
               ) : (
@@ -255,7 +289,7 @@ export default function MessagingPage({
               )}
             </div>
           </div>
-          {/* Reciever */}
+          {/* Receiver Address */}
           {address in chatAddresses && chatAddresses[address].length > 0 ? (
             <div className="w-full" style={{ height: "calc(5vh - 100px}" }}>
               <div className="flex justify-center align-center">
@@ -285,6 +319,8 @@ export default function MessagingPage({
               receiverAddress={activeReceiverAddress}
               messagesState={messagesState}
               setMessagesState={setMessagesState}
+              toggleOpenSendModal={toggleOpenSendModal}
+              toggleOpenNFTOfferModal={toggleOpenNFTOfferModal}
             />
           </div>
         ) : (

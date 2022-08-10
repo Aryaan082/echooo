@@ -13,17 +13,17 @@ const modalStyles = {
     right: "auto",
     bottom: "auto",
     transform: "translate(-50%, -50%)",
-    borderColor: "#333333",
-    borderWidth: "4px",
+    border: "0px",
     borderRadius: "1.5rem",
   },
+  overlay: { backgroundColor: "rgba(0, 0, 0, 0.5)" },
 };
 
-const createCommunicationAddress = async (echoContract, address) => {
+const createCommunicationAddress = async (contractEcho, address) => {
   const ethWallet = EthCrypto.createIdentity();
   const publicKey = ethWallet.publicKey;
   const privateKey = ethWallet.privateKey;
-  const tx = await echoContract.logIdentity(publicKey);
+  const tx = await contractEcho.logIdentity(publicKey);
   await tx.wait();
 
   let localPublicKeys = JSON.parse(
@@ -67,11 +67,11 @@ export default function CommAddressModal({
 }) {
   const { address } = useAccount();
 
-  const echoContract = ContractInstance();
+  const contracts = ContractInstance();
 
   const handleSetCommunicationAddress = (e) => {
     setBroadcasting(true);
-    createCommunicationAddress(echoContract, address)
+    createCommunicationAddress(contracts.contractEcho, address)
       .then(() => {
         const localPublicKeys = JSON.parse(
           localStorage.getItem("public-communication-address")

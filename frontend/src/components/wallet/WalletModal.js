@@ -10,11 +10,11 @@ const modalStyles = {
     right: "auto",
     bottom: "auto",
     transform: "translate(-50%, -50%)",
-    borderColor: "#333333",
-    borderWidth: "4px",
+    border: "0px",
     borderRadius: "1.5rem",
     paddingBottom: "25px",
   },
+  overlay: { backgroundColor: "rgba(0, 0, 0, 0.5)" },
 };
 
 export default function WalletModal({ openModal, toggleOpenModal }) {

@@ -12,10 +12,10 @@ const modalStyles = {
     right: "auto",
     bottom: "auto",
     transform: "translate(-50%, -50%)",
-    borderColor: "#333333",
-    borderWidth: "4px",
+    border: "0px",
     borderRadius: "1.5rem",
   },
+  overlay: { backgroundColor: "rgba(0, 0, 0, 0.5)" },
 };
 
 export default function NewChatModal({
@@ -97,10 +97,11 @@ export default function NewChatModal({
             <img src={continueIconSVG}></img>
           </button>
         </div>
-        {address in chatAddresses &&
-        chatAddresses[address].includes(newChatAddress) ? (
+        {address === newChatAddress ||
+        (address in chatAddresses &&
+          chatAddresses[address].includes(newChatAddress)) ? (
           <div className="text-lg text-red-500 text-center">
-            Chatter already exists.
+            Invalid address or chatter already exists.
           </div>
         ) : (
           <></>

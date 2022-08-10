@@ -7,76 +7,134 @@ import moment from "moment";
 
 import { GQL_QUERY_GET_COMMUNICATION_ADDRESS } from "../../constants";
 import { ContractInstance } from "../../hooks";
-import { plusIconSVG, sendMessagesIconSVG } from "../../assets";
+import {
+  plusIconSVG,
+  sendMessagesIconSVG,
+  sendArrowIconSVG,
+  exchangeArrowIconSVG,
+  lendingArrowIconSVG,
+  minusIconSVG,
+} from "../../assets";
 import "./receivers.css";
 
-const MessageSender = ({ receiverAddress, messages, setMessageLog, messagesState, setMessagesState }) => {
-    const [senderMessage, setSenderMessage] = useState("");
-    const { address } = useAccount();
-    const echoContract = ContractInstance();
-    const handleSubmitMessage = async (e) => {
-      e.preventDefault();
-      setMessagesState({ [receiverAddress]: true })
-  
-      let senderPublicKey = JSON.parse(localStorage.getItem("public-communication-address"))
-      senderPublicKey = senderPublicKey[address]
-      
-  
-      // TODO: break up into smaller functions
-      const sendMessage = async (receiverAddress, messages) => {
-        // TODO: If user has no communication address, need to create it on the fly for them... Check if public key exists within cache
-        // TODO: sanitize graphQL queries b/c currently dynamic and exposes injection vulnerability
+const MessageSender = ({
+  receiverAddress,
+  messages,
+  setMessageLog,
+  messagesState,
+  setMessagesState,
+  toggleOpenSendModal,
+  toggleOpenNFTOfferModal,
+}) => {
+  const [senderMessage, setSenderMessage] = useState("");
+  const [openP2P, setOpenP2P] = useState(false);
 
-        const graphClient = await theGraphClient();
-        const data = await graphClient.query(GQL_QUERY_GET_COMMUNICATION_ADDRESS, {receiverAddress: receiverAddress}).toPromise();
-        const receieverPublicKey = data.data.identities[0].communicationAddress;
-        
-        let messageEncryptedSender = await EthCrypto.encryptWithPublicKey(
-          senderPublicKey,
-          senderMessage
-        );
-        let messageEncryptedReceiver = await EthCrypto.encryptWithPublicKey(
-          receieverPublicKey,
-          senderMessage
-        );
-        messageEncryptedSender = EthCrypto.cipher.stringify(messageEncryptedSender);
-        messageEncryptedReceiver = EthCrypto.cipher.stringify(messageEncryptedReceiver);
-  
-        const tx = await echoContract.logMessage(receiverAddress, messageEncryptedSender, messageEncryptedReceiver);
-        await tx.wait();
-        // await promiseTimeout(60 * 1000, );
-  
-      }
-  
-      const newMessageState = { ...messagesState, [receiverAddress]: false }
-      sendMessage(receiverAddress, messages).then(() => {
-        const newReceiverMessageLog = [...messages[receiverAddress], {
-          from: address,
-          message: senderMessage,
-          timestamp: `${moment().unix()}`
-        }]
-  
-        const newMessageLog = messages
-        newMessageLog[receiverAddress] = newReceiverMessageLog
+  const toggleOpenP2P = () => setOpenP2P(!openP2P);
+
+  const { address } = useAccount();
+
+  const contracts = ContractInstance();
+
+  const handleSubmitMessage = async (e) => {
+    e.preventDefault();
+    setMessagesState({ [receiverAddress]: true });
+
+    let senderPublicKey = JSON.parse(
+      localStorage.getItem("public-communication-address")
+    );
+    senderPublicKey = senderPublicKey[address];
+
+    // TODO: break up into smaller functions
+    const sendMessage = async (receiverAddress) => {
+      // TODO: sanitize graphQL queries b/c currently dynamic and exposes injection vulnerability
+
+      // Query for the receiver's communication public key
+      const identitiesQuery = `
+        query {
+          identities(where: {from: "${receiverAddress}"}, first: 1, orderBy: timestamp, orderDirection: desc) {
+            communicationAddress,
+            timestamp     
+          }
+        }
+      `;
+
+      const graphClient = theGraphClient();
+      const data = await graphClient
+        .query(GQL_QUERY_GET_COMMUNICATION_ADDRESS, {
+          receiverAddress: receiverAddress,
+        })
+        .toPromise();
+      const receiverPublicKey = data.data.identities[0].communicationAddress;
+
+      let messageEncryptedSender = await EthCrypto.encryptWithPublicKey(
+        senderPublicKey,
+        senderMessage
+      );
+      let messageEncryptedReceiver = await EthCrypto.encryptWithPublicKey(
+        receiverPublicKey,
+        senderMessage
+      );
+      messageEncryptedSender = EthCrypto.cipher.stringify(
+        messageEncryptedSender
+      );
+      messageEncryptedReceiver = EthCrypto.cipher.stringify(
+        messageEncryptedReceiver
+      );
+
+      const tx = await contracts.contractEcho.logMessage(
+        0,
+        receiverAddress,
+        messageEncryptedSender,
+        messageEncryptedReceiver
+      );
+      await tx.wait();
+      // await promiseTimeout(60 * 1000, );
+    };
+
+    const newMessageState = { ...messagesState, [receiverAddress]: false };
+
+    // Sends transaction to blockchain
+    sendMessage(receiverAddress, messages)
+      .then(() => {
+        const newReceiverMessageLog = [
+          ...messages[receiverAddress],
+          {
+            from: address,
+            message: senderMessage,
+            timestamp: `${moment().unix()}`,
+          },
+        ];
+
+        const newMessageLog = messages;
+        newMessageLog[receiverAddress] = newReceiverMessageLog;
         setMessageLog(newMessageLog);
-        setMessagesState(newMessageState)
-  
-      }).catch((err) => {
-        console.log("Sending Message Error:", err)
-        // TODO: make message indicative of error by changing color 
-        
-        let newReceiverMessageLog = [{
-          from: address,
-          message: "Error: Message failed please try again ...",
-          timestamp: `${moment().unix()}`
-        }]
+        setMessagesState(newMessageState);
+      })
+      .catch((err) => {
+        console.log("Sending Message Error:", err);
+        // TODO: make message indicative of error by changing color
 
-        if (Object.keys(messages).length !== 0 || messages != null || receiverAddress in messages) {
-          newReceiverMessageLog = [...messages[receiverAddress],... newReceiverMessageLog]
-        } 
-        
-        const newMessageLog = messages
-        newMessageLog[receiverAddress] = newReceiverMessageLog
+        let newReceiverMessageLog = [
+          {
+            from: address,
+            message: "Error: Message failed please try again ...",
+            timestamp: `${moment().unix()}`,
+          },
+        ];
+
+        if (
+          Object.keys(messages).length !== 0 ||
+          messages != null ||
+          receiverAddress in messages
+        ) {
+          newReceiverMessageLog = [
+            ...messages[receiverAddress],
+            ...newReceiverMessageLog,
+          ];
+        }
+
+        const newMessageLog = messages;
+        newMessageLog[receiverAddress] = newReceiverMessageLog;
         setMessageLog(newMessageLog);
         setMessagesState(newMessageState);
       })
@@ -101,49 +159,96 @@ const MessageSender = ({ receiverAddress, messages, setMessageLog, messagesState
   };
 
   return (
-    <>
-      <form
-        onSubmit={handleSubmitMessage}
-        className="flex flex-row align-center justify-center w-full gap-2 px-4 py-4"
-      >
-        <input
-          onChange={(event) => setSenderMessage(event.target.value)}
-          value={senderMessage}
-          id="sender_message"
-          className="drop-shadow-md bg-gray-50 rounded-[30px] text-gray-900 text-md w-full p-4"
-          placeholder="Type your message..."
-          required
-        />
-        <button
-          className="flex flex-row justify-center items-center gap-[10px] text-white text-lg bg-[#333333] rounded-[30px] hover:bg-[#555555] font-medium px-[13.1px] disabled:opacity-25"
-          disabled={true}
-        >
-          <img height="35" width="35" src={plusIconSVG}></img>
-        </button>
-        {messagesState[receiverAddress] ? (
-          <div className="flex flex-row w-[384px] items-center justify-center gap-[20px]">
-            <Oval
-              ariaLabel="loading-indicator"
-              height={40}
-              width={40}
-              strokeWidth={3}
-              strokeWidthSecondary={3}
-              color="black"
-              secondaryColor="white"
-            />
-            <div className="text-xl font-medium">Sending message...</div>
-          </div>
+    <div className="flex flex-row items-end gap-3 p-4">
+      <input
+        onChange={(event) => setSenderMessage(event.target.value)}
+        value={senderMessage}
+        id="sender_message"
+        className="drop-shadow-md bg-gray-50 rounded-[30px] text-gray-900 text-md w-full p-4"
+        placeholder="Type your message..."
+        required
+      />
+      <div className="flex flex-col items-center">
+        {openP2P ? (
+          <>
+            <div className="flex flex-col gap-2 p-2 text-center bg-[#333333] drop-shadow-lg rounded-t-[50px]">
+              <button
+                className="hover:opacity-50"
+                onClick={() => {
+                  toggleOpenSendModal();
+                  toggleOpenP2P();
+                }}
+              >
+                <img
+                  className="bg-white h-10 rounded-[30px]"
+                  src={sendArrowIconSVG}
+                  alt=""
+                ></img>
+              </button>
+              <button
+                className="hover:opacity-50"
+                onClick={() => {
+                  toggleOpenNFTOfferModal();
+                  toggleOpenP2P();
+                }}
+              >
+                <img
+                  className="bg-white h-10 rounded-[30px]"
+                  src={exchangeArrowIconSVG}
+                  alt=""
+                ></img>
+              </button>
+              <button className="hover:opacity-50">
+                <img
+                  className="bg-white h-10 rounded-[30px]"
+                  src={lendingArrowIconSVG}
+                  alt=""
+                ></img>
+              </button>
+            </div>
+          </>
         ) : (
-          <button
-            type="submit"
-            className="flex flex-row justify-center items-center gap-[10px] text-white text-lg bg-[#333333] rounded-[30px] hover:bg-[#555555] font-medium px-6"
-          >
-            Send
-            <img className="h-[25px]" src={sendMessagesIconSVG}></img>
-          </button>
+          <></>
         )}
-      </form>
-    </>
+        <button
+          className={
+            "flex flex-row justify-center items-center bg-[#333333] rounded-[50px] hover:bg-[#555555] w-[56px] h-[56px]" +
+            (openP2P ? " rounded-t-[0px]" : "")
+          }
+          onClick={() => toggleOpenP2P()}
+        >
+          <img
+            height="30"
+            width="30"
+            src={openP2P ? minusIconSVG : plusIconSVG}
+            alt=""
+          ></img>
+        </button>
+      </div>
+      {messagesState[receiverAddress] ? (
+        <div className="flex flex-row w-[384px] items-center justify-center gap-[20px]">
+          <Oval
+            ariaLabel="loading-indicator"
+            height={40}
+            width={40}
+            strokeWidth={3}
+            strokeWidthSecondary={3}
+            color="black"
+            secondaryColor="white"
+          />
+          <div className="text-xl font-medium">Sending message...</div>
+        </div>
+      ) : (
+        <button
+          className="flex flex-row justify-center items-center gap-[10px] text-white text-lg bg-[#333333] rounded-[30px] hover:bg-[#555555] font-medium h-[56px] px-6 disabled:opacity-25"
+          onClick={handleSubmitMessage}
+          disabled={!Boolean(senderMessage)}
+        >
+          Send
+          <img className="h-[25px]" src={sendMessagesIconSVG}></img>
+        </button>
+      )}
+    </div>
   );
 };
 

@@ -1,1 +1,1 @@
-export {default as ContractInstance} from "./ContractInstance"
+export { default as ContractInstance } from "./ContractInstance";
