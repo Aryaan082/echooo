@@ -1,31 +1,41 @@
-# Advanced Sample Hardhat Project
+# Echooo Messaging Application
+Echooo is a messaging protocol that uses cryptography which allows users to communicate privately and safely. Echooo prevents users with compromised private keys from hackers to access their full history messages by creating a communication address that's renewed in the user’s preferred frequency. This communication address functions as a safe and temporarily encrypted channel that is owned only by the users involved. Echooo also utilizes Elliptic-curve Diffie–Hellman to create a shared identity for each two users and anonymize the receiver of the messages on chain.
 
-This project demonstrates an advanced Hardhat use case, integrating other tools commonly used alongside Hardhat in the ecosystem.
+Echooo was a project created at ETH NYC and won a top 10 placing in the Polygon sponsor prize: https://ethglobal.com/showcase/echooo-messaging-protocol-h7oms
 
-The project comes with a sample contract, a test for that contract, a sample script that deploys that contract, and an example of a task implementation, which simply lists the available accounts. It also comes with a variety of other tools, preconfigured to work with the project code.
+## Development
+### Frontend
+Running the frontend.
 
-Try running some of the following tasks:
+1. Change directory into the `frontend` folder
+2. Install dependencies by running `npm install`
+3. Run `npm start` to start the application
+4. Go to `localhost:3000` in the browser
+### Backend
+Running the smart contract tests.
 
-```shell
-npx hardhat accounts
-npx hardhat compile
-npx hardhat clean
-npx hardhat test
-npx hardhat node
-npx hardhat help
-REPORT_GAS=true npx hardhat test
-npx hardhat coverage
-npx hardhat run scripts/deploy.ts
-TS_NODE_FILES=true npx ts-node scripts/deploy.ts
-npx eslint '**/*.{js,ts}'
-npx eslint '**/*.{js,ts}' --fix
-npx prettier '**/*.{json,sol,md}' --check
-npx prettier '**/*.{json,sol,md}' --write
-npx solhint 'contracts/**/*.sol'
-npx solhint 'contracts/**/*.sol' --fix
-```
+1. Install dependencies by running `npm install` in the root directory
+2. Compile the smart contract first `npx hardhat compile`
+3. Run `npx hardhat test` to run the smart contract tests
 
-# Etherscan verification
+## Deployment
+### The Graph
+If want to re-deploy the graph follow the instructions below.
+1. Navigate to the `graph` folder and install the dependencies with `npm install`
+2. Go to the `config` folder and modify the files corresponding to your network. Replace the addresses with the
+smart contract you'd like to connect to
+3. Modify `package.json` to include your new graph end point API URL by replacing any string leading with `mtwichan/...` with your end point
+4. Deploy the graph by running `npm run deploy:<network-name>` where `<network-name>` is the name of the network you want to deploy to
+
+### Smart Contracts
+Deploy the smart contracts by following the instructions below.
+
+1. Configure the deploy script in `scripts/deploy.ts` if required
+2. Configure `hardhat.config.ts` if required
+3. Add the required environment variables shown in `hardhat.config.ts` to a `.env` file
+4. Deploy to hardhat by running `npx hardhat run scripts/deploy.ts --network <network-name>` where `<network>` is the name of the network you want to deploy to
+
+### Etherscan Verification
 
 To try out Etherscan verification, you first need to deploy a contract to an Ethereum network that's supported by Etherscan, such as Ropsten.
 
@@ -40,7 +50,3 @@ Then, copy the deployment address and paste it in to replace `DEPLOYED_CONTRACT_
 ```shell
 npx hardhat verify --network ropsten DEPLOYED_CONTRACT_ADDRESS "Hello, Hardhat!"
 ```
-
-# Performance optimizations
-
-For faster runs of your tests and scripts, consider skipping ts-node's type checking by setting the environment variable `TS_NODE_TRANSPILE_ONLY` to `1` in hardhat's environment. For more details see [the documentation](https://hardhat.org/guides/typescript.html#performance-optimizations).
