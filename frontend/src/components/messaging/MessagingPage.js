@@ -54,7 +54,10 @@ const intervalGetMessages = async (
     .query(GQL_QUERY_MESSAGE_LOG_INTERVAL, {
       senderAddress: senderAddress,
       receiverAddress: activeReceiverAddress,
-      recentMessageTimestamp: mostRecentMessageMeta == null ? moment().unix() : mostRecentMessageMeta.timestamp, // TODO: error check for empty chat log
+      recentMessageTimestamp:
+        mostRecentMessageMeta == null
+          ? moment().unix()
+          : mostRecentMessageMeta.timestamp, // TODO: error check for empty chat log
     })
     .toPromise();
 
@@ -110,7 +113,9 @@ export default function MessagingPage({
   const { disconnect } = useDisconnect();
   const { chain } = useNetwork();
   const { chains } = useSwitchNetwork();
+
   const [messages, setMessageLog] = useState({});
+  const [openP2P, setOpenP2P] = useState(false);
 
   useEffect(() => {
     if (activeReceiverAddress === BURNER_ADDRESS) {
@@ -137,8 +142,8 @@ export default function MessagingPage({
             senderAddress: senderAddress,
           })
           .toPromise();
-        console.log("graph client >>>", graphClient)
-        console.log("data identity >>>", dataIdentity)
+        console.log("graph client >>>", graphClient);
+        console.log("data identity >>>", dataIdentity);
         const dataIdentityTimestamp = dataIdentity.data.identities[0].timestamp;
 
         const dataMessages = await graphClient
@@ -293,16 +298,29 @@ export default function MessagingPage({
               )}
             </div>
           </div>
+          {/* Receiver Address */}
+          {address in chatAddresses && chatAddresses[address].length > 0 ? (
+            <div className="w-full" style={{ height: "calc(5vh - 100px}" }}>
+              <div className="flex justify-center align-center">
+                <div className="shadow-md flex flex-wrap rounded-[10px] border-[1px] p-5 bg-[rgba(255,255,255,0.45)] text-center text-md break-words">
+                  {activeReceiverAddress}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <></>
+          )}
         </div>
 
         {/* Chat */}
         {address in chatAddresses && chatAddresses[address].length > 0 ? (
-          <div className="flex flex-col overflow-y-auto">
+          <div className="flex flex-col">
             <ChatBox
               messages={messages}
               setMessageLog={setMessageLog}
               receiverAddress={activeReceiverAddress}
               chatAddresses={chatAddresses}
+              openP2P={openP2P}
             />
             <MessageSender
               messages={messages}
@@ -312,6 +330,8 @@ export default function MessagingPage({
               setMessagesState={setMessagesState}
               toggleOpenSendModal={toggleOpenSendModal}
               toggleOpenNFTOfferModal={toggleOpenNFTOfferModal}
+              openP2P={openP2P}
+              setOpenP2P={setOpenP2P}
             />
           </div>
         ) : (

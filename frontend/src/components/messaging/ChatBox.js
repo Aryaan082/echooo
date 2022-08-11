@@ -36,30 +36,18 @@ const renderChat = (receiverAddress, messages) => {
   return chatJSX;
 };
 
-const ChatBox = ({
-  receiverAddress,
-  messages,
-  setMessageLog,
-  chatAddresses,
-}) => {
+const ChatBox = ({ receiverAddress, messages, openP2P }) => {
   const { address } = useAccount();
 
   const chat = renderChat(receiverAddress, messages);
 
   return (
-    <div className="flex flex-col h-[78vh] justify-start">
-      {/* Receiver Address */}
-      {address in chatAddresses && chatAddresses[address].length > 0 ? (
-        <div className="w-full" style={{ height: "calc(5vh - 100px}" }}>
-          <div className="flex justify-center align-center">
-            <div className="shadow-md flex flex-wrap rounded-[10px] border-[1px] p-5 bg-[rgba(255,255,255,0.45)] text-center text-md break-words">
-              {receiverAddress}
-            </div>
-          </div>
-        </div>
-      ) : (
-        <></>
-      )}
+    <div
+      className={
+        "flex flex-col justify-between overflow-y-scroll " +
+        (openP2P ? "h-[56vh]" : "h-[72vh]")
+      }
+    >
       {chat}
     </div>
   );

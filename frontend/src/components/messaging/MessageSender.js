@@ -25,9 +25,10 @@ const MessageSender = ({
   setMessagesState,
   toggleOpenSendModal,
   toggleOpenNFTOfferModal,
+  openP2P,
+  setOpenP2P,
 }) => {
   const [senderMessage, setSenderMessage] = useState("");
-  const [openP2P, setOpenP2P] = useState(false);
 
   const toggleOpenP2P = () => setOpenP2P(!openP2P);
 
@@ -87,8 +88,6 @@ const MessageSender = ({
     // Sends transaction to blockchain
     sendMessage(receiverAddress, messages)
       .then(() => {
-        console.log(JSON.stringify(messages));
-
         let newReceiverMessageLog;
 
         if (Object.keys(messages).length !== 0 || receiverAddress in messages) {
@@ -145,7 +144,7 @@ const MessageSender = ({
   };
 
   return (
-    <div className="flex flex-row items-end gap-3 p-4">
+    <div className="flex flex-row items-end gap-3 p-4 bg-white">
       <input
         onChange={(event) => setSenderMessage(event.target.value)}
         value={senderMessage}
