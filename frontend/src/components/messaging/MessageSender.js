@@ -49,15 +49,6 @@ const MessageSender = ({
       // TODO: sanitize graphQL queries b/c currently dynamic and exposes injection vulnerability
 
       // Query for the receiver's communication public key
-      const identitiesQuery = `
-        query {
-          identities(where: {from: "${receiverAddress}"}, first: 1, orderBy: timestamp, orderDirection: desc) {
-            communicationAddress,
-            timestamp     
-          }
-        }
-      `;
-
       const graphClient = theGraphClient();
       const data = await graphClient
         .query(GQL_QUERY_GET_COMMUNICATION_ADDRESS, {
