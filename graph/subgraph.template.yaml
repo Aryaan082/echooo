@@ -8,7 +8,7 @@ dataSources:
     source:
       address: "{{address}}"
       abi: Echo
-      startBlock: "{{startBlock}}"
+      startBlock: {{startBlock}}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -22,6 +22,6 @@ dataSources:
       eventHandlers:
         - event: IdentityEvent(string)
           handler: handleIdentityEvent
-        - event: MessageEvent(indexed address,string,string)
+        - event: MessageEvent(uint256,indexed address,string,string)
           handler: handleMessageEvent
       file: ./src/mapping.ts
