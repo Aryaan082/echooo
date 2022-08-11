@@ -64,6 +64,8 @@ const MessageSender = ({
           receiverAddress: receiverAddress,
         })
         .toPromise();
+      console.log(data);
+
       const receiverPublicKey = data.data.identities[0].communicationAddress;
 
       let messageEncryptedSender = await EthCrypto.encryptWithPublicKey(
@@ -88,7 +90,6 @@ const MessageSender = ({
         messageEncryptedReceiver
       );
       await tx.wait();
-      // await promiseTimeout(60 * 1000, );
     };
 
     const newMessageState = { ...messagesState, [receiverAddress]: false };
@@ -117,16 +118,13 @@ const MessageSender = ({
         let newReceiverMessageLog = [
           {
             from: address,
-            message: "Error: Message failed please try again ...",
+            message:
+              "Error: This address likely doesn't have a communication address",
             timestamp: `${moment().unix()}`,
           },
         ];
 
-        if (
-          Object.keys(messages).length !== 0 ||
-          messages != null ||
-          receiverAddress in messages
-        ) {
+        if (Object.keys(messages).length !== 0 || receiverAddress in messages) {
           newReceiverMessageLog = [
             ...messages[receiverAddress],
             ...newReceiverMessageLog,
@@ -137,24 +135,8 @@ const MessageSender = ({
         newMessageLog[receiverAddress] = newReceiverMessageLog;
         setMessageLog(newMessageLog);
         setMessagesState(newMessageState);
-      })
-      .catch((err) => {
-        console.log("Sending Message Error:", err);
-        // TODO: make message indicative of error by changing color
-        const newReceiverMessageLog = [
-          ...messages[receiverAddress],
-          {
-            from: address,
-            message: "Error: Message failed please try again ...",
-            timestamp: `${moment().unix()}`,
-          },
-        ];
-
-        const newMessageLog = messages;
-        newMessageLog[receiverAddress] = newReceiverMessageLog;
-        setMessageLog(newMessageLog);
-        setMessagesState(newMessageState);
       });
+
     setSenderMessage("");
   };
 

@@ -56,6 +56,7 @@ const intervalGetMessages = async (
       recentMessageTimestamp: mostRecentMessageMeta.timestamp,
     })
     .toPromise();
+
   const dataMessagesParsed = dataMessages.data.messages;
   console.log("data messages parsed interval >>>", dataMessages);
   const messageLog = dataMessagesParsed;
@@ -132,7 +133,7 @@ export default function MessagingPage({
         const graphClient = await theGraphClient();
         const dataIdentity = await graphClient
           .query(GQL_QUERY_IDENTITY_TIMESTAMP_RECENT, {
-            senderAddress: senderAddress,
+            senderAddress: senderPublicKey,
           })
           .toPromise();
 
@@ -201,6 +202,7 @@ export default function MessagingPage({
     if (activeReceiverAddress !== "") {
       getMessagesAsync();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeReceiverAddress]);
 
   // TODO: Break this up into a bunch of components, way too much code here
@@ -289,30 +291,17 @@ export default function MessagingPage({
               )}
             </div>
           </div>
-          {/* Receiver Address */}
-          {address in chatAddresses && chatAddresses[address].length > 0 ? (
-            <div className="w-full" style={{ height: "calc(5vh - 100px}" }}>
-              <div className="flex justify-center align-center">
-                <div className="shadow-md flex flex-wrap rounded-[10px] border-[1px] p-5 bg-[rgba(241,245,249,0.5)] text-center text-md break-words">
-                  {activeReceiverAddress}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <></>
-          )}
         </div>
 
         {/* Chat */}
         {address in chatAddresses && chatAddresses[address].length > 0 ? (
           <div className="flex flex-col overflow-y-auto">
-            <div className="overflow-y-auto">
-              <ChatBox
-                messages={messages}
-                setMessageLog={setMessageLog}
-                receiverAddress={activeReceiverAddress}
-              />
-            </div>
+            <ChatBox
+              messages={messages}
+              setMessageLog={setMessageLog}
+              receiverAddress={activeReceiverAddress}
+              chatAddresses={chatAddresses}
+            />
             <MessageSender
               messages={messages}
               setMessageLog={setMessageLog}

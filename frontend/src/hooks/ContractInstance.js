@@ -10,8 +10,6 @@ const ContractInstance = () => {
   const { data: signer } = useSigner();
   const { chain } = useNetwork();
 
-  console.log(CONTRACT_META_DATA);
-
   const contractEcho = useContract({
     addressOrName:
       chain.id in CONTRACT_META_DATA
