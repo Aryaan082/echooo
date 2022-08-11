@@ -23,7 +23,7 @@ export class IdentityEvent__Params {
     this._event = event;
   }
 
-  get _communicationAddress(): string {
+  get _communicationKey(): string {
     return this._event.parameters[0].value.toString();
   }
 }
@@ -41,16 +41,20 @@ export class MessageEvent__Params {
     this._event = event;
   }
 
+  get _messageType(): BigInt {
+    return this._event.parameters[0].value.toBigInt();
+  }
+
   get _receiver(): Address {
-    return this._event.parameters[0].value.toAddress();
+    return this._event.parameters[1].value.toAddress();
   }
 
   get _senderMessage(): string {
-    return this._event.parameters[1].value.toString();
+    return this._event.parameters[2].value.toString();
   }
 
   get _receiverMessage(): string {
-    return this._event.parameters[2].value.toString();
+    return this._event.parameters[3].value.toString();
   }
 }
 
@@ -77,7 +81,7 @@ export class LogIdentityCall__Inputs {
     this._call = call;
   }
 
-  get _communicationAddress(): string {
+  get _communicationKey(): string {
     return this._call.inputValues[0].value.toString();
   }
 }
@@ -107,16 +111,20 @@ export class LogMessageCall__Inputs {
     this._call = call;
   }
 
+  get _messageType(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+
   get _receiver(): Address {
-    return this._call.inputValues[0].value.toAddress();
+    return this._call.inputValues[1].value.toAddress();
   }
 
   get _senderMessage(): string {
-    return this._call.inputValues[1].value.toString();
+    return this._call.inputValues[2].value.toString();
   }
 
   get _receiverMessage(): string {
-    return this._call.inputValues[2].value.toString();
+    return this._call.inputValues[3].value.toString();
   }
 }
 

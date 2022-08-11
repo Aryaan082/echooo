@@ -5,7 +5,7 @@ export function handleIdentityEvent(event: IdentityEvent): void {
   const entity = new Identity(
     event.transaction.hash.toHex() + "-" + event.logIndex.toString()
   );
-  entity.communicationAddress = event.params._communicationAddress;
+  entity.communicationAddress = event.params._communicationKey;
   entity.timestamp = event.block.timestamp;
   entity.from = event.transaction.from;
   entity.save();
@@ -15,6 +15,7 @@ export function handleMessageEvent(event: MessageEvent): void {
   const entity = new Message(
     event.transaction.hash.toHex() + "-" + event.logIndex.toString()
   );
+  entity.messageType = event.params._messageType;
   entity.receiver = event.params._receiver;
   entity.senderMessage = event.params._senderMessage;
   entity.receiverMessage = event.params._receiverMessage;

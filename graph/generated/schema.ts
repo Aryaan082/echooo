@@ -42,6 +42,15 @@ export class Identity extends Entity {
     this.set("id", Value.fromString(value));
   }
 
+  get messageType(): BigInt {
+    let value = this.get("messageType");
+    return value!.toBigInt();
+  }
+
+  set messageType(value: BigInt) {
+    this.set("messageType", Value.fromBigInt(value));
+  }
+
   get communicationAddress(): string {
     let value = this.get("communicationAddress");
     return value!.toString();
@@ -99,6 +108,15 @@ export class Message extends Entity {
 
   set id(value: string) {
     this.set("id", Value.fromString(value));
+  }
+
+  get messageType(): BigInt {
+    let value = this.get("messageType");
+    return value!.toBigInt();
+  }
+
+  set messageType(value: BigInt) {
+    this.set("messageType", Value.fromBigInt(value));
   }
 
   get receiver(): Bytes {
