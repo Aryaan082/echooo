@@ -142,14 +142,8 @@ export default function MessagingPage({
             senderAddress: senderAddress,
           })
           .toPromise();
-<<<<<<< Updated upstream
         console.log("graph client >>>", graphClient);
         console.log("data identity >>>", dataIdentity);
-=======
-
-        console.log(dataIdentity);
-
->>>>>>> Stashed changes
         const dataIdentityTimestamp = dataIdentity.data.identities[0].timestamp;
 
         const dataMessages = await graphClient

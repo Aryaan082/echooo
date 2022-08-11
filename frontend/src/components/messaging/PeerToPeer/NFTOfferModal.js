@@ -7,7 +7,7 @@ import { Oval } from "react-loader-spinner";
 
 import { theGraphClient } from "../../../config";
 import { GQL_QUERY_GET_COMMUNICATION_ADDRESS } from "../../../constants";
-import { continueIconSVG } from "../../../assets";
+import { continueIconSVG, searchIconSVG } from "../../../assets";
 import { ContractInstance } from "../../../hooks";
 
 const modalStyles = {
@@ -138,16 +138,26 @@ export default function NFTOfferModal({
           <code className="text-2xl">Make NFT offer.</code>
           <button onClick={getWETH}>Get WETH</button>
         </div>
-        <input
-          placeholder="NFT address"
-          onChange={handleNFTAddressChange}
-          className="code w-[450px] px-4 py-3 rounded-[8px] bg-[#f2f2f2]"
-        ></input>
-        <input
-          placeholder="Token Id"
-          onChange={handleNFTTokenIdChange}
-          className="code w-[110px] px-4 py-3 rounded-[8px] bg-[#f2f2f2]"
-        ></input>
+        <div className="flex flex-row items-center">
+          <input
+            placeholder="Search NFT from..."
+            onChange={handleNFTAddressChange}
+            className="code w-[600px] px-4 py-3 rounded-l-[8px] bg-[#f2f2f2]"
+          ></input>
+          <button
+            onClick={() => {
+              setNFTOfferStage(1);
+            }}
+            disabled={NFTAddress.length !== 42}
+            className="disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <img
+              className="h-12 p-3 rounded-r-[8px] bg-[#f2f2f2]"
+              src={searchIconSVG}
+            ></img>
+          </button>
+        </div>
+        {NFTOfferStage === 1 ? <div>HI</div> : <></>}
 
         {/* <div className="flex flex-row gap-4">
             <button
@@ -178,11 +188,6 @@ export default function NFTOfferModal({
               Send Offer
             </button>
           </div> */}
-      </div>
-      <div className="flex justify-end pb-4 pr-4">
-        <button className="text-lg px-5 py-3 bg-[#555555] text-white font-bold rounded-[8px] hover:opacity-90">
-          Confirm
-        </button>
       </div>
     </Modal>
   );
