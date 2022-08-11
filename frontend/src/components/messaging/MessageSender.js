@@ -55,7 +55,6 @@ const MessageSender = ({
           receiverAddress: receiverAddress,
         })
         .toPromise();
-      console.log(data);
 
       const receiverPublicKey = data.data.identities[0].communicationAddress;
 
@@ -88,14 +87,28 @@ const MessageSender = ({
     // Sends transaction to blockchain
     sendMessage(receiverAddress, messages)
       .then(() => {
-        const newReceiverMessageLog = [
-          ...messages[receiverAddress],
-          {
-            from: address,
-            message: senderMessage,
-            timestamp: `${moment().unix()}`,
-          },
-        ];
+        console.log(JSON.stringify(messages));
+
+        let newReceiverMessageLog;
+
+        if (Object.keys(messages).length !== 0 || receiverAddress in messages) {
+          newReceiverMessageLog = [
+            ...messages[receiverAddress],
+            {
+              from: address,
+              message: senderMessage,
+              timestamp: `${moment().unix()}`,
+            },
+          ];
+        } else {
+          newReceiverMessageLog = [
+            {
+              from: address,
+              message: senderMessage,
+              timestamp: `${moment().unix()}`,
+            },
+          ];
+        }
 
         const newMessageLog = messages;
         newMessageLog[receiverAddress] = newReceiverMessageLog;

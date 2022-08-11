@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract SendCrypto {
     mapping(address => uint256) owedERC20Taxes;
     address owner;
-    bytes4 private constant SELECTOR = bytes4(keccak256(bytes("transfer(address,uint256)")));
-    bytes4 private constant SELECTOR_TRANSFER_FROM = bytes4(keccak256(bytes("transferFrom(address,address,uint256)")));
+    bytes4 private constant SELECTOR =
+        bytes4(keccak256(bytes("transfer(address,uint256)")));
+    bytes4 private constant SELECTOR_TRANSFER_FROM =
+        bytes4(keccak256(bytes("transferFrom(address,address,uint256)")));
 
     constructor() {
         owner = msg.sender;
@@ -44,9 +46,9 @@ contract SendCrypto {
         );
     }
 
-    function approve(ERC20 token, uint256 amount) external {
-        token._approve(msg.sender, address(this), amount);
-    } 
+    function approve(address token, uint256 amount) external {
+        ERC20(token).increaseAllowance(address(this), amount);
+    }
 
     function sendEther(address receiver, uint256 etherAmount) external payable {
         // Hardcode the tax here to save gas (100 - 1) = 99
