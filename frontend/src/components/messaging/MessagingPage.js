@@ -136,14 +136,20 @@ export default function MessagingPage({
       if (messages[activeReceiverAddress] == null) {
         // TODO: query validation using native library to prevent query injection vulnerability
 
-        const graphClient = await theGraphClient();
+        const graphClient = theGraphClient();
         const dataIdentity = await graphClient
           .query(GQL_QUERY_IDENTITY_TIMESTAMP_RECENT, {
             senderAddress: senderAddress,
           })
           .toPromise();
+<<<<<<< Updated upstream
         console.log("graph client >>>", graphClient);
         console.log("data identity >>>", dataIdentity);
+=======
+
+        console.log(dataIdentity);
+
+>>>>>>> Stashed changes
         const dataIdentityTimestamp = dataIdentity.data.identities[0].timestamp;
 
         const dataMessages = await graphClient

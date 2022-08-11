@@ -34,6 +34,7 @@ query ($senderAddress: String!, $receiverAddress: String!, $recentMessageTimesta
     senderMessage
     receiverMessage
     timestamp
+    messageType
   }
 }
 `;
@@ -60,4 +61,4 @@ query ($receiverAddress: String!) {
     timestamp     
   }
 }
-`
+`;

@@ -138,32 +138,18 @@ export default function NFTOfferModal({
           <code className="text-2xl">Make NFT offer.</code>
           <button onClick={getWETH}>Get WETH</button>
         </div>
-        <div className="flex flex-col gap-3">
-          <code className="flex flex-col">
-            Address:
-            <input
-              placeholder="NFT address"
-              onChange={handleNFTAddressChange}
-              className="code w-full px-4 py-3 rounded-[8px] bg-[#f2f2f2]"
-            ></input>
-          </code>
-          <code className="flex flex-col">
-            Token Id:
-            <input
-              placeholder="Token Id"
-              onChange={handleNFTTokenIdChange}
-              className="code w-full px-4 py-3 rounded-[8px] bg-[#f2f2f2]"
-            ></input>
-          </code>
-          <code className="flex flex-col">
-            Price(Ξ):
-            <input
-              placeholder="Price"
-              onChange={handleNFTPriceChange}
-              className="code w-full px-4 py-3 rounded-[8px] bg-[#f2f2f2]"
-            ></input>
-          </code>
-          <div className="flex flex-row gap-4">
+        <input
+          placeholder="NFT address"
+          onChange={handleNFTAddressChange}
+          className="code w-[450px] px-4 py-3 rounded-[8px] bg-[#f2f2f2]"
+        ></input>
+        <input
+          placeholder="Token Id"
+          onChange={handleNFTTokenIdChange}
+          className="code w-[110px] px-4 py-3 rounded-[8px] bg-[#f2f2f2]"
+        ></input>
+
+        {/* <div className="flex flex-row gap-4">
             <button
               className={
                 "flex flex-row justify-center text-lg items-center gap-[15px] px-5 py-3 bg-[#555555] text-white font-bold rounded-[8px] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed" +
@@ -191,8 +177,12 @@ export default function NFTOfferModal({
             >
               Send Offer
             </button>
-          </div>
-        </div>
+          </div> */}
+      </div>
+      <div className="flex justify-end pb-4 pr-4">
+        <button className="text-lg px-5 py-3 bg-[#555555] text-white font-bold rounded-[8px] hover:opacity-90">
+          Confirm
+        </button>
       </div>
     </Modal>
   );
