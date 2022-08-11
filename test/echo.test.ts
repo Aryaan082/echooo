@@ -154,7 +154,7 @@ describe("Echo Contract", () => {
       .logMessage(BIdentity, messageEncryptedString);
   });
 
-  it.only("Can receive messages", async () => {
+  it("Can receive messages", async () => {
     const BPublicCommuncationAddress = wallet.address;
     const BPrivateCommunicationAddress =
       "0x87444924e8cc0783e721c55d13eaf51abf31b5aeda971ffdf05c7b3ae8e646fa";
