@@ -15,6 +15,10 @@ export class Identity extends Entity {
   constructor(id: string) {
     super();
     this.set("id", Value.fromString(id));
+
+    this.set("communicationAddress", Value.fromString(""));
+    this.set("from", Value.fromBytes(Bytes.empty()));
+    this.set("timestamp", Value.fromBigInt(BigInt.zero()));
   }
 
   save(): void {
@@ -40,15 +44,6 @@ export class Identity extends Entity {
 
   set id(value: string) {
     this.set("id", Value.fromString(value));
-  }
-
-  get messageType(): BigInt {
-    let value = this.get("messageType");
-    return value!.toBigInt();
-  }
-
-  set messageType(value: BigInt) {
-    this.set("messageType", Value.fromBigInt(value));
   }
 
   get communicationAddress(): string {
@@ -83,6 +78,13 @@ export class Message extends Entity {
   constructor(id: string) {
     super();
     this.set("id", Value.fromString(id));
+
+    this.set("messageType", Value.fromBigInt(BigInt.zero()));
+    this.set("receiver", Value.fromBytes(Bytes.empty()));
+    this.set("senderMessage", Value.fromString(""));
+    this.set("receiverMessage", Value.fromString(""));
+    this.set("from", Value.fromBytes(Bytes.empty()));
+    this.set("timestamp", Value.fromBigInt(BigInt.zero()));
   }
 
   save(): void {

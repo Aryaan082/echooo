@@ -4,11 +4,11 @@ schema:
 dataSources:
   - kind: ethereum
     name: Echo
-    network: fuji
+    network: mumbai
     source:
-      address: "0x197B537b91Be74d60c964Cda6f0B277516340B5d"
+      address: "0x916AbE4ee97D6288eE7A8F24857C7e20a4dfe621"
       abi: Echo
-      startBlock: 12405408
+      startBlock: 27561980
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5

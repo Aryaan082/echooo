@@ -1,6 +1,5 @@
 type Identity @entity {
   id: ID!
-  messageType: BigInt!
   communicationAddress: String! # string
   from: Bytes!
   timestamp: BigInt!
