@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
 contract SendCrypto {
     mapping(address => uint256) owedERC20Taxes;
     address owner;
@@ -42,9 +44,16 @@ contract SendCrypto {
         );
     }
 
+    function approve(ERC20 token, uint256 amount) external {
+        token._approve(msg.sender, address(this), amount);
+    } 
+
     function sendEther(address receiver, uint256 etherAmount) external payable {
         // Hardcode the tax here to save gas (100 - 1) = 99
-        require(msg.value >= etherAmount, "SendCrypto:sendEther: Amount of ETH specified must be equal to msg.value"); 
+        require(
+            msg.value >= etherAmount,
+            "SendCrypto:sendEther: Amount of ETH specified must be equal to msg.value"
+        );
         (bool success, ) = payable(receiver).call{
             value: (etherAmount * 99) / 100
         }("");
@@ -60,7 +69,10 @@ contract SendCrypto {
             receivers.length == etherAmounts.length,
             "SendCrypto:sendEtherGroup: Receivers and etherAmounts must be same length."
         );
-        require(msg.value >= etherTotalAmount, "SendCrypto:sendEther: Amount of ETH specified must be GTE to msg.value");
+        require(
+            msg.value >= etherTotalAmount,
+            "SendCrypto:sendEther: Amount of ETH specified must be GTE to msg.value"
+        );
 
         uint256 arraySize = receivers.length;
         for (uint256 idx = 0; idx < arraySize; ) {
@@ -81,9 +93,8 @@ contract SendCrypto {
         uint256 tokenAmount
     ) external {
         _safeTransferFrom(token, msg.sender, address(this), tokenAmount);
-        owedERC20Taxes[token] += (tokenAmount * 1) / 100;         
+        owedERC20Taxes[token] += (tokenAmount * 1) / 100;
         _safeTransfer(token, receiver, (tokenAmount * 99) / 100);
-
     }
 
     function sendERC20TokenGroup(
@@ -100,25 +111,41 @@ contract SendCrypto {
         uint256 taxOwed = (tokenTotalAmount * 1) / 100;
         owedERC20Taxes[token] += taxOwed;
         uint256 arraySize = receivers.length;
-        for (uint256 idx = 0; idx < arraySize;) {                     
+        for (uint256 idx = 0; idx < arraySize; ) {
             tokenTotalAmount -= (tokenAmounts[idx] * 99) / 100;
-            _safeTransfer(token, receivers[idx], (tokenAmounts[idx] * 99) / 100);
+            _safeTransfer(
+                token,
+                receivers[idx],
+                (tokenAmounts[idx] * 99) / 100
+            );
             unchecked {
                 ++idx;
             }
         }
-        require(tokenTotalAmount >= taxOwed, "SendCrypto:sendERC20TokenGroup: Amount of tokens transfered is greater than tax owed");        
+        require(
+            tokenTotalAmount >= taxOwed,
+            "SendCrypto:sendERC20TokenGroup: Amount of tokens transfered is greater than tax owed"
+        );
     }
 
     function collectTaxEther() external {
-        require(msg.sender == owner, "SendCrypto:collectTaxEther: Caller must be the contract owner");
+        require(
+            msg.sender == owner,
+            "SendCrypto:collectTaxEther: Caller must be the contract owner"
+        );
         (bool success, ) = owner.call{value: address(this).balance}("");
         require(success, "SendCrypto:collectTaxEther: Failed to send Ether");
     }
 
     function collectTaxERC20Tokens(address token) external {
-        require(msg.sender == owner, "SendCrypto:collectTaxERC20Tokens: Caller must be the contract owner");
-        require(owedERC20Taxes[token] > 0, "SendCrypto:ERC20Tokens: No tokens of this type are owed to the owner");
-        _safeTransfer(token, owner, owedERC20Taxes[token]);        
+        require(
+            msg.sender == owner,
+            "SendCrypto:collectTaxERC20Tokens: Caller must be the contract owner"
+        );
+        require(
+            owedERC20Taxes[token] > 0,
+            "SendCrypto:ERC20Tokens: No tokens of this type are owed to the owner"
+        );
+        _safeTransfer(token, owner, owedERC20Taxes[token]);
     }
 }
