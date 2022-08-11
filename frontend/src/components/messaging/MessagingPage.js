@@ -24,6 +24,7 @@ import {
   profileIconSVG,
 } from "../../assets";
 import "./receivers.css";
+import moment from "moment";
 
 const intervalGetMessages = async (
   address,
@@ -53,7 +54,7 @@ const intervalGetMessages = async (
     .query(GQL_QUERY_MESSAGE_LOG_INTERVAL, {
       senderAddress: senderAddress,
       receiverAddress: activeReceiverAddress,
-      recentMessageTimestamp: mostRecentMessageMeta.timestamp,
+      recentMessageTimestamp: mostRecentMessageMeta == null ? moment().unix() : mostRecentMessageMeta.timestamp, // TODO: error check for empty chat log
     })
     .toPromise();
 
@@ -133,10 +134,11 @@ export default function MessagingPage({
         const graphClient = await theGraphClient();
         const dataIdentity = await graphClient
           .query(GQL_QUERY_IDENTITY_TIMESTAMP_RECENT, {
-            senderAddress: senderPublicKey,
+            senderAddress: senderAddress,
           })
           .toPromise();
-
+        console.log("graph client >>>", graphClient)
+        console.log("data identity >>>", dataIdentity)
         const dataIdentityTimestamp = dataIdentity.data.identities[0].timestamp;
 
         const dataMessages = await graphClient
