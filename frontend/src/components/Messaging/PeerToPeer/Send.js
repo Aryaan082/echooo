@@ -63,7 +63,12 @@ export default function Send({
       <div className="flex flex-col py-4 px-4 gap-4">
         <div className="flex flex-row justify-between items-center">
           <code className="text-2xl">Send tokens.</code>
-          <button onClick={getWETH}>Get WETH</button>
+          <button
+            className="bg-[#333333] text-white p-1 hover:bg-[#555555]"
+            onClick={sendETH}
+          >
+            Get WETH
+          </button>
         </div>
 
         <div className="flex flex-row gap-3">
@@ -74,7 +79,7 @@ export default function Send({
           ></input>
           <button
             className="flex flex-row justify-center text-lg items-center gap-[15px] px-5 py-3 bg-[#555555] text-white font-bold rounded-[8px] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={sendETH}
+            onClick={getWETH}
           >
             Send ETH
           </button>

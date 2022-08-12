@@ -46,10 +46,6 @@ contract SendCrypto {
         );
     }
 
-    function approve(address token, uint256 amount) external {
-        ERC20(token).increaseAllowance(address(this), amount);
-    }
-
     function sendEther(address receiver, uint256 etherAmount) external payable {
         // Hardcode the tax here to save gas (100 - 1) = 99
         require(

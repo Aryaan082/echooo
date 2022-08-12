@@ -41,16 +41,7 @@ const ChatBox = ({ receiverAddress, messages, openP2P }) => {
 
   const chat = renderChat(receiverAddress, messages);
 
-  return (
-    <div
-      className={
-        "flex flex-col justify-between overflow-y-scroll " +
-        (openP2P ? "h-[56vh]" : "h-[72vh]")
-      }
-    >
-      {chat}
-    </div>
-  );
+  return <div className="h-[72vh] overflow-y-scroll">{chat}</div>;
 };
 
 export default ChatBox;

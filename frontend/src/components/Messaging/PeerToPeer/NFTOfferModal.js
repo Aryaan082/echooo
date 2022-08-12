@@ -2,13 +2,15 @@ import Modal from "react-modal";
 import { ethers } from "ethers";
 import React, { useEffect, useState } from "react";
 import EthCrypto from "eth-crypto";
-import { useAccount } from "wagmi";
+import { useAccount, useContract, useSigner } from "wagmi";
 import { Oval } from "react-loader-spinner";
 
 import { theGraphClient } from "../../../config";
 import { GQL_QUERY_GET_COMMUNICATION_ADDRESS } from "../../../constants";
 import { continueIconSVG, searchIconSVG } from "../../../assets";
 import { ContractInstance } from "../../../hooks";
+
+import TestERC721Token from "../../../contracts/TestERC721Token.json";
 
 const modalStyles = {
   content: {
@@ -29,17 +31,41 @@ export default function NFTOfferModal({
   activeReceiverAddress,
 }) {
   const { address } = useAccount();
+  const { data: signer } = useSigner();
 
   const [NFTOfferStage, setNFTOfferStage] = useState(0);
   const [NFTAddress, setNFTAddress] = useState("");
   const [NFTTokenId, setNFTTokenId] = useState("");
   const [NFTPrice, setNFTPrice] = useState("");
+  const [NFTName, setNFTName] = useState("");
+  const [NFTSymbol, setNFTSymbol] = useState("");
+  const [NFTBalanceOfReceiver, setNFTBalanceOfReceiver] = useState("");
 
   const handleNFTAddressChange = (e) => setNFTAddress(e.target.value);
   const handleNFTTokenIdChange = (e) => setNFTTokenId(e.target.value);
   const handleNFTPriceChange = (e) => setNFTPrice(e.target.value);
 
   const contracts = ContractInstance();
+
+  const NFTContract = async () => {
+    const nftContract = new ethers.Contract(
+      NFTAddress,
+      TestERC721Token.abi,
+      signer
+    );
+
+    setNFTName(await nftContract.name());
+    setNFTSymbol(await nftContract.symbol());
+    setNFTBalanceOfReceiver(
+      (await nftContract.balanceOf(activeReceiverAddress)).toString()
+    );
+  };
+
+  const getNFTInfo = async () => {};
+
+  const mintNFT = async (receiver) => {
+    const tx = await contracts.contractNFT.safeMint(receiver);
+  };
 
   const getWETH = async () => {
     const tx = await contracts.contractWETH.getWETH();
@@ -136,19 +162,40 @@ export default function NFTOfferModal({
       <div className="flex flex-col py-4 px-4 gap-4">
         <div className="flex flex-row justify-between items-center">
           <code className="text-2xl">Make NFT offer.</code>
-          <button onClick={getWETH}>Get WETH</button>
+          <div className="flex flex-row gap-[1px]">
+            <button
+              className="bg-[#333333] text-white p-1 hover:bg-[#555555]"
+              onClick={() => mintNFT(address)}
+            >
+              Get NFT
+            </button>
+            <button
+              className="bg-[#333333] text-white p-1 hover:bg-[#555555]"
+              onClick={getWETH}
+            >
+              Get WETH
+            </button>
+            <button
+              className="bg-[#333333] text-white p-1 hover:bg-[#555555]"
+              onClick={() => mintNFT(activeReceiverAddress)}
+            >
+              Give NFT
+            </button>
+          </div>
         </div>
         <div className="flex flex-row items-center">
           <input
             placeholder="Search NFT from..."
             onChange={handleNFTAddressChange}
-            className="code w-[600px] px-4 py-3 rounded-l-[8px] bg-[#f2f2f2]"
+            className="code w-[600px] px-4 py-3 rounded-l-[8px] bg-[#f2f2f2] disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={NFTOfferStage > 0}
           ></input>
           <button
             onClick={() => {
+              NFTContract();
               setNFTOfferStage(1);
             }}
-            disabled={NFTAddress.length !== 42}
+            disabled={NFTAddress.length !== 42 || NFTOfferStage > 0}
             className="disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <img
@@ -157,7 +204,18 @@ export default function NFTOfferModal({
             ></img>
           </button>
         </div>
-        {NFTOfferStage === 1 ? <div>HI</div> : <></>}
+        <div>0xd1f246258155d114f9B7C369A9d32eb0feA17aE5</div>
+        {NFTOfferStage > 0 ? (
+          <div>
+            <div>{NFTName}</div>
+            <div>
+              {NFTName} by {}
+            </div>
+            <div>{NFTBalanceOfReceiver}</div>
+          </div>
+        ) : (
+          <></>
+        )}
 
         {/* <div className="flex flex-row gap-4">
             <button

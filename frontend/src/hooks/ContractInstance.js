@@ -2,6 +2,7 @@ import { useContract, useNetwork, useSigner } from "wagmi";
 
 import EchoJSON from "../contracts/Echo.json";
 import WETHJSON from "../contracts/WETH.json";
+import TestERC721Token from "../contracts/TestERC721Token.json";
 
 import { CONTRACT_META_DATA } from "../constants";
 
@@ -28,7 +29,16 @@ const ContractInstance = () => {
     signerOrProvider: signer,
   });
 
-  return { contractEcho, contractWETH };
+  const contractNFT = useContract({
+    addressOrName:
+      chain.id in CONTRACT_META_DATA
+        ? CONTRACT_META_DATA[chain.id].NFTAddress
+        : "",
+    contractInterface: TestERC721Token.abi,
+    signerOrProvider: signer,
+  });
+
+  return { contractEcho, contractWETH, contractNFT };
 };
 
 export default ContractInstance;
