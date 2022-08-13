@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useAccount, useDisconnect, useNetwork, useSwitchNetwork } from "wagmi";
 import EthCrypto from "eth-crypto";
 import { theGraphClient } from "../../config";
@@ -30,40 +30,49 @@ const intervalGetMessages = async (
   address,
   newMessage,
   activeReceiverAddress,
-  setMessageLog
+  setMessageLog,
 ) => {
   const senderAddress = address.toLowerCase();
+  console.log("receiever address >>>", activeReceiverAddress)
   console.log(
     "new message active interval >>>",
     newMessage[activeReceiverAddress]
   );
-  if (Object.keys(newMessage).length === 0 || newMessage == null) {
-    return;
-  }
 
-  const mostRecentMessageMeta = newMessage[activeReceiverAddress].at(-1);
+  // if (Object.keys(newMessage).length === 0 || newMessage == null) {
+  //   console.log("returning none >>>> ")
+  //   return;
+  // }
+
+  // const mostRecentMessageMeta = newMessage[activeReceiverAddress].at(-1);
   let senderPrivateKey = JSON.parse(
     localStorage.getItem("private-communication-address")
   );
   senderPrivateKey = senderPrivateKey[address];
 
-  console.log("most recent message meta interval >>>", mostRecentMessageMeta);
+  // console.log("most recent message meta interval >>>", mostRecentMessageMeta);
+  const recentMessage = newMessage[activeReceiverAddress];
+  if (recentMessage == null) {
+    return;
+  }
 
   const graphClient = await theGraphClient();
   const dataMessages = await graphClient
     .query(GQL_QUERY_MESSAGE_LOG_INTERVAL, {
       senderAddress: senderAddress,
       receiverAddress: activeReceiverAddress,
-      recentMessageTimestamp:
-        mostRecentMessageMeta == null
-          ? moment().unix()
-          : mostRecentMessageMeta.timestamp, // TODO: error check for empty chat log
+      recentMessageTimestamp: recentMessage.at(-1).timestamp
     })
     .toPromise();
-
+    console.log("data messages interval >>>", dataMessages);
+    console.log("data interval length >>>", Object.keys(dataMessages).length)
   const dataMessagesParsed = dataMessages.data.messages;
-  console.log("data messages parsed interval >>>", dataMessages);
+  console.log("data messages parsed interval >>>", dataMessagesParsed);
   const messageLog = dataMessagesParsed;
+  if (Object.keys(messageLog).length === 0 || messageLog == null) {
+    console.log("returning none >>>> ")
+    return;
+  }
   for (let idx = 0; idx < dataMessagesParsed.length; idx++) {
     let metaDataMessages = await dataMessagesParsed[idx];
     let message = "";
@@ -116,96 +125,106 @@ export default function MessagingPage({
 
   const [messages, setMessageLog] = useState({});
   const [openP2P, setOpenP2P] = useState(false);
+  const [messageInterval, setMessageInterval] = useState();
+
+  const intervalCallback = useCallback((address,
+    newMessage,
+    activeReceiverAddress,
+    setMessageLog) => {
+    intervalGetMessages(address,
+      newMessage,
+      activeReceiverAddress,
+      setMessageLog,);
+  }, [activeReceiverAddress])
+
+  const getMessagesAsyncCallback = useCallback(async () => {
+    const senderAddress = address.toLowerCase();
+    let senderPrivateKey = JSON.parse(
+      localStorage.getItem("private-communication-address")
+    );
+    senderPrivateKey = senderPrivateKey[address];
+
+    if (messages[activeReceiverAddress] == null) {
+      const graphClient = theGraphClient();
+      const dataIdentity = await graphClient
+        .query(GQL_QUERY_IDENTITY_TIMESTAMP_RECENT, {
+          senderAddress: senderAddress,
+        })
+        .toPromise();
+      console.log("graph client >>>", graphClient);
+      console.log("data identity >>>", dataIdentity);
+      const dataIdentityTimestamp = dataIdentity.data.identities[0].timestamp;
+
+      const dataMessages = await graphClient
+        .query(GQL_QUERY_MESSAGE_LOG_INIT, {
+          senderAddress: senderAddress,
+          receiverAddress: activeReceiverAddress,
+          recentTimestamp: dataIdentityTimestamp,
+        })
+        .toPromise();
+      const dataMessagesParsed = dataMessages.data.messages;
+
+      const messageLog = dataMessagesParsed;
+      for (let idx = 0; idx < dataMessagesParsed.length; idx++) {
+        let metaDataMessages = await dataMessagesParsed[idx];
+        let message = "";
+
+        // Decrypt sender message
+        if (metaDataMessages.from === senderAddress) {
+          message = metaDataMessages.senderMessage;
+        } else {
+          // Decrypt receiver message
+          message = metaDataMessages.receiverMessage;
+        }
+
+        const decryptedMessage = await EthCrypto.decryptWithPrivateKey(
+          senderPrivateKey,
+          EthCrypto.cipher.parse(message)
+        );
+        messageLog[idx].message = decryptedMessage;
+
+        console.log(`Decrypted message ${idx} >>>`, decryptedMessage);
+      }
+
+      const newMessageLog = {
+        ...messages,
+        [activeReceiverAddress]: messageLog,
+      };
+
+      setMessageLog(newMessageLog);
+      return newMessageLog;
+    }
+  }, [activeReceiverAddress]);
 
   useEffect(() => {
     if (activeReceiverAddress === BURNER_ADDRESS) {
       return;
-    }
-    const getMessagesAsync = async () => {
-      const senderAddress = address.toLowerCase();
-      let senderPrivateKey = JSON.parse(
-        localStorage.getItem("private-communication-address")
-      );
-      senderPrivateKey = senderPrivateKey[address];
-
-      let senderPublicKey = JSON.parse(
-        localStorage.getItem("public-communication-address")
-      );
-      senderPublicKey = senderPublicKey[address];
-
-      if (messages[activeReceiverAddress] == null) {
-        const graphClient = theGraphClient();
-        const dataIdentity = await graphClient
-          .query(GQL_QUERY_IDENTITY_TIMESTAMP_RECENT, {
-            senderAddress: senderAddress,
-          })
-          .toPromise();
-        console.log("graph client >>>", graphClient);
-        console.log("data identity >>>", dataIdentity);
-        const dataIdentityTimestamp = dataIdentity.data.identities[0].timestamp;
-
-        const dataMessages = await graphClient
-          .query(GQL_QUERY_MESSAGE_LOG_INIT, {
-            senderAddress: senderAddress,
-            receiverAddress: activeReceiverAddress,
-            recentTimestamp: dataIdentityTimestamp,
-          })
-          .toPromise();
-        const dataMessagesParsed = dataMessages.data.messages;
-
-        const messageLog = dataMessagesParsed;
-        for (let idx = 0; idx < dataMessagesParsed.length; idx++) {
-          let metaDataMessages = await dataMessagesParsed[idx];
-          let message = "";
-
-          // Decrypt sender message
-          if (metaDataMessages.from === senderAddress) {
-            message = metaDataMessages.senderMessage;
-          } else {
-            // Decrypt receiver message
-            message = metaDataMessages.receiverMessage;
-          }
-
-          const decryptedMessage = await EthCrypto.decryptWithPrivateKey(
-            senderPrivateKey,
-            EthCrypto.cipher.parse(message)
-          );
-          messageLog[idx].message = decryptedMessage;
-
-          console.log(`Decrypted message ${idx} >>>`, decryptedMessage);
-        }
-
-        const newMessageLog = {
-          ...messages,
-          [activeReceiverAddress]: messageLog,
-        };
-
-        setMessageLog(newMessageLog);
-        const interval = setInterval(
-          async (
+    }    
+    if (activeReceiverAddress !== "") {
+      getMessagesAsyncCallback();
+      const interval = setInterval(
+        async (
+          senderAddress,
+          newMessage,
+          activeReceiverAddress,
+          setMessageLog,
+        ) =>
+          intervalCallback(
             senderAddress,
             newMessage,
             activeReceiverAddress,
             setMessageLog
-          ) =>
-            intervalGetMessages(
-              senderAddress,
-              newMessage,
-              activeReceiverAddress,
-              setMessageLog
-            ),
-          5 * 1000,
-          address,
-          newMessageLog,
-          activeReceiverAddress,
-          setMessageLog
-        );
-        return () => clearInterval(interval);
-      }
-    };
-
-    if (activeReceiverAddress !== "") {
-      getMessagesAsync();
+          ),
+        5 * 1000,
+        address,
+        messages,
+        activeReceiverAddress,
+        setMessageLog,
+      )
+      return () => {
+        console.log("clean up >>>");
+        return clearInterval(interval)
+      };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeReceiverAddress]);

@@ -2,8 +2,8 @@
 pragma solidity ^0.8.13;
 
 contract SendCrypto {
-    mapping(address => uint256) owedERC20Taxes;
-    address owner;
+    mapping(address => uint256) public owedERC20Taxes;
+    address public owner;
     bytes4 private constant SELECTOR = bytes4(keccak256(bytes("transfer(address,uint256)")));
     bytes4 private constant SELECTOR_TRANSFER_FROM = bytes4(keccak256(bytes("transferFrom(address,address,uint256)")));
 

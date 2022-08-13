@@ -33,13 +33,13 @@ export default function App() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [communicationAddress, setCommunicationAddress] = useState(
     JSON.parse(localStorage.getItem("public-communication-address"))[address] ||
-      ""
+      {}
   );
   const [openCommAddressModal, setOpenCommAddressModal] = useState(
     !Boolean(
       JSON.parse(localStorage.getItem("public-communication-address"))[
         address
-      ] || ""
+      ] || {}
     )
   );
   const [openSend, setOpenSend] = useState(false);

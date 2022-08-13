@@ -1,4 +1,8 @@
+import { useState } from "react";
 import { useAccount, useDisconnect, useNetwork, useSwitchNetwork } from "wagmi";
+import moment from "moment";
+import { theGraphClient } from "../../config";
+import { GQL_QUERY_GET_UNKNOWN_SENDERS } from "../../constants";
 
 import {
   addressEllipsePNG,
@@ -14,11 +18,16 @@ export default function FriendsList({
   setActiveReceiver,
 }) {
   const { address } = useAccount();
-
+  const [showTrustedAddressList, setShowTrustedAddressList] = useState(true);
+  
   const handleActiveReceiver = (e, index, address) => {
     setActiveIndex(index);
     setActiveReceiver(address);
   };
+
+  const handleShowAddressList = () => {
+      setShowTrustedAddressList(!showTrustedAddressList);
+  }
 
   return (
     <>
@@ -27,12 +36,13 @@ export default function FriendsList({
           <div className="border-r-[3px] border-[#333333] border-opacity-10 w-[30%] pt-[4vh]">
             <div className="flex flex-row justify-between items-center px-[2vw]">
               <code className="text-xl font-semibold">Your anon chats</code>
+              <button onClick={handleShowAddressList}>{showTrustedAddressList ? "Trusted Addresses" : "Unknown Addresses"}</button>
               <img
                 className="h-[25px] hover:cursor-pointer"
                 src={resetIconSVG}
                 alt=""
                 onClick={() => setChatAddresses({})}
-              ></img>
+              ></img>              
             </div>
             <ul className="Receivers">
               {chatAddresses[address].map((address, index) => {

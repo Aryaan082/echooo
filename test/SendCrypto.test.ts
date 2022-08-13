@@ -10,7 +10,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 dotenv.config();
 
 // TODO: Add tests for edge cases
-describe.only("SendCrypto Contract", () => {
+describe("SendCrypto Contract", () => {
   //   let contractSendCrypto: Contract;  
   let deployer: SignerWithAddress;
   let alice: SignerWithAddress;
