@@ -10,6 +10,7 @@ import {
   resetIconSVG,
   cancelIconSVG,
 } from "../../assets";
+import { useEffect } from "react";
 
 export default function FriendsList({
   chatAddresses,
@@ -20,15 +21,15 @@ export default function FriendsList({
 }) {
   const { address } = useAccount();
   const [showTrustedAddressList, setShowTrustedAddressList] = useState(true);
-  
+
   const handleActiveReceiver = (e, index, address) => {
     setActiveIndex(index);
     setActiveReceiver(address);
   };
 
   const handleShowAddressList = () => {
-      setShowTrustedAddressList(!showTrustedAddressList);
-  }
+    setShowTrustedAddressList(!showTrustedAddressList);
+  };
 
   return (
     <>
@@ -36,40 +37,82 @@ export default function FriendsList({
         <>
           <div className="border-r-[3px] border-[#333333] border-opacity-10 w-[30%] pt-[4vh]">
             <div className="flex flex-row justify-between items-center px-[2vw]">
-              <code className="text-xl font-semibold">Your anon chats</code>
-              <button onClick={handleShowAddressList}>{showTrustedAddressList ? "Trusted Addresses" : "Unknown Addresses"}</button>
-              <img
-                className="h-[25px] hover:cursor-pointer"
-                src={resetIconSVG}
-                alt=""
-                onClick={() => setChatAddresses({})}
-              ></img>              
+              <button onClick={() => setShowTrustedAddressList(true)}>
+                <code
+                  className={
+                    "text-lg font-semibold " +
+                    (!showTrustedAddressList ? "opacity-50" : "")
+                  }
+                >
+                  Accepted chats
+                </code>
+              </button>
+              <button onClick={() => setShowTrustedAddressList(false)}>
+                <code
+                  className={
+                    "text-lg font-semibold " +
+                    (showTrustedAddressList ? "opacity-50" : "")
+                  }
+                >
+                  Requested chats
+                </code>
+              </button>
             </div>
             <ul className="Receivers">
-              {chatAddresses[address].map((address, index) => {
-                return (
-                  <button
-                    className="w-[80%] flex flex-row justify-between items-center px-4 py-4 font-bold rounded-[50px]"
-                    key={index}
-                    id={index === activeIndex ? "active" : "inactive"}
-                    onClick={(event) =>
-                      handleActiveReceiver(event, index, address)
-                    }
-                  >
-                    <code className="flex flex-row items-center gap-4 text-lg">
-                      <img src={addressEllipsePNG} alt=""></img>
-                      {`${address.substring(0, 4)}...${address.substring(38)}`}
-                    </code>
-                    <button onClick={() => {}}>
-                      <img
-                        className="h-6 p-1 hover:bg-[#ffffff] rounded-[50px]"
-                        src={cancelIconSVG}
-                        alt=""
-                      ></img>
-                    </button>
-                  </button>
-                );
-              })}
+              {showTrustedAddressList ? (
+                <>
+                  {chatAddresses[address].map((friendAddress, index) => {
+                    return (
+                      <button
+                        className="w-[80%] flex flex-row justify-between items-center px-4 py-4 font-bold rounded-[50px]"
+                        key={index}
+                        id={index === activeIndex ? "active" : "inactive"}
+                        onClick={(event) =>
+                          handleActiveReceiver(event, index, friendAddress)
+                        }
+                      >
+                        <code className="flex flex-row items-center gap-4 text-lg">
+                          <img src={addressEllipsePNG} alt=""></img>
+                          {`${friendAddress.substring(
+                            0,
+                            4
+                          )}...${friendAddress.substring(38)}`}
+                        </code>
+                        <button
+                          onClick={() => {
+                            console.log(chatAddresses[address]);
+                            if (index > -1) {
+                              setChatAddresses((current) => {
+                                const chatAddressesTemp = Object.assign(
+                                  {},
+                                  current
+                                );
+                                if (
+                                  Object.keys(chatAddresses).length !== 0 &&
+                                  address in chatAddresses
+                                ) {
+                                  chatAddressesTemp[address].splice(index, 1);
+                                }
+                                setActiveIndex(0);
+                                return chatAddressesTemp;
+                              });
+                            }
+                            console.log(chatAddresses[address]);
+                          }}
+                        >
+                          <img
+                            className="h-6 p-1 hover:bg-[#ffffff] rounded-[50px]"
+                            src={cancelIconSVG}
+                            alt=""
+                          ></img>
+                        </button>
+                      </button>
+                    );
+                  })}
+                </>
+              ) : (
+                <>FILL ME UP</>
+              )}
             </ul>
           </div>
         </>

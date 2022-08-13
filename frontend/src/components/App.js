@@ -81,6 +81,10 @@ export default function App() {
     onSuccess() {},
   });
 
+  useEffect(() => {
+    localStorage.setItem("chats", JSON.stringify(chatAddresses));
+  }, [chatAddresses]);
+
   return (
     <div
       style={{
