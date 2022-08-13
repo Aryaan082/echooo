@@ -1,5 +1,5 @@
 import Modal from "react-modal";
-import React from "react";
+import {useEffect} from "react";
 import { useAccount } from "wagmi";
 
 import "./chat.css";
@@ -31,8 +31,28 @@ export default function NewChatModal({
   const { address } = useAccount();
 
   const handleChatInputChange = (e) => setNewChatAddress(e.target.value);
+  
+  const handleStartChat = (e , chatAddresses, newChatAddress, address) => {
+    toggleOpenModal();
+    setChatAddresses((current) => {
+      const chatAddressesTemp = Object.assign({}, current);      
+      if (Object.keys(chatAddresses).length !== 0 &&
+      address in chatAddresses) {
+        chatAddressesTemp[address] = [
+          ...chatAddresses[address],
+          newChatAddress,
+        ];
+      } else {
+        chatAddressesTemp[address] = [newChatAddress];
+      }
+      return chatAddressesTemp;
+    });
 
-  React.useEffect(() => {
+    setActiveReceiver(newChatAddress);
+    setActiveIndex(chatAddresses[address].length);
+    setNewChatAddress("");
+  }
+  useEffect(() => {
     localStorage.setItem("chats", JSON.stringify(chatAddresses));
   }, [chatAddresses]);
 
@@ -52,41 +72,7 @@ export default function NewChatModal({
           ></input>
           <button
             className="flex flex-row justify-center text-lg items-center gap-[15px] px-5 py-3 bg-[#555555] text-white font-bold rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={
-              // communication is setup when at least 1 chat is open
-              Object.keys(chatAddresses).length !== 0 &&
-              address in chatAddresses
-                ? () => {
-                    toggleOpenModal();
-                    console.log("HI1");
-                    setChatAddresses((current) => {
-                      let chatAddressesTemp = Object.assign({}, current);
-                      console.log(chatAddressesTemp);
-                      chatAddressesTemp[address] = [
-                        ...chatAddresses[address],
-                        newChatAddress,
-                      ];
-                      console.log(chatAddressesTemp);
-                      return chatAddressesTemp;
-                    });
-                    setActiveReceiver(newChatAddress);
-                    setActiveIndex(chatAddresses[address].length);
-                    setNewChatAddress("");
-                  }
-                : () => {
-                    toggleOpenModal();
-                    setChatAddresses((current) => {
-                      let chatAddressesTemp = Object.assign({}, current);
-                      console.log(chatAddressesTemp);
-                      chatAddressesTemp[address] = [newChatAddress];
-                      console.log(chatAddressesTemp);
-                      return chatAddressesTemp;
-                    });
-                    setActiveReceiver(newChatAddress);
-                    setActiveIndex(chatAddresses[address].length);
-                    setNewChatAddress("");
-                  }
-            }
+            onClick={(e) => handleStartChat(e , chatAddresses, newChatAddress, address)}             
             disabled={
               newChatAddress.length !== 42 ||
               (address in chatAddresses &&

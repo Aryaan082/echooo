@@ -1,15 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
 contract SendCrypto {
-    mapping(address => uint256) owedERC20Taxes;
-    address owner;
-    bytes4 private constant SELECTOR =
-        bytes4(keccak256(bytes("transfer(address,uint256)")));
-    bytes4 private constant SELECTOR_TRANSFER_FROM =
-        bytes4(keccak256(bytes("transferFrom(address,address,uint256)")));
+    mapping(address => uint256) public owedERC20Taxes;
+    address public owner;
+    bytes4 private constant SELECTOR = bytes4(keccak256(bytes("transfer(address,uint256)")));
+    bytes4 private constant SELECTOR_TRANSFER_FROM = bytes4(keccak256(bytes("transferFrom(address,address,uint256)")));
 
     constructor() {
         owner = msg.sender;
@@ -46,30 +42,21 @@ contract SendCrypto {
         );
     }
 
-    function sendEther(address receiver, uint256 etherAmount) external payable {
+    function sendEther(address receiver) external payable {
         // Hardcode the tax here to save gas (100 - 1) = 99
-        require(
-            msg.value >= etherAmount,
-            "SendCrypto:sendEther: Amount of ETH specified must be equal to msg.value"
-        );
         (bool success, ) = payable(receiver).call{
-            value: (etherAmount * 99) / 100
+            value: (msg.value * 99) / 100
         }("");
         require(success, "SendCrypto:sendEther: Failed to send Ether");
     }
 
     function sendEtherGroup(
         address[] calldata receivers,
-        uint256[] calldata etherAmounts,
-        uint256 etherTotalAmount
+        uint256[] calldata etherAmounts
     ) external payable {
         require(
             receivers.length == etherAmounts.length,
             "SendCrypto:sendEtherGroup: Receivers and etherAmounts must be same length."
-        );
-        require(
-            msg.value >= etherTotalAmount,
-            "SendCrypto:sendEther: Amount of ETH specified must be GTE to msg.value"
         );
 
         uint256 arraySize = receivers.length;
@@ -131,7 +118,7 @@ contract SendCrypto {
             msg.sender == owner,
             "SendCrypto:collectTaxEther: Caller must be the contract owner"
         );
-        (bool success, ) = owner.call{value: address(this).balance}("");
+        (bool success, ) = payable(owner).call{value: address(this).balance}("");
         require(success, "SendCrypto:collectTaxEther: Failed to send Ether");
     }
 
