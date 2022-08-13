@@ -8,6 +8,7 @@ import {
   addressEllipsePNG,
   continueIconColoredSVG,
   resetIconSVG,
+  cancelIconSVG,
 } from "../../assets";
 
 export default function FriendsList({
@@ -59,7 +60,13 @@ export default function FriendsList({
                       <img src={addressEllipsePNG} alt=""></img>
                       {`${address.substring(0, 4)}...${address.substring(38)}`}
                     </code>
-                    <img src={continueIconColoredSVG} alt=""></img>
+                    <button onClick={() => {}}>
+                      <img
+                        className="h-6 p-1 hover:bg-[#ffffff] rounded-[50px]"
+                        src={cancelIconSVG}
+                        alt=""
+                      ></img>
+                    </button>
                   </button>
                 );
               })}

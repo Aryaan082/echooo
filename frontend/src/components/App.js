@@ -40,15 +40,6 @@ export default function App() {
         ]
       : ""
   );
-  console.log(
-    !(
-      Boolean(
-        JSON.parse(localStorage.getItem("public-communication-address"))
-      ) &&
-      address in
-        JSON.parse(localStorage.getItem("public-communication-address"))
-    )
-  );
   const [openCommAddressModal, setOpenCommAddressModal] = useState(
     !(
       Boolean(
