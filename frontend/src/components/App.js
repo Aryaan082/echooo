@@ -32,15 +32,31 @@ export default function App() {
   );
   const [activeIndex, setActiveIndex] = useState(0);
   const [communicationAddress, setCommunicationAddress] = useState(
-    JSON.parse(localStorage.getItem("public-communication-address"))[address] ||
-      {}
+    Boolean(JSON.parse(localStorage.getItem("public-communication-address"))) &&
+      address in
+        JSON.parse(localStorage.getItem("public-communication-address"))
+      ? JSON.parse(localStorage.getItem("public-communication-address"))[
+          address
+        ]
+      : ""
+  );
+  console.log(
+    !(
+      Boolean(
+        JSON.parse(localStorage.getItem("public-communication-address"))
+      ) &&
+      address in
+        JSON.parse(localStorage.getItem("public-communication-address"))
+    )
   );
   const [openCommAddressModal, setOpenCommAddressModal] = useState(
-    !Boolean(
-      JSON.parse(localStorage.getItem("public-communication-address"))[
-        address
-      ] || {}
-    )
+    !(
+      Boolean(
+        JSON.parse(localStorage.getItem("public-communication-address"))
+      ) &&
+      address in
+        JSON.parse(localStorage.getItem("public-communication-address"))
+    ) || ""
   );
   const [openSend, setOpenSend] = useState(false);
   const [openNFTOfferModal, setOpenNFTOfferModal] = useState(false);

@@ -40,16 +40,7 @@ const ChatBox = ({ receiverAddress, messages, openP2P }) => {
   const { address } = useAccount();
 
   const chat = renderChat(receiverAddress, messages);
-
-  return (
-    <div
-      className={
-        "flex flex-col justify-between overflow-y-scroll"
-      }
-    >
-      {chat}
-    </div>
-  );
+  return <div className="overflow-y-scroll">{chat}</div>;
 };
 
 export default ChatBox;

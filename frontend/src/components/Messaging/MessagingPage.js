@@ -331,7 +331,7 @@ export default function MessagingPage({
 
         {/* Chat */}
         {address in chatAddresses && chatAddresses[address].length > 0 ? (
-          <div className="flex flex-col">
+          <div className="flex flex-col justify-end">
             <ChatBox
               messages={messages}
               setMessageLog={setMessageLog}

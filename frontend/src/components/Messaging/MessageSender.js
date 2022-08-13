@@ -132,6 +132,14 @@ const MessageSender = ({
             ...messages[receiverAddress],
             ...newReceiverMessageLog,
           ];
+        } else {
+          newReceiverMessageLog = [
+            {
+              from: address,
+              message: senderMessage,
+              timestamp: `${moment().unix()}`,
+            },
+          ];
         }
 
         const newMessageLog = messages;
