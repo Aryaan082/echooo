@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAccount, useDisconnect, useNetwork, useSwitchNetwork } from "wagmi";
 import moment from "moment";
 import { theGraphClient } from "../../config";
-import { GQL_QUERY_GET_UNKNOWN_SENDERS } from "../../constants";
+import { GQL_QUERY_GET_COMMUNICATION_ADDRESS, GQL_QUERY_GET_UNKNOWN_SENDERS } from "../../constants";
 
 import {
   addressEllipsePNG,
@@ -27,9 +27,34 @@ export default function FriendsList({
     setActiveReceiver(address);
   };
 
-  const handleShowAddressList = () => {
-    setShowTrustedAddressList(!showTrustedAddressList);
-  };
+  const handleShowAddressList = async () => {      
+      const graphClient = theGraphClient();
+      const dataIdentity = await graphClient.query(
+        GQL_QUERY_GET_COMMUNICATION_ADDRESS,
+        {receiverAddress: address}
+      ).toPromise();
+      const dataIdentityTimestamp = dataIdentity.data.identities[0].timestamp;
+
+      const dataMessages = await graphClient.query(
+        GQL_QUERY_GET_UNKNOWN_SENDERS, {
+          knownSenders: chatAddresses[address],
+          receiverAddress: address,
+          recentIdentityTimestamp: dataIdentityTimestamp      
+        }
+        ).toPromise();
+      const dataMessagesParsed = dataMessages.data.messages;
+      if (dataMessagesParsed == null) {
+        return
+      }
+      const unknownChatAddresses = {}
+      const unknownChatAddressesList = []
+      for (let idx = 0; idx < dataMessagesParsed.length; idx++) {
+        unknownChatAddresses[dataMessagesParsed[idx].from] = true;
+      }
+      console.log("messagesIdentityParsed >>>", dataMessagesParsed)
+      setShowTrustedAddressList(!showTrustedAddressList);
+      
+  }
 
   return (
     <>

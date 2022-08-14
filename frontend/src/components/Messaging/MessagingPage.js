@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useAccount, useDisconnect, useNetwork, useSwitchNetwork } from "wagmi";
 import EthCrypto from "eth-crypto";
 import { theGraphClient } from "../../config";
@@ -26,6 +26,7 @@ import {
 import "./receivers.css";
 import moment from "moment";
 
+
 const intervalGetMessages = async (
   address,
   newMessage,
@@ -39,29 +40,28 @@ const intervalGetMessages = async (
     newMessage[activeReceiverAddress]
   );
 
-  // if (Object.keys(newMessage).length === 0 || newMessage == null) {
-  //   console.log("returning none >>>> ")
-  //   return;
-  // }
 
-  // const mostRecentMessageMeta = newMessage[activeReceiverAddress].at(-1);
   let senderPrivateKey = JSON.parse(
     localStorage.getItem("private-communication-address")
   );
   senderPrivateKey = senderPrivateKey[address];
 
-  // console.log("most recent message meta interval >>>", mostRecentMessageMeta);
   const recentMessage = newMessage[activeReceiverAddress];
-  if (recentMessage == null) {
+  console.log("recent message >>>", recentMessage)
+  console.log("recent message >>>", recentMessage == null || recentMessage.length === 0)
+  let recentTimestamp;
+  if (recentMessage == null || recentMessage.length === 0) {
     return;
+  } else {
+    recentTimestamp = recentMessage.at(-1).timestamp
   }
-
+  console.log("recentTimestamp >>>", recentTimestamp)
   const graphClient = await theGraphClient();
   const dataMessages = await graphClient
     .query(GQL_QUERY_MESSAGE_LOG_INTERVAL, {
       senderAddress: senderAddress,
       receiverAddress: activeReceiverAddress,
-      recentMessageTimestamp: recentMessage.at(-1).timestamp
+      recentMessageTimestamp: recentTimestamp
     })
     .toPromise();
     console.log("data messages interval >>>", dataMessages);
@@ -126,6 +126,11 @@ export default function MessagingPage({
   const [messages, setMessageLog] = useState({});
   const [openP2P, setOpenP2P] = useState(false);
   const [messageInterval, setMessageInterval] = useState();
+  const messagesRef = useRef(messages);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  })
 
   const intervalCallback = useCallback((address,
     newMessage,
@@ -201,33 +206,37 @@ export default function MessagingPage({
       return;
     }    
     if (activeReceiverAddress !== "") {
-      getMessagesAsyncCallback();
-      const interval = setInterval(
-        async (
-          senderAddress,
-          newMessage,
-          activeReceiverAddress,
-          setMessageLog,
-        ) =>
-          intervalCallback(
+      if (messages[activeReceiverAddress] == null) {
+        console.log("running active >>>")
+        getMessagesAsyncCallback(); 
+      } else {
+        const interval = setInterval(
+          async (
             senderAddress,
             newMessage,
             activeReceiverAddress,
-            setMessageLog
-          ),
-        5 * 1000,
-        address,
-        messages,
-        activeReceiverAddress,
-        setMessageLog,
-      )
-      return () => {
-        console.log("clean up >>>");
-        return clearInterval(interval)
-      };
+            setMessageLog,
+          ) =>
+            intervalCallback(
+              senderAddress,
+              newMessage,
+              activeReceiverAddress,
+              setMessageLog              
+            ),
+          5 * 1000,
+          address,
+          messagesRef.current,
+          activeReceiverAddress,
+          setMessageLog,
+        )
+        return () => {
+          console.log("clean up >>>");
+          return clearInterval(interval)
+        };
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeReceiverAddress]);
+  }, [messages, activeReceiverAddress]);
 
   // TODO: Break this up into a bunch of components, way too much code here
   // - could do left column, header, and right column as a component
