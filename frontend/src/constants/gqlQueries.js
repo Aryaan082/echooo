@@ -65,11 +65,11 @@ query ($receiverAddress: String!) {
 
 // MessagePage.js -> Get unknown message senders
 export const GQL_QUERY_GET_UNKNOWN_SENDERS = `
-query ($knownSenders: [String]!, $receiverAddress: String!, $recentMessageTimestamp: BigInt!) {
+query ($knownSenders: [String]!, $receiverAddress: String!, $recentIdentityTimestamp: BigInt!) {
   messages(where: {
     from_not_in: $knownSenders, 
     receiver: $receiverAddress
-  	timestamp_gt: $recentMessageTimestamp   
+  	timestamp_gt: $recentIdentityTimestamp   
   }
   ) {
     receiver
