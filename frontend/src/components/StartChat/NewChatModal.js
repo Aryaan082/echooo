@@ -1,5 +1,5 @@
 import Modal from "react-modal";
-import {useEffect} from "react";
+import { useEffect } from "react";
 import { useAccount } from "wagmi";
 
 import "./chat.css";
@@ -31,13 +31,12 @@ export default function NewChatModal({
   const { address } = useAccount();
 
   const handleChatInputChange = (e) => setNewChatAddress(e.target.value);
-  
-  const handleStartChat = (e , chatAddresses, newChatAddress, address) => {
+
+  const handleStartChat = (e, chatAddresses, newChatAddress, address) => {
     toggleOpenModal();
     setChatAddresses((current) => {
-      const chatAddressesTemp = Object.assign({}, current);      
-      if (Object.keys(chatAddresses).length !== 0 &&
-      address in chatAddresses) {
+      const chatAddressesTemp = Object.assign({}, current);
+      if (Object.keys(chatAddresses).length !== 0 && address in chatAddresses) {
         chatAddressesTemp[address] = [
           ...chatAddresses[address],
           newChatAddress,
@@ -51,10 +50,7 @@ export default function NewChatModal({
     setActiveReceiver(newChatAddress);
     setActiveIndex(chatAddresses[address].length);
     setNewChatAddress("");
-  }
-  useEffect(() => {
-    localStorage.setItem("chats", JSON.stringify(chatAddresses));
-  }, [chatAddresses]);
+  };
 
   return (
     <Modal
@@ -72,7 +68,9 @@ export default function NewChatModal({
           ></input>
           <button
             className="flex flex-row justify-center text-lg items-center gap-[15px] px-5 py-3 bg-[#555555] text-white font-bold rounded-[8px] disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={(e) => handleStartChat(e , chatAddresses, newChatAddress, address)}             
+            onClick={(e) =>
+              handleStartChat(e, chatAddresses, newChatAddress, address)
+            }
             disabled={
               newChatAddress.length !== 42 ||
               (address in chatAddresses &&
