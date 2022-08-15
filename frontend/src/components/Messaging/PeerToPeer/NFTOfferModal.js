@@ -226,10 +226,12 @@ export default function NFTOfferModal({
               {NFTsOwned.map((NFT, index) => {
                 if (Boolean(NFTFilter)) {
                   if (
-                    NFT.name.toLocaleLowerCase() ===
-                      NFTFilter.toLocaleLowerCase() ||
-                    NFT.token_address.toLocaleLowerCase() ===
-                      NFTFilter.toLocaleLowerCase()
+                    NFT.name
+                      .toLocaleLowerCase()
+                      .includes(NFTFilter.toLocaleLowerCase()) ||
+                    NFT.token_address
+                      .toLocaleLowerCase()
+                      .includes(NFTFilter.toLocaleLowerCase())
                   ) {
                     return (
                       <button
