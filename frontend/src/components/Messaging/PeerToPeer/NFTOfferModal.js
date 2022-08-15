@@ -2,15 +2,21 @@ import Modal from "react-modal";
 import { ethers } from "ethers";
 import React, { useEffect, useState } from "react";
 import EthCrypto from "eth-crypto";
-import { useAccount, useContract, useSigner } from "wagmi";
+import { useAccount, useNetwork } from "wagmi";
 import { Oval } from "react-loader-spinner";
+import Moralis from "moralis";
 
 import { theGraphClient } from "../../../config";
-import { GQL_QUERY_GET_COMMUNICATION_ADDRESS } from "../../../constants";
-import { continueIconSVG, searchIconSVG } from "../../../assets";
+import {
+  GQL_QUERY_GET_COMMUNICATION_ADDRESS,
+  CONTRACT_META_DATA,
+} from "../../../constants";
+import { sendMessagesIconSVG, searchIconSVG } from "../../../assets";
 import { ContractInstance } from "../../../hooks";
 
 import TestERC721Token from "../../../contracts/TestERC721Token.json";
+
+import "./peerToPeer.css";
 
 const modalStyles = {
   content: {
@@ -31,37 +37,45 @@ export default function NFTOfferModal({
   activeReceiverAddress,
 }) {
   const { address } = useAccount();
-  const { data: signer } = useSigner();
+  const { chain } = useNetwork();
 
   const [NFTOfferStage, setNFTOfferStage] = useState(0);
+  const [NFTsOwned, setNFTsOwned] = useState([]);
   const [NFTAddress, setNFTAddress] = useState("");
+  const [NFTTokenIndex, setNFTTokenIndex] = useState();
   const [NFTTokenId, setNFTTokenId] = useState("");
   const [NFTPrice, setNFTPrice] = useState("");
-  const [NFTName, setNFTName] = useState("");
-  const [NFTSymbol, setNFTSymbol] = useState("");
-  const [NFTBalanceOfReceiver, setNFTBalanceOfReceiver] = useState("");
+  const [ETH_USD, setETH_USD] = useState(0);
 
   const handleNFTAddressChange = (e) => setNFTAddress(e.target.value);
-  const handleNFTTokenIdChange = (e) => setNFTTokenId(e.target.value);
   const handleNFTPriceChange = (e) => setNFTPrice(e.target.value);
 
   const contracts = ContractInstance();
 
-  const NFTContract = async () => {
-    const nftContract = new ethers.Contract(
-      NFTAddress,
-      TestERC721Token.abi,
-      signer
-    );
+  const getNFTInfo = async () => {
+    await Moralis.start({
+      apiKey:
+        "CvRZsrHPOZe7da1adyC6G2GMqDrLMXxKOBNCilBhcTtFm4i0gVmtvRaprFGMZOz0",
+    });
 
-    setNFTName(await nftContract.name());
-    setNFTSymbol(await nftContract.symbol());
-    setNFTBalanceOfReceiver(
-      (await nftContract.balanceOf(activeReceiverAddress)).toString()
-    );
+    let ownedNFTs = await Moralis.EvmApi.account.getNFTsForContract({
+      address: activeReceiverAddress,
+      tokenAddress: NFTAddress,
+      chain: chain.id,
+    });
+
+    ownedNFTs = ownedNFTs._data.result.reverse();
+
+    setNFTsOwned(ownedNFTs);
+
+    fetch(
+      "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD&api_key=58cddf6c19d0f436c15409ad20c236d10ee173c0b77be1ee4f4a1f6b7c53c843"
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        setETH_USD(data.USD);
+      });
   };
-
-  const getNFTInfo = async () => {};
 
   const mintNFT = async (receiver) => {
     const tx = await contracts.contractNFT.safeMint(receiver);
@@ -94,11 +108,7 @@ export default function NFTOfferModal({
       .catch((err) => console.log("Error occurred: " + err));
   };
 
-  const signOffer = async () => {
-    setNFTOfferStage(2);
-  };
-
-  const createNFTOffer = async () => {
+  const handleSendOffer = async () => {
     let senderPublicKey = JSON.parse(
       localStorage.getItem("public-communication-address")
     );
@@ -156,7 +166,10 @@ export default function NFTOfferModal({
   return (
     <Modal
       isOpen={openModal}
-      onRequestClose={toggleOpenModal}
+      onRequestClose={() => {
+        setNFTOfferStage(0);
+        toggleOpenModal();
+      }}
       style={modalStyles}
     >
       <div className="flex flex-col py-4 px-4 gap-4">
@@ -183,69 +196,99 @@ export default function NFTOfferModal({
             </button>
           </div>
         </div>
-        <div className="flex flex-row items-center">
-          <input
-            placeholder="Search NFT from..."
-            onChange={handleNFTAddressChange}
-            className="code w-[600px] px-4 py-3 rounded-l-[8px] bg-[#f2f2f2] disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={NFTOfferStage > 0}
-          ></input>
-          <button
-            onClick={() => {
-              NFTContract();
-              setNFTOfferStage(1);
-            }}
-            disabled={NFTAddress.length !== 42 || NFTOfferStage > 0}
-            className="disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <img
-              className="h-12 p-3 rounded-r-[8px] bg-[#f2f2f2]"
-              src={searchIconSVG}
-            ></img>
-          </button>
-        </div>
-        <div>0xd1f246258155d114f9B7C369A9d32eb0feA17aE5</div>
-        {NFTOfferStage > 0 ? (
-          <div>
-            <div>{NFTName}</div>
-            <div>
-              {NFTName} by {}
-            </div>
-            <div>{NFTBalanceOfReceiver}</div>
+        {NFTOfferStage === 0 ? (
+          <div className="flex flex-row items-center">
+            <input
+              placeholder="Search NFT from..."
+              onChange={handleNFTAddressChange}
+              className="code w-[600px] px-4 py-3 rounded-l-[8px] bg-[#f2f2f2] disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={NFTOfferStage > 0}
+            ></input>
+            <button
+              onClick={() => {
+                getNFTInfo(NFTAddress);
+                setNFTOfferStage(1);
+              }}
+              disabled={NFTAddress.length !== 42 || NFTOfferStage > 0}
+              className="disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <img
+                className="h-12 p-3 rounded-r-[8px] bg-[#f2f2f2]"
+                src={searchIconSVG}
+                alt=""
+              ></img>
+            </button>
           </div>
         ) : (
           <></>
         )}
-
-        {/* <div className="flex flex-row gap-4">
-            <button
-              className={
-                "flex flex-row justify-center text-lg items-center gap-[15px] px-5 py-3 bg-[#555555] text-white font-bold rounded-[8px] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed" +
-                (NFTOfferStage > 0 ? " disabled:bg-green-700" : "")
-              }
-              onClick={increaseAllowance}
-              disabled={NFTOfferStage !== 0}
-            >
-              Increase Allowance
-            </button>
-            <button
-              className={
-                "flex flex-row justify-center text-lg items-center gap-[15px] px-5 py-3 bg-[#555555] text-white font-bold rounded-[8px] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed" +
-                (NFTOfferStage > 1 ? " disabled:bg-green-700" : "")
-              }
-              onClick={signOffer}
-              disabled={NFTOfferStage !== 1}
-            >
-              Sign Offer
-            </button>
-            <button
-              className="flex flex-row justify-center text-lg items-center gap-[15px] px-5 py-3 bg-[#555555] text-white font-bold rounded-[8px] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={createNFTOffer}
-              disabled={NFTOfferStage !== 2}
-            >
-              Send Offer
-            </button>
-          </div> */}
+        {NFTOfferStage === 1 ? (
+          <>
+            {NFTsOwned.length > 0 ? (
+              <>
+                <div className="flex flex-col gap-2 overflow-y-auto	h-[22vh]">
+                  {NFTsOwned.map((NFT, index) => {
+                    return (
+                      <button
+                        key={index}
+                        className="border-gradient"
+                        onClick={() => {
+                          setNFTTokenIndex(index);
+                          setNFTOfferStage(2);
+                        }}
+                      >
+                        {NFT.token_uri === null ? (
+                          <div className="bg-black w-[50px] h-[50px] rounded-[5px]"></div>
+                        ) : (
+                          <></>
+                        )}
+                        <div className="text-lg font-medium">
+                          {NFT.name} #{NFT.token_id}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <>{activeReceiverAddress} doesn't own an NFT at this address</>
+            )}
+          </>
+        ) : (
+          <></>
+        )}
+        {NFTOfferStage === 2 ? (
+          <>
+            <div className="border-gradient-always" onClick={() => {}}>
+              {NFTsOwned[NFTTokenIndex].token_uri === null ? (
+                <div className="bg-black w-[50px] h-[50px] rounded-[5px]"></div>
+              ) : (
+                <></>
+              )}
+              <div className="text-lg font-medium">
+                {NFTsOwned[NFTTokenIndex].name} #
+                {NFTsOwned[NFTTokenIndex].token_id}
+              </div>
+            </div>
+            <div className="flex flex-row gap-3 w-[650px]">
+              <input
+                placeholder={`1 WETH ($${ETH_USD} USD)`}
+                onChange={handleNFTPriceChange}
+                className="code px-4 py-3 w-[467px] rounded-[8px] bg-[#f2f2f2] disabled:opacity-50 disabled:cursor-not-allowed"
+              ></input>
+              <button
+                className="flex flex-row justify-center text-lg items-center gap-[15px] px-5 py-3 bg-[#333333] text-white font-bold rounded-[8px] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleSendOffer}
+              >
+                Send offer
+                <img className="h-[25px]" src={sendMessagesIconSVG}></img>
+              </button>
+            </div>
+          </>
+        ) : (
+          <></>
+        )}
+        <div>Ex. 0xB046Dcd2957b15cdD922BFab7D08D661c98213fF</div>
       </div>
     </Modal>
   );

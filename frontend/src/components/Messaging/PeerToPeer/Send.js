@@ -78,8 +78,8 @@ export default function Send({
             className="code w-[450px] px-4 py-3 rounded-[8px] bg-[#f2f2f2]"
           ></input>
           <button
-            className="flex flex-row justify-center text-lg items-center gap-[15px] px-5 py-3 bg-[#555555] text-white font-bold rounded-[8px] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={getWETH}
+            className="flex flex-row justify-center text-lg items-center gap-[15px] px-5 py-3 bg-[#333333] text-white font-bold rounded-[8px] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+            // onClick={getWETH}
           >
             Send ETH
           </button>

@@ -74,7 +74,8 @@ export default function NewChatModal({
             disabled={
               newChatAddress.length !== 42 ||
               (address in chatAddresses &&
-                chatAddresses[address].includes(newChatAddress))
+                chatAddresses[address].includes(newChatAddress)) ||
+              address === newChatAddress
             }
           >
             Start
