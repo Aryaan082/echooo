@@ -58,7 +58,7 @@ export default function NFTOfferModal({
         "CvRZsrHPOZe7da1adyC6G2GMqDrLMXxKOBNCilBhcTtFm4i0gVmtvRaprFGMZOz0",
     });
 
-    let ownedNFTs = await Moralis.EvmApi.account.getNFTsForContract({
+    let ownedNFTs = await Moralis.EvmApi.account.getNFTs({
       address: activeReceiverAddress,
       tokenAddress: NFTAddress,
       chain: chain.id,
@@ -199,9 +199,9 @@ export default function NFTOfferModal({
         {NFTOfferStage === 0 ? (
           <div className="flex flex-row items-center">
             <input
-              placeholder="Search NFT from..."
+              placeholder={`Search NFT from ${activeReceiverAddress}`}
               onChange={handleNFTAddressChange}
-              className="code w-[600px] px-4 py-3 rounded-l-[8px] bg-[#f2f2f2] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="code w-[700px] px-4 py-3 rounded-l-[8px] bg-[#f2f2f2] disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={NFTOfferStage > 0}
             ></input>
             <button
@@ -209,7 +209,7 @@ export default function NFTOfferModal({
                 getNFTInfo(NFTAddress);
                 setNFTOfferStage(1);
               }}
-              disabled={NFTAddress.length !== 42 || NFTOfferStage > 0}
+              disabled={NFTAddress.length !== 42 && NFTAddress.length !== 0}
               className="disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <img
@@ -288,7 +288,7 @@ export default function NFTOfferModal({
         ) : (
           <></>
         )}
-        <div>Ex. 0xB046Dcd2957b15cdD922BFab7D08D661c98213fF</div>
+        <div>Ex. {CONTRACT_META_DATA[chain.id].NFTAddress}</div>
       </div>
     </Modal>
   );
