@@ -45,12 +45,17 @@ export default function NFTOfferModal({
   const [NFTTokenIndex, setNFTTokenIndex] = useState();
   const [NFTTokenId, setNFTTokenId] = useState("");
   const [NFTPrice, setNFTPrice] = useState("");
+  const [NFTFilter, setNFTFilter] = useState("");
   const [ETH_USD, setETH_USD] = useState(0);
 
-  const handleNFTAddressChange = (e) => setNFTAddress(e.target.value);
+  const handleNFTFilterChange = (e) => setNFTFilter(e.target.value);
   const handleNFTPriceChange = (e) => setNFTPrice(e.target.value);
 
   const contracts = ContractInstance();
+
+  useEffect(() => {
+    getNFTInfo();
+  }, [openModal]);
 
   const getNFTInfo = async () => {
     await Moralis.start({
@@ -197,44 +202,42 @@ export default function NFTOfferModal({
           </div>
         </div>
         {NFTOfferStage === 0 ? (
-          <div className="flex flex-row items-center">
-            <input
-              placeholder={`Search NFT from ${activeReceiverAddress}`}
-              onChange={handleNFTAddressChange}
-              className="code w-[700px] px-4 py-3 rounded-l-[8px] bg-[#f2f2f2] disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={NFTOfferStage > 0}
-            ></input>
-            <button
-              onClick={() => {
-                getNFTInfo(NFTAddress);
-                setNFTOfferStage(1);
-              }}
-              disabled={NFTAddress.length !== 42 && NFTAddress.length !== 0}
-              className="disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <img
-                className="h-12 p-3 rounded-r-[8px] bg-[#f2f2f2]"
-                src={searchIconSVG}
-                alt=""
-              ></img>
-            </button>
-          </div>
-        ) : (
-          <></>
-        )}
-        {NFTOfferStage === 1 ? (
-          <>
-            {NFTsOwned.length > 0 ? (
-              <>
-                <div className="flex flex-col gap-2 overflow-y-auto	h-[22vh]">
-                  {NFTsOwned.map((NFT, index) => {
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-row items-center">
+              <input
+                placeholder={`Search NFT by Name or Address`}
+                onChange={handleNFTFilterChange}
+                className="code w-[600px] px-4 py-3 rounded-l-[8px] bg-[#f2f2f2] disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={NFTOfferStage > 0}
+              ></input>
+              <button
+                onClick={() => {
+                  getNFTInfo();
+                }}
+              >
+                <img
+                  className="h-12 p-3 rounded-r-[8px] bg-[#f2f2f2]"
+                  src={searchIconSVG}
+                  alt=""
+                ></img>
+              </button>
+            </div>
+            <div className="flex flex-col gap-2 overflow-y-auto">
+              {NFTsOwned.map((NFT, index) => {
+                if (Boolean(NFTFilter)) {
+                  if (
+                    NFT.name.toLocaleLowerCase() ===
+                      NFTFilter.toLocaleLowerCase() ||
+                    NFT.token_address.toLocaleLowerCase() ===
+                      NFTFilter.toLocaleLowerCase()
+                  ) {
                     return (
                       <button
                         key={index}
                         className="border-gradient"
                         onClick={() => {
                           setNFTTokenIndex(index);
-                          setNFTOfferStage(2);
+                          setNFTOfferStage(1);
                         }}
                       >
                         {NFT.token_uri === null ? (
@@ -247,17 +250,37 @@ export default function NFTOfferModal({
                         </div>
                       </button>
                     );
-                  })}
-                </div>
-              </>
-            ) : (
-              <>{activeReceiverAddress} doesn't own an NFT at this address</>
-            )}
-          </>
+                  } else {
+                    return "";
+                  }
+                } else {
+                  return (
+                    <button
+                      key={index}
+                      className="border-gradient"
+                      onClick={() => {
+                        setNFTTokenIndex(index);
+                        setNFTOfferStage(1);
+                      }}
+                    >
+                      {NFT.token_uri === null ? (
+                        <div className="bg-black w-[50px] h-[50px] rounded-[5px]"></div>
+                      ) : (
+                        <></>
+                      )}
+                      <div className="text-lg font-medium">
+                        {NFT.name} #{NFT.token_id}
+                      </div>
+                    </button>
+                  );
+                }
+              })}
+            </div>
+          </div>
         ) : (
           <></>
         )}
-        {NFTOfferStage === 2 ? (
+        {NFTOfferStage === 1 ? (
           <>
             <div className="border-gradient-always" onClick={() => {}}>
               {NFTsOwned[NFTTokenIndex].token_uri === null ? (
@@ -288,7 +311,6 @@ export default function NFTOfferModal({
         ) : (
           <></>
         )}
-        <div>Ex. {CONTRACT_META_DATA[chain.id].NFTAddress}</div>
       </div>
     </Modal>
   );
