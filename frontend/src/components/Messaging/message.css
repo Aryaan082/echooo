@@ -6,6 +6,7 @@
   padding: 12px 18px;
   background-color: white;
   border: 1px solid #eeeeee;
+  max-width: 800px;
 }
 
 .message-receiver {
@@ -15,4 +16,5 @@
   filter: drop-shadow(0 0 3px rgba(220, 220, 220, 0.1));
   padding: 12px 18px;
   background-color: #eeeeee;
+  max-width: 800px;
 }

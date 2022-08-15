@@ -26,20 +26,18 @@ import {
 import "./receivers.css";
 import moment from "moment";
 
-
 const intervalGetMessages = async (
   address,
   newMessage,
   activeReceiverAddress,
-  setMessageLog,
+  setMessageLog
 ) => {
   const senderAddress = address.toLowerCase();
-  console.log("receiever address >>>", activeReceiverAddress)
+  console.log("receiever address >>>", activeReceiverAddress);
   console.log(
     "new message active interval >>>",
     newMessage[activeReceiverAddress]
   );
-
 
   let senderPrivateKey = JSON.parse(
     localStorage.getItem("private-communication-address")
@@ -47,30 +45,33 @@ const intervalGetMessages = async (
   senderPrivateKey = senderPrivateKey[address];
 
   const recentMessage = newMessage[activeReceiverAddress];
-  console.log("recent message >>>", recentMessage)
-  console.log("recent message >>>", recentMessage == null || recentMessage.length === 0)
+  console.log("recent message >>>", recentMessage);
+  console.log(
+    "recent message >>>",
+    recentMessage == null || recentMessage.length === 0
+  );
   let recentTimestamp;
   if (recentMessage == null || recentMessage.length === 0) {
     return;
   } else {
-    recentTimestamp = recentMessage.at(-1).timestamp
+    recentTimestamp = recentMessage.at(-1).timestamp;
   }
-  console.log("recentTimestamp >>>", recentTimestamp)
+  console.log("recentTimestamp >>>", recentTimestamp);
   const graphClient = await theGraphClient();
   const dataMessages = await graphClient
     .query(GQL_QUERY_MESSAGE_LOG_INTERVAL, {
       senderAddress: senderAddress,
       receiverAddress: activeReceiverAddress,
-      recentMessageTimestamp: recentTimestamp
+      recentMessageTimestamp: recentTimestamp,
     })
     .toPromise();
-    console.log("data messages interval >>>", dataMessages);
-    console.log("data interval length >>>", Object.keys(dataMessages).length)
+  console.log("data messages interval >>>", dataMessages);
+  console.log("data interval length >>>", Object.keys(dataMessages).length);
   const dataMessagesParsed = dataMessages.data.messages;
   console.log("data messages parsed interval >>>", dataMessagesParsed);
   const messageLog = dataMessagesParsed;
   if (Object.keys(messageLog).length === 0 || messageLog == null) {
-    console.log("returning none >>>> ")
+    console.log("returning none >>>> ");
     return;
   }
   for (let idx = 0; idx < dataMessagesParsed.length; idx++) {
@@ -130,17 +131,19 @@ export default function MessagingPage({
 
   useEffect(() => {
     messagesRef.current = messages;
-  })
+  });
 
-  const intervalCallback = useCallback((address,
-    newMessage,
-    activeReceiverAddress,
-    setMessageLog) => {
-    intervalGetMessages(address,
-      newMessage,
-      activeReceiverAddress,
-      setMessageLog,);
-  }, [activeReceiverAddress])
+  const intervalCallback = useCallback(
+    (address, newMessage, activeReceiverAddress, setMessageLog) => {
+      intervalGetMessages(
+        address,
+        newMessage,
+        activeReceiverAddress,
+        setMessageLog
+      );
+    },
+    [activeReceiverAddress]
+  );
 
   const getMessagesAsyncCallback = useCallback(async () => {
     const senderAddress = address.toLowerCase();
@@ -204,34 +207,34 @@ export default function MessagingPage({
   useEffect(() => {
     if (activeReceiverAddress === BURNER_ADDRESS) {
       return;
-    }    
+    }
     if (activeReceiverAddress !== "") {
       if (messages[activeReceiverAddress] == null) {
-        console.log("running active >>>")
-        getMessagesAsyncCallback(); 
+        console.log("running active >>>");
+        getMessagesAsyncCallback();
       } else {
         const interval = setInterval(
           async (
             senderAddress,
             newMessage,
             activeReceiverAddress,
-            setMessageLog,
+            setMessageLog
           ) =>
             intervalCallback(
               senderAddress,
               newMessage,
               activeReceiverAddress,
-              setMessageLog              
+              setMessageLog
             ),
           5 * 1000,
           address,
           messagesRef.current,
           activeReceiverAddress,
-          setMessageLog,
-        )
+          setMessageLog
+        );
         return () => {
           console.log("clean up >>>");
-          return clearInterval(interval)
+          return clearInterval(interval);
         };
       }
     }
@@ -340,7 +343,7 @@ export default function MessagingPage({
 
         {/* Chat */}
         {address in chatAddresses && chatAddresses[address].length > 0 ? (
-          <div className="flex flex-col justify-end">
+          <div className="relative flex flex-col justify-end">
             <ChatBox
               messages={messages}
               setMessageLog={setMessageLog}

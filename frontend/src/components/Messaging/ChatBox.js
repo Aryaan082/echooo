@@ -40,7 +40,16 @@ const ChatBox = ({ receiverAddress, messages, openP2P }) => {
   const { address } = useAccount();
 
   const chat = renderChat(receiverAddress, messages);
-  return <div className="overflow-y-scroll">{chat}</div>;
+
+  if (receiverAddress in messages) {
+    messages[receiverAddress].reverse();
+  }
+
+  return (
+    <div className="absolute flex flex-col-reverse overflow-y-scroll w-full bottom-[88px] h-[72vh]">
+      {chat}
+    </div>
+  );
 };
 
 export default ChatBox;
