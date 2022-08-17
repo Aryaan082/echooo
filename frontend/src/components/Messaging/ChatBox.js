@@ -5,6 +5,10 @@ import ReceiveMessageContainer from "./ReceiveMessageContainer";
 
 const renderChat = (receiverAddress, messages) => {
   const chatJSX = [];
+
+  if (receiverAddress == null) {
+    return [];
+  }
   const receiverAddressLowerCase = receiverAddress.toLowerCase();
   const messageLog = messages[receiverAddress];
 

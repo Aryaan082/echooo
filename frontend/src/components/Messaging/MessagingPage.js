@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useAccount, useDisconnect, useNetwork, useSwitchNetwork } from "wagmi";
 import EthCrypto from "eth-crypto";
-import { theGraphClient } from "../../config";
+import {useTheGraphClient } from "../../config";
 
 import FriendsList from "./MessagingPageFriendsList";
 import MessageSender from "./MessageSender";
@@ -24,13 +24,14 @@ import {
   profileIconSVG,
 } from "../../assets";
 import "./receivers.css";
-import moment from "moment";
+
 
 const intervalGetMessages = async (
   address,
   newMessage,
   activeReceiverAddress,
-  setMessageLog
+  setMessageLog,
+  graphClient
 ) => {
   const senderAddress = address.toLowerCase();
   console.log("receiever address >>>", activeReceiverAddress);
@@ -57,7 +58,6 @@ const intervalGetMessages = async (
     recentTimestamp = recentMessage.at(-1).timestamp;
   }
   console.log("recentTimestamp >>>", recentTimestamp);
-  const graphClient = await theGraphClient();
   const dataMessages = await graphClient
     .query(GQL_QUERY_MESSAGE_LOG_INTERVAL, {
       senderAddress: senderAddress,
@@ -123,10 +123,12 @@ export default function MessagingPage({
   const { disconnect } = useDisconnect();
   const { chain } = useNetwork();
   const { chains } = useSwitchNetwork();
-
+  const graphClient = useTheGraphClient();  
+  const [unknownChatAddresses, setUnknownChatAddresses] = useState({});
   const [messages, setMessageLog] = useState({});
   const [openP2P, setOpenP2P] = useState(false);
-  const [messageInterval, setMessageInterval] = useState();
+  const [showTrustedAddressList, setShowTrustedAddressList] = useState(true);
+
   const messagesRef = useRef(messages);
 
   useEffect(() => {
@@ -134,18 +136,19 @@ export default function MessagingPage({
   });
 
   const intervalCallback = useCallback(
-    (address, newMessage, activeReceiverAddress, setMessageLog) => {
+    (address, newMessage, activeReceiverAddress, setMessageLog, graphClient) => {
       intervalGetMessages(
         address,
         newMessage,
         activeReceiverAddress,
-        setMessageLog
+        setMessageLog,
+        graphClient
       );
     },
     [activeReceiverAddress]
   );
 
-  const getMessagesAsyncCallback = useCallback(async () => {
+  const fetchMessagesAsyncCallback = useCallback(async () => {
     const senderAddress = address.toLowerCase();
     let senderPrivateKey = JSON.parse(
       localStorage.getItem("private-communication-address")
@@ -153,7 +156,7 @@ export default function MessagingPage({
     senderPrivateKey = senderPrivateKey[address];
 
     if (messages[activeReceiverAddress] == null) {
-      const graphClient = theGraphClient();
+      
       const dataIdentity = await graphClient
         .query(GQL_QUERY_IDENTITY_TIMESTAMP_RECENT, {
           senderAddress: senderAddress,
@@ -211,26 +214,29 @@ export default function MessagingPage({
     if (activeReceiverAddress !== "") {
       if (messages[activeReceiverAddress] == null) {
         console.log("running active >>>");
-        getMessagesAsyncCallback();
+        fetchMessagesAsyncCallback();
       } else {
         const interval = setInterval(
           async (
             senderAddress,
             newMessage,
             activeReceiverAddress,
-            setMessageLog
+            setMessageLog,
+            graphClient
           ) =>
             intervalCallback(
               senderAddress,
               newMessage,
               activeReceiverAddress,
-              setMessageLog
+              setMessageLog,
+              graphClient
             ),
           5 * 1000,
           address,
           messagesRef.current,
           activeReceiverAddress,
-          setMessageLog
+          setMessageLog,
+          graphClient
         );
         return () => {
           console.log("clean up >>>");
@@ -254,6 +260,10 @@ export default function MessagingPage({
         activeIndex={activeIndex}
         setActiveIndex={setActiveIndex}
         setActiveReceiver={setActiveReceiver}
+        unknownChatAddresses={unknownChatAddresses}
+        setUnknownChatAddresses={setUnknownChatAddresses}
+        showTrustedAddressList={showTrustedAddressList}
+        setShowTrustedAddressList={setShowTrustedAddressList}
       />
       {/* Header */}
       <div className="w-[70%] flex flex-col justify-between">
@@ -328,7 +338,9 @@ export default function MessagingPage({
             </div>
           </div>
           {/* Receiver Address */}
-          {address in chatAddresses && chatAddresses[address].length > 0 ? (
+          {(address in chatAddresses && chatAddresses[address].length > 0) || (address in unknownChatAddresses && unknownChatAddresses[address].length > 0) ? 
+          
+          (
             <div className="w-full" style={{ height: "calc(5vh - 100px}" }}>
               <div className="flex justify-center align-center">
                 <div className="shadow-md flex flex-wrap rounded-[10px] border-[1px] p-5 bg-[rgba(255,255,255,0.45)] text-center text-md break-words">
@@ -342,7 +354,7 @@ export default function MessagingPage({
         </div>
 
         {/* Chat */}
-        {address in chatAddresses && chatAddresses[address].length > 0 ? (
+        {(address in chatAddresses && chatAddresses[address].length > 0) || (address in unknownChatAddresses && unknownChatAddresses[address].length > 0) ? (
           <div className="relative flex flex-col justify-end">
             <ChatBox
               messages={messages}
@@ -364,7 +376,7 @@ export default function MessagingPage({
             />
           </div>
         ) : (
-          ""
+          <></>
         )}
       </div>
     </div>

@@ -129,7 +129,7 @@ export default function NFTOfferModal({
       }
     `;
 
-    const graphClient = theGraphClient();
+    const graphClient = await theGraphClient();
     const data = await graphClient
       .query(GQL_QUERY_GET_COMMUNICATION_ADDRESS, {
         receiverAddress: activeReceiverAddress,

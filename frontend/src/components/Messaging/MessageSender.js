@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import EthCrypto from "eth-crypto";
-import { theGraphClient } from "../../config";
+import { useTheGraphClient } from "../../config";
 import { Oval } from "react-loader-spinner";
 import moment from "moment";
 
@@ -28,6 +28,7 @@ const MessageSender = ({
   openP2P,
   setOpenP2P,
 }) => {
+  const graphClient = useTheGraphClient();  
   const [senderMessage, setSenderMessage] = useState("");
 
   const toggleOpenP2P = () => setOpenP2P(!openP2P);
@@ -50,7 +51,6 @@ const MessageSender = ({
       // TODO: sanitize graphQL queries b/c currently dynamic and exposes injection vulnerability
 
       // Query for the receiver's communication public key
-      const graphClient = theGraphClient();
       const data = await graphClient
         .query(GQL_QUERY_GET_COMMUNICATION_ADDRESS, {
           receiverAddress: receiverAddress,
