@@ -222,7 +222,7 @@ export default function NFTOfferModal({
                 ></img>
               </button>
             </div>
-            <div className="flex flex-col gap-2 overflow-y-auto">
+            <div className="flex flex-col gap-2 overflow-y-auto max-h-[22vh]">
               {NFTsOwned.map((NFT, index) => {
                 if (Boolean(NFTFilter)) {
                   if (

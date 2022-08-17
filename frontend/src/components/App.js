@@ -8,7 +8,7 @@ import NewChatModal from "./StartChat/NewChatModal";
 import MessagingPage from "./Messaging/MessagingPage";
 import CommAddressModal from "./ChangeKeys/CommAddressModal";
 import NFTOfferModal from "./Messaging/PeerToPeer/NFTOfferModal";
-import Send from "./Messaging/PeerToPeer/Send";
+import TokenTransfer from "./Messaging/PeerToPeer/TokenTransfer";
 
 import { BURNER_ADDRESS } from "../constants";
 import { gradientOneSVG, gradientTwoSVG, echoooLogoSVG } from "../assets/";
@@ -137,7 +137,7 @@ export default function App() {
             setActiveReceiver={setActiveReceiver}
             setActiveIndex={setActiveIndex}
           />
-          <Send
+          <TokenTransfer
             openModal={openSend}
             toggleOpenModal={toggleOpenSendModal}
             activeReceiverAddress={activeReceiverAddress}

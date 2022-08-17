@@ -21,7 +21,7 @@ const modalStyles = {
   overlay: { backgroundColor: "rgba(0, 0, 0, 0.5)" },
 };
 
-export default function Send({
+export default function TokenTransfer({
   openModal,
   toggleOpenModal,
   activeReceiverAddress,
@@ -70,10 +70,14 @@ export default function Send({
             Get WETH
           </button>
         </div>
-
+        <input
+          placeholder="Search token address..."
+          onChange={handleETHChange}
+          className="code px-4 py-3 rounded-[8px] bg-[#f2f2f2]"
+        ></input>
         <div className="flex flex-row gap-3">
           <input
-            placeholder="Type amount of ETH to send"
+            placeholder="How much would you like to send..."
             onChange={handleETHChange}
             className="code w-[450px] px-4 py-3 rounded-[8px] bg-[#f2f2f2]"
           ></input>
@@ -81,7 +85,7 @@ export default function Send({
             className="flex flex-row justify-center text-lg items-center gap-[15px] px-5 py-3 bg-[#333333] text-white font-bold rounded-[8px] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
             // onClick={getWETH}
           >
-            Send ETH
+            Send
           </button>
         </div>
       </div>
