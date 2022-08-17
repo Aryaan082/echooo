@@ -71,8 +71,8 @@ export default function App() {
     onConnect() {
       setConnectedWallet(true);
       setOpenModalConnect(false);
-      setActiveReceiver(JSON.parse(localStorage.getItem("chats"))[address][0]);
-      setChatAddresses(JSON.parse(localStorage.getItem("chats")));
+      setActiveReceiver(JSON.parse(localStorage.getItem("chats"))[address][0] || "");
+      setChatAddresses(JSON.parse(localStorage.getItem("chats"))|| []);
     },
   });
 
