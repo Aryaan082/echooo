@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useAccount, useDisconnect, useNetwork, useSwitchNetwork } from "wagmi";
 import EthCrypto from "eth-crypto";
-import {useTheGraphClient } from "../../config";
+import { useTheGraphClient } from "../../config";
 
 import FriendsList from "./MessagingPageFriendsList";
 import MessageSender from "./MessageSender";
@@ -24,7 +24,6 @@ import {
   profileIconSVG,
 } from "../../assets";
 import "./receivers.css";
-
 
 const intervalGetMessages = async (
   address,
@@ -123,7 +122,7 @@ export default function MessagingPage({
   const { disconnect } = useDisconnect();
   const { chain } = useNetwork();
   const { chains } = useSwitchNetwork();
-  const graphClient = useTheGraphClient();  
+  const graphClient = useTheGraphClient();
   const [unknownChatAddresses, setUnknownChatAddresses] = useState({});
   const [messages, setMessageLog] = useState({});
   const [openP2P, setOpenP2P] = useState(false);
@@ -136,7 +135,13 @@ export default function MessagingPage({
   });
 
   const intervalCallback = useCallback(
-    (address, newMessage, activeReceiverAddress, setMessageLog, graphClient) => {
+    (
+      address,
+      newMessage,
+      activeReceiverAddress,
+      setMessageLog,
+      graphClient
+    ) => {
       intervalGetMessages(
         address,
         newMessage,
@@ -156,7 +161,6 @@ export default function MessagingPage({
     senderPrivateKey = senderPrivateKey[address];
 
     if (messages[activeReceiverAddress] == null) {
-      
       const dataIdentity = await graphClient
         .query(GQL_QUERY_IDENTITY_TIMESTAMP_RECENT, {
           senderAddress: senderAddress,
@@ -292,7 +296,7 @@ export default function MessagingPage({
                 ) : (
                   <>
                     <img
-                      className="w-[25px]"
+                      className="w-[30px]"
                       src={CONTRACT_META_DATA[chain.id].logo}
                       alt=""
                     ></img>
@@ -328,7 +332,7 @@ export default function MessagingPage({
                     New chat
                     <img src={textBubbleSVG} alt=""></img>
                   </button>
-                  <button className="flex justify-center items-center p-3 bg-white rounded-[30px]">
+                  <button className="flex justify-center items-center w-[54px] bg-white rounded-[30px]">
                     <img src={profileIconSVG} alt=""></img>
                   </button>
                 </>
@@ -338,9 +342,9 @@ export default function MessagingPage({
             </div>
           </div>
           {/* Receiver Address */}
-          {(address in chatAddresses && chatAddresses[address].length > 0) || (address in unknownChatAddresses && unknownChatAddresses[address].length > 0) ? 
-          
-          (
+          {(address in chatAddresses && chatAddresses[address].length > 0) ||
+          (address in unknownChatAddresses &&
+            unknownChatAddresses[address].length > 0) ? (
             <div className="w-full" style={{ height: "calc(5vh - 100px}" }}>
               <div className="flex justify-center align-center">
                 <div className="shadow-md flex flex-wrap rounded-[10px] border-[1px] p-5 bg-[rgba(255,255,255,0.45)] text-center text-md break-words">
@@ -354,7 +358,9 @@ export default function MessagingPage({
         </div>
 
         {/* Chat */}
-        {(address in chatAddresses && chatAddresses[address].length > 0) || (address in unknownChatAddresses && unknownChatAddresses[address].length > 0) ? (
+        {(address in chatAddresses && chatAddresses[address].length > 0) ||
+        (address in unknownChatAddresses &&
+          unknownChatAddresses[address].length > 0) ? (
           <div className="relative flex flex-col justify-end">
             <ChatBox
               messages={messages}

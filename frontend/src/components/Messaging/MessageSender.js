@@ -10,10 +10,10 @@ import { ContractInstance } from "../../hooks";
 import {
   plusIconSVG,
   sendMessagesIconSVG,
-  sendArrowIconSVG,
-  exchangeArrowIconSVG,
+  exchangeIconSVG,
   lendingArrowIconSVG,
   minusIconSVG,
+  transferTokenIconSVG,
 } from "../../assets";
 import "./receivers.css";
 
@@ -28,7 +28,7 @@ const MessageSender = ({
   openP2P,
   setOpenP2P,
 }) => {
-  const graphClient = useTheGraphClient();  
+  const graphClient = useTheGraphClient();
   const [senderMessage, setSenderMessage] = useState("");
 
   const toggleOpenP2P = () => setOpenP2P(!openP2P);
@@ -161,53 +161,39 @@ const MessageSender = ({
         placeholder="Type your message..."
         required
       />
-      <div className="flex flex-col items-center">
+      <div className="flex flex-col items-end relative">
         {openP2P ? (
-          <>
-            <div className="flex flex-col gap-2 p-2 text-center bg-[#333333] drop-shadow-lg rounded-t-[50px]">
-              <button
-                className="hover:opacity-50"
-                onClick={() => {
-                  toggleOpenSendModal();
-                  toggleOpenP2P();
-                }}
-              >
-                <img
-                  className="bg-white h-10 rounded-[30px]"
-                  src={sendArrowIconSVG}
-                  alt=""
-                ></img>
-              </button>
-              <button
-                className="hover:opacity-50"
-                onClick={() => {
-                  toggleOpenNFTOfferModal();
-                  toggleOpenP2P();
-                }}
-              >
-                <img
-                  className="bg-white h-10 rounded-[30px]"
-                  src={exchangeArrowIconSVG}
-                  alt=""
-                ></img>
-              </button>
-              <button className="hover:opacity-50">
-                <img
-                  className="bg-white h-10 rounded-[30px]"
-                  src={lendingArrowIconSVG}
-                  alt=""
-                ></img>
-              </button>
-            </div>
-          </>
+          <div className="absolute flex flex-col bottom-[70px] w-[200px] rounded-[10px] border border-[#eeeeee] z-10">
+            <button
+              className="flex flex-row items-center gap-2 p-3 rounded-t-[10px] hover:bg-[#eeeeee]"
+              onClick={() => {
+                toggleOpenSendModal();
+                toggleOpenP2P();
+              }}
+            >
+              <img className="h-[25px]" src={transferTokenIconSVG} alt=""></img>
+              <code>Send a token</code>
+            </button>
+            <button
+              className="flex flex-row items-center gap-2 p-3 hover:bg-[#eeeeee]"
+              onClick={() => {
+                toggleOpenNFTOfferModal();
+                toggleOpenP2P();
+              }}
+            >
+              <img src={exchangeIconSVG} alt=""></img>
+              <code>Make NFT offer</code>
+            </button>
+            <button className="flex flex-row items-center gap-2 p-3 rounded-b-[10px] hover:bg-[#eeeeee]">
+              <img className="h-[25px]" src={lendingArrowIconSVG} alt=""></img>
+              <code>Offer lending</code>
+            </button>
+          </div>
         ) : (
           <></>
         )}
         <button
-          className={
-            "flex flex-row justify-center items-center bg-[#333333] rounded-[50px] hover:bg-[#555555] w-[56px] h-[56px]" +
-            (openP2P ? " rounded-t-[0px]" : "")
-          }
+          className="flex flex-row justify-center items-center bg-[#333333] rounded-[50px] hover:bg-[#999999] w-[56px] h-[56px]"
           onClick={() => toggleOpenP2P()}
         >
           <img

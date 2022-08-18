@@ -24,17 +24,29 @@ export default function App() {
   const [openModalConnect, setOpenModalConnect] = useState(false);
   const [openNewChatModal, setOpenNewChatModal] = useState(false);
   const [newChatAddress, setNewChatAddress] = useState("");
-  const [activeReceiverAddress, setActiveReceiver] = useState(BURNER_ADDRESS);
+  const [activeReceiverAddress, setActiveReceiver] = useState(
+    Boolean(JSON.parse(localStorage.getItem("chats"))) &&
+      address in JSON.parse(localStorage.getItem("chats"))
+      ? JSON.parse(localStorage.getItem("chats"))[address][0]
+      : BURNER_ADDRESS
+  );
   const [broadcasting, setBroadcasting] = useState(false);
   const [messagesState, setMessagesState] = useState({});
   const [chatAddresses, setChatAddresses] = useState(
-    JSON.parse(localStorage.getItem("chats")) || {}
+    Boolean(JSON.parse(localStorage.getItem("chats")))
+      ? JSON.parse(localStorage.getItem("chats"))
+      : {}
   );
   const [activeIndex, setActiveIndex] = useState(0);
   const [communicationAddress, setCommunicationAddress] = useState(
     Boolean(JSON.parse(localStorage.getItem("public-communication-address"))) &&
       address in
-        JSON.parse(localStorage.getItem("public-communication-address"))
+        JSON.parse(localStorage.getItem("public-communication-address")) &&
+      Boolean(
+        JSON.parse(localStorage.getItem("public-communication-address"))[
+          address
+        ][0]
+      )
       ? JSON.parse(localStorage.getItem("public-communication-address"))[
           address
         ]
@@ -71,8 +83,17 @@ export default function App() {
     onConnect() {
       setConnectedWallet(true);
       setOpenModalConnect(false);
-      setActiveReceiver(JSON.parse(localStorage.getItem("chats"))[address][0] || "");
-      setChatAddresses(JSON.parse(localStorage.getItem("chats"))|| []);
+      setActiveReceiver(
+        Boolean(JSON.parse(localStorage.getItem("chats"))) &&
+          address in JSON.parse(localStorage.getItem("chats"))
+          ? JSON.parse(localStorage.getItem("chats"))[address][0]
+          : BURNER_ADDRESS
+      );
+      setChatAddresses(
+        Boolean(JSON.parse(localStorage.getItem("chats")))
+          ? JSON.parse(localStorage.getItem("chats"))
+          : {}
+      );
     },
   });
 

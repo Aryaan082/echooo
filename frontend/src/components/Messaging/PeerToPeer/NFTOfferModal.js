@@ -184,7 +184,7 @@ export default function NFTOfferModal({
           <code className="text-2xl">Make NFT offer.</code>
           <div className="flex flex-row gap-[1px]">
             <button
-              className="bg-[#333333] text-white p-1 hover:bg-[#555555]"
+              className="bg-[#333333] text-white p-1 hover:bg-[#555555] rounded-l-[8px]"
               onClick={() => mintNFT(address)}
             >
               Get NFT
@@ -196,7 +196,7 @@ export default function NFTOfferModal({
               Get WETH
             </button>
             <button
-              className="bg-[#333333] text-white p-1 hover:bg-[#555555]"
+              className="bg-[#333333] text-white p-1 hover:bg-[#555555] rounded-r-[8px]"
               onClick={() => mintNFT(activeReceiverAddress)}
             >
               Give NFT
@@ -226,6 +226,7 @@ export default function NFTOfferModal({
             </div>
             <div className="flex flex-col gap-2 overflow-y-auto max-h-[22vh]">
               {NFTsOwned.map((NFT, index) => {
+                console.log(NFT);
                 if (Boolean(NFTFilter)) {
                   if (
                     NFT.name
@@ -233,7 +234,12 @@ export default function NFTOfferModal({
                       .includes(NFTFilter.toLocaleLowerCase()) ||
                     NFT.token_address
                       .toLocaleLowerCase()
-                      .includes(NFTFilter.toLocaleLowerCase())
+                      .includes(NFTFilter.toLocaleLowerCase()) ||
+                    (
+                      NFT.name.toLocaleLowerCase() +
+                      " #" +
+                      NFT.token_id.toLocaleLowerCase()
+                    ).includes(NFTFilter.toLocaleLowerCase())
                   ) {
                     return (
                       <button
