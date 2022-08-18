@@ -57,10 +57,11 @@ export default function NFTOfferModal({
     getNFTInfo();
   }, [openModal]);
 
+  // TODO: add to config folder
   const getNFTInfo = async () => {
     await Moralis.start({
       apiKey:
-        "CvRZsrHPOZe7da1adyC6G2GMqDrLMXxKOBNCilBhcTtFm4i0gVmtvRaprFGMZOz0",
+        process.env.MORALIS_API_KEY,
     });
 
     let ownedNFTs = await Moralis.EvmApi.account.getNFTs({
@@ -92,6 +93,7 @@ export default function NFTOfferModal({
 
   const increaseAllowance = async () => {
     // _operator is NFT exchange contract
+    // TODO: don't hardcode this
     const _operator = "0x6ef0d67Ca702fAE10E133c885df41F43c3a56136";
     console.log(
       ethers.BigNumber.from(NFTPrice)

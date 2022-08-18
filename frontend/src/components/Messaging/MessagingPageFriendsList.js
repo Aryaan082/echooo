@@ -9,6 +9,7 @@ import {
   plusIconBlackSVG,
 } from "../../assets";
 
+// TODO: Make separate React components
 const EmptyFriendsList = () => {
   return (
     <div className="flex flex-col justify-center text-center border-[#333333] border-opacity-10">

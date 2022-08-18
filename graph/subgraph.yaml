@@ -6,7 +6,7 @@ dataSources:
     name: Echo
     network: mumbai
     source:
-      address: "0x916AbE4ee97D6288eE7A8F24857C7e20a4dfe621"
+      address: "0x5122f8a3f18d3ECa05aD26890647948FA319b633"
       abi: Echo
       startBlock: 27561980
     mapping:
@@ -22,6 +22,6 @@ dataSources:
       eventHandlers:
         - event: IdentityEvent(string)
           handler: handleIdentityEvent
-        - event: MessageEvent(uint256,indexed address,string,string)
+        - event: MessageEvent(indexed address,indexed address,uint256,string,string)
           handler: handleMessageEvent
       file: ./src/mapping.ts
