@@ -4,7 +4,7 @@ import { avalancheIconSVG, ethereumIconSVG, polygonIconSVG } from "../assets";
 
 export const CONTRACT_META_DATA = {
   43113: {
-    contractAddress: "0x197B537b91Be74d60c964Cda6f0B277516340B5d",
+    contractAddress: "0x81B9DE4383571a209cB4290D98716e8Cf4eF86Fe",
     logo: avalancheIconSVG,
     name: "Avalanche",
     theGraphAPI: "https://api.thegraph.com/subgraphs/name/mtwichan/echofuji",
@@ -13,7 +13,7 @@ export const CONTRACT_META_DATA = {
     NFTAddress: "0xd1f246258155d114f9B7C369A9d32eb0feA17aE5",
   },
   80001: {
-    contractAddress: "0x916AbE4ee97D6288eE7A8F24857C7e20a4dfe621",
+    contractAddress: "0x5122f8a3f18d3ECa05aD26890647948FA319b633",
     logo: polygonIconSVG,
     name: "Polygon",
     theGraphAPI: "https://api.thegraph.com/subgraphs/name/mtwichan/echo",
