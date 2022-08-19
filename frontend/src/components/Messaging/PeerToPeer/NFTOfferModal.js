@@ -1,3 +1,4 @@
+// import * as dotenv from "dotenv";
 import Modal from "react-modal";
 import { ethers } from "ethers";
 import React, { useEffect, useState } from "react";
@@ -18,6 +19,7 @@ import TestERC721Token from "../../../contracts/TestERC721Token.json";
 
 import "./peerToPeer.css";
 
+// dotenv.config();
 const modalStyles = {
   content: {
     top: "50%",
@@ -52,7 +54,7 @@ export default function NFTOfferModal({
   const handleNFTPriceChange = (e) => setNFTPrice(e.target.value);
 
   const contracts = ContractInstance();
-
+  console.log("moralis api key >>>", process.env.REACT_APP_MORALIS_API_KEY)
   useEffect(() => {
     getNFTInfo();
   }, [openModal]);
@@ -61,7 +63,7 @@ export default function NFTOfferModal({
   const getNFTInfo = async () => {
     await Moralis.start({
       apiKey:
-        process.env.MORALIS_API_KEY,
+        process.env.REACT_APP_MORALIS_API_KEY,
     });
 
     let ownedNFTs = await Moralis.EvmApi.account.getNFTs({
