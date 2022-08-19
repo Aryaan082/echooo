@@ -1,5 +1,6 @@
 // Instructions: https://github.com/ChainSafe/web3.js
 const webpack = require('webpack');
+const Dotenv = require('dotenv-webpack');
 
 module.exports = function override(config) {
     const fallback = config.resolve.fallback || {};
@@ -20,8 +21,12 @@ module.exports = function override(config) {
     config.plugins = (config.plugins || []).concat([
         new webpack.ProvidePlugin({
             process: 'process/browser',
-            Buffer: ['buffer', 'Buffer']
-        })
+            Buffer: ['buffer', 'Buffer'],            
+        }),
+        new Dotenv({
+            path: '../.env', // Path to .env file (this is the default)
+            safe: true, // load .env.example (defaults to "false" which does not use dotenv-safe)
+          })
     ])    
     return config;
 }
