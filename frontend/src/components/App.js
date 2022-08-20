@@ -15,8 +15,6 @@ import { gradientOneSVG, gradientTwoSVG, echoooLogoSVG } from "../assets/";
 
 export default function App() {
   const { chain } = useNetwork();
-  const { chains, error, isLoading, pendingChainId, switchNetwork } =
-    useSwitchNetwork();
   const { address } = useAccount();
 
   const [connectedWallet, setConnectedWallet] = useState(false);

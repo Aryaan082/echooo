@@ -2,7 +2,7 @@ import Modal from "react-modal";
 import { ethers } from "ethers";
 import React, { useEffect, useState } from "react";
 import EthCrypto from "eth-crypto";
-import { useAccount, useNetwork } from "wagmi";
+import { useAccount, useBalance, useNetwork, useSigner } from "wagmi";
 import { Oval } from "react-loader-spinner";
 
 import { CONTRACT_META_DATA } from "../../../constants";
@@ -29,10 +29,15 @@ export default function TokenTransfer({
 }) {
   const { address } = useAccount();
   const { chain } = useNetwork();
+  const { data } = useBalance({ addressOrName: address });
+  const { data: signer } = useSigner();
 
   const [sendBaseToken, setSendBaseToken] = useState(true);
   const [amtOfToken, setAmtOfToken] = useState("");
+  const [tokenBalance, setTokenBalance] = useState(0);
   const [openTokenTypeDropdown, setOpenTokenTypeDropdown] = useState(false);
+  const [isApproved, setApproved] = useState(false);
+  const [isLoading, setLoading] = useState(false);
 
   const toggleOpenTokenTypeDropdown = () =>
     setOpenTokenTypeDropdown(!openTokenTypeDropdown);
@@ -42,94 +47,204 @@ export default function TokenTransfer({
 
   const contracts = ContractInstance();
 
-  const getWETH = async () => {
-    const tx = await contracts.contractWETH.getWETH();
+  useEffect(() => {
+    async function checkApproval() {
+      if (
+        (
+          await contracts.contractUSDC.allowance(
+            address,
+            CONTRACT_META_DATA[chain.id].contractTokenTransfer
+          )
+        ).gt(ethers.BigNumber.from(amtOfToken))
+      ) {
+        setApproved(true);
+      }
+    }
+
+    checkApproval();
+  }, [amtOfToken, sendBaseToken]);
+
+  useEffect(() => {
+    async function getTokenBalance() {
+      if (sendBaseToken && data) {
+        setTokenBalance(data.formatted);
+      } else {
+        setTokenBalance(
+          ethers.utils.formatEther(
+            (await contracts.contractUSDC.balanceOf(address)).toString()
+          )
+        );
+      }
+    }
+    getTokenBalance();
+  }, [openModal, sendBaseToken]);
+
+  const getUSDC = async () => {
+    const tx = await contracts.contractUSDC.mint(
+      address,
+      ethers.utils.parseEther("1000")
+    );
   };
 
   const sendToken = async () => {
-    console.log("HI");
+    setLoading(true);
+    let tx;
+    if (sendBaseToken) {
+      tx = await contracts.contractTokenTransfer
+        .sendEther(activeReceiverAddress, {
+          value: ethers.utils.parseEther(amtOfToken),
+        })
+        .catch(() => setLoading(false));
+      await tx.wait().then(() => {
+        setLoading(false);
+        toggleOpenModal();
+      });
+    } else {
+      if (!isApproved) {
+        tx = await contracts.contractUSDC
+          .approve(
+            CONTRACT_META_DATA[chain.id].contractTokenTransfer,
+            ethers.constants.MaxUint256
+          )
+          .catch(() => setLoading(false));
+        await tx.wait().then(() => {
+          setLoading(false);
+          setApproved(true);
+        });
+      } else {
+        tx = await contracts.contractTokenTransfer
+          .sendERC20Token(
+            CONTRACT_META_DATA[chain.id].contractUSDC,
+            activeReceiverAddress,
+            ethers.utils.parseEther(amtOfToken)
+          )
+          .catch(() => setLoading(false));
+        await tx.wait().then(() => {
+          setLoading(false);
+          toggleOpenModal();
+        });
+      }
+    }
   };
 
   return (
     <Modal
       isOpen={openModal}
-      onRequestClose={toggleOpenModal}
+      onRequestClose={() => {
+        toggleOpenModal();
+        toggleOpenTokenTypeDropdown();
+      }}
       style={modalStyles}
     >
-      <div className="flex flex-col py-4 px-4 gap-4">
-        <div className="flex flex-row justify-between items-center">
-          <code className="text-2xl">Send tokens.</code>
-          <button
-            className="bg-[#333333] text-white p-1 hover:bg-[#555555] rounded-[8px]"
-            onClick={getWETH}
-          >
-            Get WETH
-          </button>
-        </div>
-        <div className="flex flex-row gap-3">
-          <div className="flex flex-row">
-            <button
-              className="flex justify-center items-center rounded-l-[8px] border border-[#f2f2f2] px-3 gap-2"
-              onClick={toggleOpenTokenTypeDropdown}
-            >
-              {sendBaseToken ? (
-                <>
-                  <img
-                    className="h-6"
-                    src={CONTRACT_META_DATA[chain.id].logo}
-                    alt=""
-                  ></img>
-                  {CONTRACT_META_DATA[chain.id].baseToken}
-                </>
-              ) : (
-                <>
-                  <img className="h-6" src={usdcIconSVG} alt=""></img>USDC
-                </>
-              )}
-              <img src={dropdownIconSVG} alt=""></img>
-            </button>
-            <input
-              placeholder="How much would you like to send"
-              onChange={handleTokenChange}
-              className="code w-[450px] px-4 py-3 rounded-r-[8px] bg-[#f2f2f2]"
-            ></input>
+      {isLoading ? (
+        <div className="flex flex-col w-[384px] items-center justify-center gap-[20px]">
+          <Oval
+            ariaLabel="loading-indicator"
+            height={40}
+            width={40}
+            strokeWidth={3}
+            strokeWidthSecondary={3}
+            color="black"
+            secondaryColor="white"
+          />
+          <div className="text-xl font-medium">
+            {sendBaseToken || isApproved ? "Sending" : "Approving"} {amtOfToken}{" "}
+            {sendBaseToken ? CONTRACT_META_DATA[chain.id].baseToken : "USDC"} to{" "}
+            {`${activeReceiverAddress.substring(
+              0,
+              4
+            )}...${activeReceiverAddress.substring(38)}`}
           </div>
-          <button
-            className="flex flex-row justify-center text-lg items-center gap-[15px] px-5 py-3 bg-[#333333] text-white font-bold rounded-[8px] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={sendToken}
-          >
-            Send
-          </button>
         </div>
-        {openTokenTypeDropdown ? (
-          <div className="flex flex-col place-self-start">
+      ) : (
+        <div className="flex flex-col py-4 px-4 gap-4">
+          <div className="flex flex-row justify-between items-center">
+            <code className="text-2xl">Send tokens.</code>
             <button
-              className="flex justify-center items-center border border-[#f2f2f2] p-2 gap-2 mt-[-16px] ml-[10px]"
-              onClick={() => {
-                toggleSendBaseToken();
-                toggleOpenTokenTypeDropdown();
-              }}
+              className="bg-[#333333] text-white p-1 hover:bg-[#555555] rounded-[8px]"
+              onClick={getUSDC}
             >
-              {sendBaseToken ? (
-                <>
-                  <img className="h-6" src={usdcIconSVG} alt=""></img>USDC
-                </>
-              ) : (
-                <>
-                  <img
-                    className="h-6"
-                    src={CONTRACT_META_DATA[chain.id].logo}
-                    alt=""
-                  ></img>
-                  {CONTRACT_META_DATA[chain.id].baseToken}
-                </>
-              )}
+              Get USDC
             </button>
           </div>
-        ) : (
-          <></>
-        )}
-      </div>
+          <div className="flex flex-row gap-3">
+            <div className="flex flex-row">
+              <button
+                className={
+                  "flex justify-center items-center rounded-l-[8px] border border-[#f2f2f2] w-[150px] gap-2 hover:bg-[#eeeeee] " +
+                  (openTokenTypeDropdown ? "rounded-bl-[0px]" : "")
+                }
+                onClick={toggleOpenTokenTypeDropdown}
+              >
+                {sendBaseToken ? (
+                  <>
+                    <img
+                      className="h-6"
+                      src={
+                        chain.id in CONTRACT_META_DATA
+                          ? CONTRACT_META_DATA[chain.id].logo
+                          : ""
+                      }
+                      alt=""
+                    ></img>
+                    {chain.id in CONTRACT_META_DATA
+                      ? CONTRACT_META_DATA[chain.id].baseToken
+                      : ""}
+                  </>
+                ) : (
+                  <>
+                    <img className="h-6" src={usdcIconSVG} alt=""></img>USDC
+                  </>
+                )}
+                <img src={dropdownIconSVG} alt=""></img>
+              </button>
+              <input
+                placeholder="How much would you like to send"
+                onChange={handleTokenChange}
+                className="code w-[450px] px-4 py-3 rounded-r-[8px] bg-[#f2f2f2]"
+              ></input>
+            </div>
+            <button
+              className="flex flex-row justify-center text-lg items-center gap-[15px] px-5 py-3 bg-[#333333] text-white font-bold rounded-[8px] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={sendToken}
+              disabled={!amtOfToken}
+            >
+              {sendBaseToken || isApproved ? "Send" : "Approve"}
+            </button>
+          </div>
+          {openTokenTypeDropdown ? (
+            <div className="flex flex-col place-self-start">
+              <button
+                className="flex justify-center items-center rounded-b-[8px] border border-[#f2f2f2] w-[150px] py-[13px] mt-[-17px] gap-2 hover:bg-[#eeeeee]"
+                onClick={() => {
+                  toggleSendBaseToken();
+                  toggleOpenTokenTypeDropdown();
+                }}
+              >
+                {sendBaseToken ? (
+                  <>
+                    <img className="h-6" src={usdcIconSVG} alt=""></img>USDC
+                  </>
+                ) : (
+                  <>
+                    <img
+                      className="h-6"
+                      src={CONTRACT_META_DATA[chain.id].logo}
+                      alt=""
+                    ></img>
+                    {CONTRACT_META_DATA[chain.id].baseToken}
+                  </>
+                )}
+              </button>
+            </div>
+          ) : (
+            <></>
+          )}
+          <div className="font-medium">
+            Balance: {parseFloat(tokenBalance).toFixed(2)}
+          </div>
+        </div>
+      )}
     </Modal>
   );
 }

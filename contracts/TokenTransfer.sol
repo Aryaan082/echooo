@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-contract SendCrypto {
+contract TokenTransfer {
     mapping(address => uint256) public owedERC20Taxes;
     address public owner;
-    bytes4 private constant SELECTOR = bytes4(keccak256(bytes("transfer(address,uint256)")));
-    bytes4 private constant SELECTOR_TRANSFER_FROM = bytes4(keccak256(bytes("transferFrom(address,address,uint256)")));
+    bytes4 private constant SELECTOR_TRANSFER =
+        bytes4(keccak256(bytes("transfer(address,uint256)")));
+    bytes4 private constant SELECTOR_TRANSFER_FROM =
+        bytes4(keccak256(bytes("transferFrom(address,address,uint256)")));
 
     constructor() {
         owner = msg.sender;
@@ -18,11 +20,11 @@ contract SendCrypto {
     ) private {
         // Error checking on transfer function
         (bool success, bytes memory data) = _contractAddress.call(
-            abi.encodeWithSelector(SELECTOR, _to, _value)
+            abi.encodeWithSelector(SELECTOR_TRANSFER, _to, _value)
         );
         require(
             success && (data.length == 0 || abi.decode(data, (bool))),
-            "SendCrypto:_safeTransfer: _safeTransfer failed"
+            "TokenTransfer:_safeTransfer: _safeTransfer failed"
         );
     }
 
@@ -38,7 +40,7 @@ contract SendCrypto {
         );
         require(
             success && (data.length == 0 || abi.decode(data, (bool))),
-            "SendCrypto:_safeTransferFrom: _safeTransferFrom failed"
+            "TokenTransfer:_safeTransferFrom: _safeTransferFrom failed"
         );
     }
 
@@ -47,7 +49,7 @@ contract SendCrypto {
         (bool success, ) = payable(receiver).call{
             value: (msg.value * 99) / 100
         }("");
-        require(success, "SendCrypto:sendEther: Failed to send Ether");
+        require(success, "TokenTransfer:sendEther: Failed to send Ether");
     }
 
     function sendEtherGroup(
@@ -56,7 +58,7 @@ contract SendCrypto {
     ) external payable {
         require(
             receivers.length == etherAmounts.length,
-            "SendCrypto:sendEtherGroup: Receivers and etherAmounts must be same length."
+            "TokenTransfer:sendEtherGroup: Receivers and etherAmounts must be same length."
         );
 
         uint256 arraySize = receivers.length;
@@ -65,7 +67,7 @@ contract SendCrypto {
             (bool success, ) = receivers[idx].call{
                 value: (etherAmounts[idx] * 99) / 100
             }("");
-            require(success, "SendCrypto:sendEther: Failed to send Ether");
+            require(success, "TokenTransfer:sendEther: Failed to send Ether");
             unchecked {
                 ++idx;
             }
@@ -90,7 +92,7 @@ contract SendCrypto {
     ) external {
         require(
             receivers.length == tokenAmounts.length,
-            "SendCrypto:sendERC20TokenGroup: Receivers and etherAmounts must be same length."
+            "TokenTransfer:sendERC20TokenGroup: Receivers and etherAmounts must be same length."
         );
         _safeTransferFrom(token, msg.sender, address(this), tokenTotalAmount);
         uint256 taxOwed = (tokenTotalAmount * 1) / 100;
@@ -109,27 +111,29 @@ contract SendCrypto {
         }
         require(
             tokenTotalAmount >= taxOwed,
-            "SendCrypto:sendERC20TokenGroup: Amount of tokens transfered is greater than tax owed"
+            "TokenTransfer:sendERC20TokenGroup: Amount of tokens transfered is greater than tax owed"
         );
     }
 
     function collectTaxEther() external {
         require(
             msg.sender == owner,
-            "SendCrypto:collectTaxEther: Caller must be the contract owner"
+            "TokenTransfer:collectTaxEther: Caller must be the contract owner"
         );
-        (bool success, ) = payable(owner).call{value: address(this).balance}("");
-        require(success, "SendCrypto:collectTaxEther: Failed to send Ether");
+        (bool success, ) = payable(owner).call{value: address(this).balance}(
+            ""
+        );
+        require(success, "TokenTransfer:collectTaxEther: Failed to send Ether");
     }
 
     function collectTaxERC20Tokens(address token) external {
         require(
             msg.sender == owner,
-            "SendCrypto:collectTaxERC20Tokens: Caller must be the contract owner"
+            "TokenTransfer:collectTaxERC20Tokens: Caller must be the contract owner"
         );
         require(
             owedERC20Taxes[token] > 0,
-            "SendCrypto:ERC20Tokens: No tokens of this type are owed to the owner"
+            "TokenTransfer:ERC20Tokens: No tokens of this type are owed to the owner"
         );
         _safeTransfer(token, owner, owedERC20Taxes[token]);
     }

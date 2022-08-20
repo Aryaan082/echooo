@@ -1,9 +1,11 @@
-import { useState } from "react";
-import { useAccount, useDisconnect, useNetwork, useSwitchNetwork } from "wagmi";
+import { useEffect, useState } from "react";
+import { useAccount, useNetwork } from "wagmi";
 import { useTheGraphClient } from "../../config";
 import {
   GQL_QUERY_GET_COMMUNICATION_ADDRESS,
   GQL_QUERY_GET_UNKNOWN_SENDERS,
+  CONTRACT_META_DATA,
+  BURNER_ADDRESS,
 } from "../../constants";
 
 import {
@@ -44,7 +46,7 @@ const FriendsListTab = ({
       <button onClick={handleShowAddressList}>
         <code
           className={
-            "text-lg font-semibold " +
+            "flex flex-row item text-lg font-semibold " +
             (showTrustedAddressList ? "opacity-50" : "")
           }
         >
@@ -67,7 +69,25 @@ export default function FriendsList({
   setShowTrustedAddressList,
 }) {
   const { address } = useAccount();
-  const graphClient = useTheGraphClient();
+  const { chain } = useNetwork();
+
+  useEffect(() => {
+    if (
+      address in unknownChatAddresses &&
+      unknownChatAddresses[address].length > 0
+    ) {
+      setActiveIndex(0);
+      setActiveReceiver(
+        Boolean(unknownChatAddresses) && address in unknownChatAddresses
+          ? unknownChatAddresses[address][0]
+          : BURNER_ADDRESS
+      );
+    }
+  }, [showTrustedAddressList]);
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const graphClient = chain.id in CONTRACT_META_DATA ? useTheGraphClient() : "";
+
   const handleActiveReceiver = (e, index, address) => {
     setActiveIndex(index);
     setActiveReceiver(address);
@@ -108,7 +128,7 @@ export default function FriendsList({
       unknownAddresses[dataMessagesParsed[idx].from] = true;
     }
 
-    // keep in this format to stay consistent with chat addresses + cacheing potential
+    // keep in this format to stay consistent with chat addresses + caching potential
     const newUnknownChatAddresses = Object.assign(unknownChatAddresses, {
       [address]: Object.keys(unknownAddresses),
     });
@@ -126,32 +146,27 @@ export default function FriendsList({
 
     if (index >= 0) {
       setChatAddresses((current) => {
-        console.log("handleAddAddress:current >>>", current);
         const chatAddressesTemp = Object.assign({}, current);
 
         if (
-          Object.keys(unknownAddressesTemp).length !== 0 &&
-          address in unknownAddressesTemp
+          Object.keys(chatAddresses).length !== 0 &&
+          address in chatAddresses
         ) {
           chatAddressesTemp[address].push(friendAddress);
-          console.log(
-            "handleAddAddress:chatAddressesTemp after >>>",
-            chatAddressesTemp
-          );
           unknownAddressesTemp[address] = unknownAddressesTemp[address].filter(
             (item) => item !== friendAddress
           );
-          // unknownAddressesTemp[address].splice(index, 1);
+
           setUnknownChatAddresses(unknownAddressesTemp);
+        } else {
+          chatAddressesTemp[address] = [friendAddress];
         }
-        // setActiveReceiver(chatAddressesTemp[chatAddressesTemp.length]);
-        // setActiveIndex(0);
 
         return chatAddressesTemp;
       });
+
+      setShowTrustedAddressList(true);
     }
-    setShowTrustedAddressList(true);
-    console.log(chatAddresses[address]);
   };
 
   const handleRemoveAddress = (index, friendAddress) => {

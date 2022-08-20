@@ -1,8 +1,10 @@
 import { useContract, useNetwork, useSigner } from "wagmi";
 
 import EchoJSON from "../contracts/Echo.json";
+import TokenTransferJSON from "../contracts/TokenTransfer.json";
 import WETHJSON from "../contracts/WETH.json";
-import TestERC721Token from "../contracts/TestERC721Token.json";
+import ERC20JSON from "../contracts/ERC20.json";
+import BAYCJSON from "../contracts/BoredApeYachtClubTest.json";
 
 import { CONTRACT_META_DATA } from "../constants";
 
@@ -14,31 +16,55 @@ const ContractInstance = () => {
   const contractEcho = useContract({
     addressOrName:
       chain.id in CONTRACT_META_DATA
-        ? CONTRACT_META_DATA[chain.id].contractAddress
+        ? CONTRACT_META_DATA[chain.id].contractEcho
         : "",
     contractInterface: EchoJSON.abi,
+    signerOrProvider: signer,
+  });
+
+  const contractTokenTransfer = useContract({
+    addressOrName:
+      chain.id in CONTRACT_META_DATA
+        ? CONTRACT_META_DATA[chain.id].contractTokenTransfer
+        : "",
+    contractInterface: TokenTransferJSON.abi,
     signerOrProvider: signer,
   });
 
   const contractWETH = useContract({
     addressOrName:
       chain.id in CONTRACT_META_DATA
-        ? CONTRACT_META_DATA[chain.id].WETHAddress
+        ? CONTRACT_META_DATA[chain.id].contractWETH
         : "",
     contractInterface: WETHJSON.abi,
     signerOrProvider: signer,
   });
 
-  const contractNFT = useContract({
+  const contractUSDC = useContract({
     addressOrName:
       chain.id in CONTRACT_META_DATA
-        ? CONTRACT_META_DATA[chain.id].NFTAddress
+        ? CONTRACT_META_DATA[chain.id].contractUSDC
         : "",
-    contractInterface: TestERC721Token.abi,
+    contractInterface: ERC20JSON.abi,
     signerOrProvider: signer,
   });
 
-  return { contractEcho, contractWETH, contractNFT };
+  const contractBAYC = useContract({
+    addressOrName:
+      chain.id in CONTRACT_META_DATA
+        ? CONTRACT_META_DATA[chain.id].contractBAYC
+        : "",
+    contractInterface: BAYCJSON.abi,
+    signerOrProvider: signer,
+  });
+
+  return {
+    contractEcho,
+    contractTokenTransfer,
+    contractWETH,
+    contractUSDC,
+    contractBAYC,
+  };
 };
 
 export default ContractInstance;

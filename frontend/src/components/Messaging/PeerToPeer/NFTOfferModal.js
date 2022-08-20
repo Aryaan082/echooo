@@ -15,8 +15,6 @@ import {
 import { sendMessagesIconSVG, searchIconSVG } from "../../../assets";
 import { ContractInstance } from "../../../hooks";
 
-import TestERC721Token from "../../../contracts/TestERC721Token.json";
-
 import "./peerToPeer.css";
 
 // dotenv.config();
@@ -54,7 +52,7 @@ export default function NFTOfferModal({
   const handleNFTPriceChange = (e) => setNFTPrice(e.target.value);
 
   const contracts = ContractInstance();
-  console.log("moralis api key >>>", process.env.REACT_APP_MORALIS_API_KEY)
+  console.log("moralis api key >>>", process.env.REACT_APP_MORALIS_API_KEY);
   useEffect(() => {
     getNFTInfo();
   }, [openModal]);
@@ -62,8 +60,7 @@ export default function NFTOfferModal({
   // TODO: add to config folder
   const getNFTInfo = async () => {
     await Moralis.start({
-      apiKey:
-        process.env.REACT_APP_MORALIS_API_KEY,
+      apiKey: process.env.REACT_APP_MORALIS_API_KEY,
     });
 
     let ownedNFTs = await Moralis.EvmApi.account.getNFTs({
@@ -86,7 +83,7 @@ export default function NFTOfferModal({
   };
 
   const mintNFT = async (receiver) => {
-    const tx = await contracts.contractNFT.safeMint(receiver);
+    const tx = await contracts.contractBAYC.safeMint(receiver);
   };
 
   const getWETH = async () => {

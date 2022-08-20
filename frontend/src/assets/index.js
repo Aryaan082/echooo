@@ -19,7 +19,6 @@ export { default as polygonIconSVG } from "./imgs/polygon-icon.svg";
 export { default as coinbaseLogoSVG } from "./imgs/coinbase-wallet-logo.svg";
 export { default as walletConnectLogoSVG } from "./imgs/wallet-connect-wallet-logo.svg";
 export { default as exchangeIconSVG } from "./imgs/nft-exchange-icon.svg";
-export { default as lendingArrowIconSVG } from "./imgs/lending-arrow-icon.svg";
 export { default as minusIconSVG } from "./imgs/minus-icon.svg";
 export { default as searchIconSVG } from "./imgs/search-icon.svg";
 export { default as cancelIconSVG } from "./imgs/cancel-icon.svg";
@@ -27,3 +26,4 @@ export { default as addressEllipsePNG } from "./imgs/selected-address-ellipse.pn
 export { default as metamaskLogoPNG } from "./imgs/metamask-wallet-logo.png";
 export { default as plusIconBlackSVG } from "./imgs/plus-icon-black.svg";
 export { default as usdcIconSVG } from "./imgs/usdc-icon.svg";
+export { default as lendingIconSVG } from "./imgs/lending-icon.svg";
