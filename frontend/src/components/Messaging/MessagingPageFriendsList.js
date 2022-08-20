@@ -8,11 +8,7 @@ import {
   BURNER_ADDRESS,
 } from "../../constants";
 
-import {
-  addressEllipsePNG,
-  cancelIconSVG,
-  plusIconBlackSVG,
-} from "../../assets";
+import { addressEllipsePNG, cancelIconSVG } from "../../assets";
 
 // TODO: Make separate React components
 const EmptyFriendsList = () => {
@@ -269,8 +265,8 @@ export default function FriendsList({
                           onClick={() => handleAddAddress(index, friendAddress)}
                         >
                           <img
-                            className="h-6 p-1 hover:bg-[#ffffff] rounded-[50px]"
-                            src={plusIconBlackSVG}
+                            className="rotate-45 h-6 p-1 hover:bg-[#ffffff] rounded-[50px]"
+                            src={cancelIconSVG}
                             alt=""
                           ></img>
                         </button>

@@ -148,7 +148,9 @@ export default function TokenTransfer({
             secondaryColor="white"
           />
           <div className="text-xl font-medium">
-            {sendBaseToken || isApproved ? "Sending" : "Approving"} {amtOfToken}{" "}
+            {sendBaseToken || isApproved
+              ? "Sending " + amtOfToken
+              : "Approving"}{" "}
             {sendBaseToken ? CONTRACT_META_DATA[chain.id].baseToken : "USDC"} to{" "}
             {`${activeReceiverAddress.substring(
               0,

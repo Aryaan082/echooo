@@ -24,6 +24,5 @@ export { default as searchIconSVG } from "./imgs/search-icon.svg";
 export { default as cancelIconSVG } from "./imgs/cancel-icon.svg";
 export { default as addressEllipsePNG } from "./imgs/selected-address-ellipse.png";
 export { default as metamaskLogoPNG } from "./imgs/metamask-wallet-logo.png";
-export { default as plusIconBlackSVG } from "./imgs/plus-icon-black.svg";
 export { default as usdcIconSVG } from "./imgs/usdc-icon.svg";
 export { default as lendingIconSVG } from "./imgs/lending-icon.svg";
