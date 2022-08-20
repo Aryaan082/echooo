@@ -54,7 +54,6 @@ export default function NFTOfferModal({
   const handleNFTPriceChange = (e) => setNFTPrice(e.target.value);
 
   const contracts = ContractInstance();
-  console.log("moralis api key >>>", process.env.REACT_APP_MORALIS_API_KEY)
   useEffect(() => {
     getNFTInfo();
   }, [openModal]);
