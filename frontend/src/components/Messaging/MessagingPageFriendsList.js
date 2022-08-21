@@ -221,17 +221,59 @@ export default function FriendsList({
 
   return (
     <>
-      <>
-        <div className="border-r-[3px] border-[#333333] border-opacity-10 w-[30%] pt-[4vh]">
-          <FriendsListTab
-            handleShowAddressList={handleShowAddressList}
-            showTrustedAddressList={showTrustedAddressList}
-            setShowTrustedAddressList={setShowTrustedAddressList}
-          />
-          <ul className="Receivers">
-            {showTrustedAddressList ? (
-              address in chatAddresses && chatAddresses[address].length > 0 ? (
-                chatAddresses[address].map((friendAddress, index) => {
+      <div className="border-r-[3px] border-[#333333] border-opacity-10 w-[30%] pt-[4vh]">
+        <FriendsListTab
+          handleShowAddressList={handleShowAddressList}
+          showTrustedAddressList={showTrustedAddressList}
+          setShowTrustedAddressList={setShowTrustedAddressList}
+        />
+        <ul className="Receivers">
+          {showTrustedAddressList ? (
+            address in chatAddresses && chatAddresses[address].length > 0 ? (
+              chatAddresses[address].map((friendAddress, index) => {
+                return (
+                  <button
+                    className="w-[80%] flex flex-row justify-between items-center px-4 py-4 font-bold rounded-[50px]"
+                    key={index}
+                    id={index === activeIndex ? "active" : "inactive"}
+                    onClick={(event) =>
+                      handleActiveReceiver(event, index, friendAddress)
+                    }
+                  >
+                    <code className="flex flex-row items-center gap-4 text-lg">
+                      <img
+                        className="h-10 rounded-[30px]"
+                        src={
+                          Boolean(friendsListPFP[index])
+                            ? friendsListPFP[index]
+                            : addressEllipsePNG
+                        }
+                        alt=""
+                      ></img>
+                      {`${friendAddress.substring(
+                        0,
+                        4
+                      )}...${friendAddress.substring(38)}`}
+                    </code>
+                    <button
+                      onClick={() => handleRemoveAddress(index, friendAddress)}
+                    >
+                      <img
+                        className="h-6 p-1 hover:bg-[#ffffff] rounded-[50px]"
+                        src={cancelIconSVG}
+                        alt=""
+                      ></img>
+                    </button>
+                  </button>
+                );
+              })
+            ) : (
+              <EmptyFriendsList />
+            )
+          ) : (
+            <>
+              {unknownChatAddresses[address].length > 0 ? (
+                unknownChatAddresses[address].map((friendAddress, index) => {
                   return (
                     <button
                       className="w-[80%] flex flex-row justify-between items-center px-4 py-4 font-bold rounded-[50px]"
@@ -257,12 +299,10 @@ export default function FriendsList({
                         )}...${friendAddress.substring(38)}`}
                       </code>
                       <button
-                        onClick={() =>
-                          handleRemoveAddress(index, friendAddress)
-                        }
+                        onClick={() => handleAddAddress(index, friendAddress)}
                       >
                         <img
-                          className="h-6 p-1 hover:bg-[#ffffff] rounded-[50px]"
+                          className="rotate-45 h-6 p-1 hover:bg-[#ffffff] rounded-[50px]"
                           src={cancelIconSVG}
                           alt=""
                         ></img>
@@ -272,55 +312,11 @@ export default function FriendsList({
                 })
               ) : (
                 <EmptyFriendsList />
-              )
-            ) : (
-              <>
-                {unknownChatAddresses[address].length > 0 ? (
-                  unknownChatAddresses[address].map((friendAddress, index) => {
-                    return (
-                      <button
-                        className="w-[80%] flex flex-row justify-between items-center px-4 py-4 font-bold rounded-[50px]"
-                        key={index}
-                        id={index === activeIndex ? "active" : "inactive"}
-                        onClick={(event) =>
-                          handleActiveReceiver(event, index, friendAddress)
-                        }
-                      >
-                        <code className="flex flex-row items-center gap-4 text-lg">
-                          <img
-                            className="h-10 rounded-[30px]"
-                            src={
-                              Boolean(friendsListPFP[index])
-                                ? friendsListPFP[index]
-                                : addressEllipsePNG
-                            }
-                            alt=""
-                          ></img>
-                          {`${friendAddress.substring(
-                            0,
-                            4
-                          )}...${friendAddress.substring(38)}`}
-                        </code>
-                        <button
-                          onClick={() => handleAddAddress(index, friendAddress)}
-                        >
-                          <img
-                            className="rotate-45 h-6 p-1 hover:bg-[#ffffff] rounded-[50px]"
-                            src={cancelIconSVG}
-                            alt=""
-                          ></img>
-                        </button>
-                      </button>
-                    );
-                  })
-                ) : (
-                  <EmptyFriendsList />
-                )}
-              </>
-            )}
-          </ul>
-        </div>
-      </>
+              )}
+            </>
+          )}
+        </ul>
+      </div>
     </>
   );
 }

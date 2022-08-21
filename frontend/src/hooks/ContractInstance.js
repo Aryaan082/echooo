@@ -3,6 +3,7 @@ import { useContract, useNetwork, useSigner } from "wagmi";
 import EchoJSON from "../contracts/Echo.json";
 import TokenTransferJSON from "../contracts/TokenTransfer.json";
 import WETHJSON from "../contracts/WETH.json";
+import USDCJSON from "../contracts/USDC.json";
 import ERC20JSON from "../contracts/ERC20.json";
 import BAYCJSON from "../contracts/BoredApeYachtClubTest.json";
 import PFPJSON from "../contracts/ProfilePicture.json";
@@ -46,7 +47,7 @@ const ContractInstance = () => {
       chain.id in CONTRACT_META_DATA
         ? CONTRACT_META_DATA[chain.id].contractUSDC
         : "",
-    contractInterface: ERC20JSON.abi,
+    contractInterface: USDCJSON.abi,
     signerOrProvider: signer,
   });
 
