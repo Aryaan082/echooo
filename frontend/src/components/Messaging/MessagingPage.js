@@ -383,7 +383,7 @@ export default function MessagingPage({
                   >
                     {Boolean(profilePicture) ? (
                       <img
-                        className="rounded-[30px] h-7"
+                        className="rounded-[30px] h-[54px]"
                         src={profilePicture}
                         alt=""
                       ></img>
