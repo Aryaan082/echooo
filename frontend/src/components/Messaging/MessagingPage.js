@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useAccount, useDisconnect, useNetwork, useSwitchNetwork } from "wagmi";
 import EthCrypto from "eth-crypto";
-import { useTheGraphClient } from "../../config";
+import moment from "moment";
 
 import FriendsList from "./MessagingPageFriendsList";
 import MessageSender from "./MessageSender";
 import ChatBox from "./ChatBox";
+
+import { useTheGraphClient } from "../../config";
 import {
   CONTRACT_META_DATA,
   BURNER_ADDRESS,
@@ -13,7 +15,6 @@ import {
   GQL_QUERY_MESSAGE_LOG_INTERVAL,
   GQL_QUERY_MESSAGE_LOG_INIT,
 } from "../../constants";
-
 import {
   logoutIconSVG,
   textBubbleSVG,
@@ -23,6 +24,7 @@ import {
   changeKeysIconSVG,
   profileIconSVG,
 } from "../../assets";
+import { ContractInstance } from "../../hooks";
 import "./receivers.css";
 
 const intervalGetMessages = async (
@@ -106,6 +108,7 @@ export default function MessagingPage({
   toggleOpenModalChainSelect,
   toggleOpenCommAddressModal,
   toggleOpenNewChatModal,
+  toggleOpenProfileModal,
   toggleOpenNFTOfferModal,
   toggleOpenSendModal,
   chatAddresses,
@@ -127,15 +130,26 @@ export default function MessagingPage({
   const [messages, setMessageLog] = useState({});
   const [openP2P, setOpenP2P] = useState(false);
   const [showTrustedAddressList, setShowTrustedAddressList] = useState(true);
+  const [profilePicture, setProfilePicture] = useState("");
 
   const messagesRef = useRef(messages);
+
+  const contracts = ContractInstance();
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const graphClient = chain.id in CONTRACT_META_DATA ? useTheGraphClient() : "";
 
   useEffect(() => {
     messagesRef.current = messages;
+    async function placeholder() {
+      setProfilePicture(await getPFP(address));
+    }
+    placeholder();
   });
+
+  const getPFP = async (userAddress) => {
+    return await contracts.contractPFP.getProfilePicture(userAddress);
+  };
 
   const intervalCallback = useCallback(
     (
@@ -198,7 +212,33 @@ export default function MessagingPage({
         const decryptedMessage = await EthCrypto.decryptWithPrivateKey(
           senderPrivateKey,
           EthCrypto.cipher.parse(message)
-        );
+        ).catch((err) => {
+          console.log("Sending Message Error:", err);
+          // TODO: make message indicative of error by changing color
+          let newReceiverMessageLog = [
+            {
+              from: address,
+              message: "Error: Encryption error. Change keys.",
+              timestamp: `${moment().unix()}`,
+            },
+          ];
+
+          if (
+            Object.keys(messages).length !== 0 ||
+            activeReceiverAddress in messages
+          ) {
+            newReceiverMessageLog = [
+              ...messages[activeReceiverAddress],
+              ...newReceiverMessageLog,
+            ];
+          } else {
+            newReceiverMessageLog = [newReceiverMessageLog];
+          }
+
+          const newMessageLog = messages;
+          newMessageLog[activeReceiverAddress] = newReceiverMessageLog;
+          setMessageLog(newMessageLog);
+        });
         messageLog[idx].message = decryptedMessage;
 
         // console.log(`Decrypted message ${idx} >>>`, decryptedMessage);
@@ -335,8 +375,21 @@ export default function MessagingPage({
                     New chat
                     <img src={textBubbleSVG} alt=""></img>
                   </button>
-                  <button className="flex justify-center items-center w-[54px] bg-white rounded-[30px]">
-                    <img src={profileIconSVG} alt=""></img>
+                  <button
+                    className="flex justify-center items-center w-[54px] bg-white rounded-[30px]"
+                    onClick={() => {
+                      toggleOpenProfileModal();
+                    }}
+                  >
+                    {Boolean(profilePicture) ? (
+                      <img
+                        className="rounded-[30px] h-7"
+                        src={profilePicture}
+                        alt=""
+                      ></img>
+                    ) : (
+                      <img src={profileIconSVG} alt=""></img>
+                    )}
                   </button>
                 </>
               ) : (

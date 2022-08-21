@@ -52,9 +52,10 @@ export default function NFTOfferModal({
   const handleNFTPriceChange = (e) => setNFTPrice(e.target.value);
 
   const contracts = ContractInstance();
-  console.log("moralis api key >>>", process.env.REACT_APP_MORALIS_API_KEY);
+
   useEffect(() => {
     getNFTInfo();
+    getETHPrice();
   }, [openModal]);
 
   // TODO: add to config folder
@@ -71,8 +72,18 @@ export default function NFTOfferModal({
 
     ownedNFTs = ownedNFTs._data.result.reverse();
 
-    setNFTsOwned(ownedNFTs);
+    for (var i = 0; i < ownedNFTs.length; i++) {
+      if (ownedNFTs[i].metadata) {
+        ownedNFTs[i].imageURL =
+          "https://ipfs.io/ipfs/" +
+          JSON.parse(ownedNFTs[i].metadata).image.slice(7);
+      }
+    }
 
+    setNFTsOwned(ownedNFTs);
+  };
+
+  const getETHPrice = async () => {
     fetch(
       "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD&api_key=58cddf6c19d0f436c15409ad20c236d10ee173c0b77be1ee4f4a1f6b7c53c843"
     )
@@ -94,16 +105,10 @@ export default function NFTOfferModal({
     // _operator is NFT exchange contract
     // TODO: don't hardcode this
     const _operator = "0x6ef0d67Ca702fAE10E133c885df41F43c3a56136";
-    console.log(
-      ethers.BigNumber.from(NFTPrice)
-        .mul(ethers.BigNumber.from(10).pow(ethers.BigNumber.from(18)))
-        .toString()
-    );
+
     const tx = await contracts.contractWETH.approve(
       _operator,
-      ethers.BigNumber.from(NFTPrice).mul(
-        ethers.BigNumber.from(10).pow(ethers.BigNumber.from(18))
-      )
+      ethers.utils.parseEther(NFTPrice)
     );
 
     await tx
@@ -225,7 +230,6 @@ export default function NFTOfferModal({
             </div>
             <div className="flex flex-col gap-2 overflow-y-auto max-h-[22vh]">
               {NFTsOwned.map((NFT, index) => {
-                console.log(NFT);
                 if (Boolean(NFTFilter)) {
                   if (
                     NFT.name
@@ -242,7 +246,6 @@ export default function NFTOfferModal({
                   ) {
                     return (
                       <button
-                        key={index}
                         className="border-gradient"
                         onClick={() => {
                           setNFTTokenIndex(index);
@@ -252,10 +255,19 @@ export default function NFTOfferModal({
                         {NFT.token_uri === null ? (
                           <div className="bg-black w-[50px] h-[50px] rounded-[5px]"></div>
                         ) : (
-                          <></>
+                          <img src={NFT.imageURL} alt=""></img>
                         )}
-                        <div className="text-lg font-medium">
-                          {NFT.name} #{NFT.token_id}
+                        <div className="flex flex-col text-left">
+                          <div className="text-lg font-medium">
+                            {NFT.name} #{NFT.token_id}
+                          </div>
+                          <div className="text-sm font-medium">
+                            Address{" "}
+                            {`${NFT.token_address.substring(
+                              0,
+                              4
+                            )}...${NFT.token_address.substring(38)}`}
+                          </div>
                         </div>
                       </button>
                     );
@@ -265,7 +277,6 @@ export default function NFTOfferModal({
                 } else {
                   return (
                     <button
-                      key={index}
                       className="border-gradient"
                       onClick={() => {
                         setNFTTokenIndex(index);
@@ -275,10 +286,23 @@ export default function NFTOfferModal({
                       {NFT.token_uri === null ? (
                         <div className="bg-black w-[50px] h-[50px] rounded-[5px]"></div>
                       ) : (
-                        <></>
+                        <img
+                          className="h-[50px] rounded-[5px]"
+                          src={NFT.imageURL}
+                          alt=""
+                        ></img>
                       )}
-                      <div className="text-lg font-medium">
-                        {NFT.name} #{NFT.token_id}
+                      <div className="flex flex-col text-left">
+                        <div className="text-lg font-medium">
+                          {NFT.name} #{NFT.token_id}
+                        </div>
+                        <div className="text-sm font-medium">
+                          Address{" "}
+                          {`${NFT.token_address.substring(
+                            0,
+                            4
+                          )}...${NFT.token_address.substring(38)}`}
+                        </div>
                       </div>
                     </button>
                   );
@@ -295,11 +319,24 @@ export default function NFTOfferModal({
               {NFTsOwned[NFTTokenIndex].token_uri === null ? (
                 <div className="bg-black w-[50px] h-[50px] rounded-[5px]"></div>
               ) : (
-                <></>
+                <img
+                  className="h-[50px] rounded-[5px]"
+                  src={NFTsOwned[NFTTokenIndex].imageURL}
+                  alt=""
+                ></img>
               )}
-              <div className="text-lg font-medium">
-                {NFTsOwned[NFTTokenIndex].name} #
-                {NFTsOwned[NFTTokenIndex].token_id}
+              <div className="flex flex-col text-left">
+                <div className="text-lg font-medium">
+                  {NFTsOwned[NFTTokenIndex].name} #
+                  {NFTsOwned[NFTTokenIndex].token_id}
+                </div>
+                <div className="text-sm font-medium">
+                  Address{" "}
+                  {`${NFTsOwned[NFTTokenIndex].token_address.substring(
+                    0,
+                    4
+                  )}...${NFTsOwned[NFTTokenIndex].token_address.substring(38)}`}
+                </div>
               </div>
             </div>
             <div className="flex flex-row gap-3 w-[650px]">

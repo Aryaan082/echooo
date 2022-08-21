@@ -127,7 +127,7 @@ const MessageSender = ({
           {
             from: address,
             message:
-              "Error: This address likely doesn't have a communication address",
+              "Error: Address likely doesn't have a communication address",
             timestamp: `${moment().unix()}`,
           },
         ];
@@ -138,13 +138,7 @@ const MessageSender = ({
             ...newReceiverMessageLog,
           ];
         } else {
-          newReceiverMessageLog = [
-            {
-              from: address,
-              message: senderMessage,
-              timestamp: `${moment().unix()}`,
-            },
-          ];
+          newReceiverMessageLog = [newReceiverMessageLog];
         }
 
         const newMessageLog = messages;

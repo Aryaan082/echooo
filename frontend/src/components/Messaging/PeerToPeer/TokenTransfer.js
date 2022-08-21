@@ -6,7 +6,7 @@ import { useAccount, useBalance, useNetwork, useSigner } from "wagmi";
 import { Oval } from "react-loader-spinner";
 
 import { CONTRACT_META_DATA } from "../../../constants";
-import { continueIconSVG, dropdownIconSVG, usdcIconSVG } from "../../../assets";
+import { dropdownIconSVG, usdcIconSVG } from "../../../assets";
 import { ContractInstance } from "../../../hooks";
 
 const modalStyles = {
@@ -33,7 +33,7 @@ export default function TokenTransfer({
   const { data: signer } = useSigner();
 
   const [sendBaseToken, setSendBaseToken] = useState(true);
-  const [amtOfToken, setAmtOfToken] = useState("");
+  const [amtOfToken, setAmtOfToken] = useState(0);
   const [tokenBalance, setTokenBalance] = useState(0);
   const [openTokenTypeDropdown, setOpenTokenTypeDropdown] = useState(false);
   const [isApproved, setApproved] = useState(false);
@@ -90,41 +90,21 @@ export default function TokenTransfer({
     setLoading(true);
     let tx;
     if (sendBaseToken) {
-      tx = await contracts.contractTokenTransfer
-        .sendEther(activeReceiverAddress, {
+      tx = await signer
+        .sendTransaction({
+          to: activeReceiverAddress,
           value: ethers.utils.parseEther(amtOfToken),
         })
         .catch(() => setLoading(false));
-      await tx.wait().then(() => {
-        setLoading(false);
-        toggleOpenModal();
-      });
     } else {
-      if (!isApproved) {
-        tx = await contracts.contractUSDC
-          .approve(
-            CONTRACT_META_DATA[chain.id].contractTokenTransfer,
-            ethers.constants.MaxUint256
-          )
-          .catch(() => setLoading(false));
-        await tx.wait().then(() => {
-          setLoading(false);
-          setApproved(true);
-        });
-      } else {
-        tx = await contracts.contractTokenTransfer
-          .sendERC20Token(
-            CONTRACT_META_DATA[chain.id].contractUSDC,
-            activeReceiverAddress,
-            ethers.utils.parseEther(amtOfToken)
-          )
-          .catch(() => setLoading(false));
-        await tx.wait().then(() => {
-          setLoading(false);
-          toggleOpenModal();
-        });
-      }
+      tx = await contracts.contractUSDC
+        .transfer(activeReceiverAddress, ethers.utils.parseEther(amtOfToken))
+        .catch(() => setLoading(false));
     }
+    await tx.wait().then(() => {
+      setLoading(false);
+      toggleOpenModal();
+    });
   };
 
   return (
@@ -148,9 +128,7 @@ export default function TokenTransfer({
             secondaryColor="white"
           />
           <div className="text-xl font-medium">
-            {sendBaseToken || isApproved
-              ? "Sending " + amtOfToken
-              : "Approving"}{" "}
+            Sending {amtOfToken}{" "}
             {sendBaseToken ? CONTRACT_META_DATA[chain.id].baseToken : "USDC"} to{" "}
             {`${activeReceiverAddress.substring(
               0,
@@ -211,7 +189,7 @@ export default function TokenTransfer({
               onClick={sendToken}
               disabled={!amtOfToken}
             >
-              {sendBaseToken || isApproved ? "Send" : "Approve"}
+              Send
             </button>
           </div>
           {openTokenTypeDropdown ? (

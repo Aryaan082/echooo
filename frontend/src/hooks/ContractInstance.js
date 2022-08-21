@@ -5,6 +5,7 @@ import TokenTransferJSON from "../contracts/TokenTransfer.json";
 import WETHJSON from "../contracts/WETH.json";
 import ERC20JSON from "../contracts/ERC20.json";
 import BAYCJSON from "../contracts/BoredApeYachtClubTest.json";
+import PFPJSON from "../contracts/ProfilePicture.json";
 
 import { CONTRACT_META_DATA } from "../constants";
 
@@ -58,12 +59,22 @@ const ContractInstance = () => {
     signerOrProvider: signer,
   });
 
+  const contractPFP = useContract({
+    addressOrName:
+      chain.id in CONTRACT_META_DATA
+        ? CONTRACT_META_DATA[chain.id].contractPFP
+        : "",
+    contractInterface: PFPJSON.abi,
+    signerOrProvider: signer,
+  });
+
   return {
     contractEcho,
     contractTokenTransfer,
     contractWETH,
     contractUSDC,
     contractBAYC,
+    contractPFP,
   };
 };
 

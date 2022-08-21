@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAccount, useNetwork } from "wagmi";
+
 import { useTheGraphClient } from "../../config";
 import {
   GQL_QUERY_GET_COMMUNICATION_ADDRESS,
@@ -7,8 +8,8 @@ import {
   CONTRACT_META_DATA,
   BURNER_ADDRESS,
 } from "../../constants";
-
 import { addressEllipsePNG, cancelIconSVG } from "../../assets";
+import { ContractInstance } from "../../hooks";
 
 // TODO: Make separate React components
 const EmptyFriendsList = () => {
@@ -67,6 +68,14 @@ export default function FriendsList({
   const { address } = useAccount();
   const { chain } = useNetwork();
 
+  const [friendsListPFP, setFriendsListPFP] = useState([]);
+
+  const contracts = ContractInstance();
+
+  const getPFP = async (userAddress) => {
+    return await contracts.contractPFP.getProfilePicture(userAddress);
+  };
+
   useEffect(() => {
     if (
       address in unknownChatAddresses &&
@@ -80,6 +89,25 @@ export default function FriendsList({
       );
     }
   }, [showTrustedAddressList]);
+
+  useEffect(() => {
+    async function setupProfilePictures() {
+      const tempFriendsListPFP = [];
+      if (showTrustedAddressList) {
+        for (var i = 0; i < chatAddresses[address].length; i++) {
+          tempFriendsListPFP.push(await getPFP(chatAddresses[address][i]));
+        }
+      } else {
+        for (var ii = 0; ii < unknownChatAddresses[address].length; ii++) {
+          tempFriendsListPFP.push(
+            await getPFP(unknownChatAddresses[address][ii])
+          );
+        }
+      }
+      setFriendsListPFP(tempFriendsListPFP);
+    }
+    setupProfilePictures();
+  });
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const graphClient = chain.id in CONTRACT_META_DATA ? useTheGraphClient() : "";
@@ -101,7 +129,6 @@ export default function FriendsList({
       currentChatAddresses = [""];
     }
 
-    console.log("handleShowAddressList: knownSenders", chatAddresses[address]);
     const dataMessages = await graphClient
       .query(GQL_QUERY_GET_UNKNOWN_SENDERS, {
         knownSenders: currentChatAddresses,
@@ -109,12 +136,9 @@ export default function FriendsList({
         recentIdentityTimestamp: dataIdentityTimestamp,
       })
       .toPromise();
-    console.log("handleShowAddressList: dataMessages", dataMessages);
+
     const dataMessagesParsed = dataMessages.data.messages;
-    console.log(
-      "handleShowAddressList: dataMessagesParsed",
-      dataMessagesParsed
-    );
+
     if (dataMessagesParsed == null) {
       return;
     }
@@ -218,7 +242,15 @@ export default function FriendsList({
                       }
                     >
                       <code className="flex flex-row items-center gap-4 text-lg">
-                        <img src={addressEllipsePNG} alt=""></img>
+                        <img
+                          className="h-10 rounded-[30px]"
+                          src={
+                            Boolean(friendsListPFP[index])
+                              ? friendsListPFP[index]
+                              : addressEllipsePNG
+                          }
+                          alt=""
+                        ></img>
                         {`${friendAddress.substring(
                           0,
                           4
@@ -255,7 +287,15 @@ export default function FriendsList({
                         }
                       >
                         <code className="flex flex-row items-center gap-4 text-lg">
-                          <img src={addressEllipsePNG} alt=""></img>
+                          <img
+                            className="h-10 rounded-[30px]"
+                            src={
+                              Boolean(friendsListPFP[index])
+                                ? friendsListPFP[index]
+                                : addressEllipsePNG
+                            }
+                            alt=""
+                          ></img>
                           {`${friendAddress.substring(
                             0,
                             4
