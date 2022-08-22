@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useAccount, useDisconnect, useNetwork, useSwitchNetwork } from "wagmi";
 import EthCrypto from "eth-crypto";
-import { useTheGraphClient } from "../../config";
+import moment from "moment";
 
 import FriendsList from "./MessagingPageFriendsList";
 import MessageSender from "./MessageSender";
 import ChatBox from "./ChatBox";
+
+import { useTheGraphClient } from "../../config";
 import {
   CONTRACT_META_DATA,
   BURNER_ADDRESS,
@@ -13,7 +15,6 @@ import {
   GQL_QUERY_MESSAGE_LOG_INTERVAL,
   GQL_QUERY_MESSAGE_LOG_INIT,
 } from "../../constants";
-
 import {
   logoutIconSVG,
   textBubbleSVG,
@@ -23,6 +24,7 @@ import {
   changeKeysIconSVG,
   profileIconSVG,
 } from "../../assets";
+import { ContractInstance } from "../../hooks";
 import "./receivers.css";
 
 const intervalGetMessages = async (
@@ -33,11 +35,11 @@ const intervalGetMessages = async (
   graphClient
 ) => {
   const senderAddress = address.toLowerCase();
-  console.log("receiever address >>>", activeReceiverAddress);
-  console.log(
-    "new message active interval >>>",
-    newMessage[activeReceiverAddress]
-  );
+  // console.log("receiever address >>>", activeReceiverAddress);
+  // console.log(
+  //   "new message active interval >>>",
+  //   newMessage[activeReceiverAddress]
+  // );
 
   let senderPrivateKey = JSON.parse(
     localStorage.getItem("private-communication-address")
@@ -45,18 +47,18 @@ const intervalGetMessages = async (
   senderPrivateKey = senderPrivateKey[address];
 
   const recentMessage = newMessage[activeReceiverAddress];
-  console.log("recent message >>>", recentMessage);
-  console.log(
-    "recent message >>>",
-    recentMessage == null || recentMessage.length === 0
-  );
+  // console.log("recent message >>>", recentMessage);
+  // console.log(
+  //   "recent message >>>",
+  //   recentMessage == null || recentMessage.length === 0
+  // );
   let recentTimestamp;
   if (recentMessage == null || recentMessage.length === 0) {
     return;
   } else {
     recentTimestamp = recentMessage.at(-1).timestamp;
   }
-  console.log("recentTimestamp >>>", recentTimestamp);
+  // console.log("recentTimestamp >>>", recentTimestamp);
   const dataMessages = await graphClient
     .query(GQL_QUERY_MESSAGE_LOG_INTERVAL, {
       senderAddress: senderAddress,
@@ -64,13 +66,13 @@ const intervalGetMessages = async (
       recentMessageTimestamp: recentTimestamp,
     })
     .toPromise();
-  console.log("data messages interval >>>", dataMessages);
-  console.log("data interval length >>>", Object.keys(dataMessages).length);
+  // console.log("data messages interval >>>", dataMessages);
+  // console.log("data interval length >>>", Object.keys(dataMessages).length);
   const dataMessagesParsed = dataMessages.data.messages;
-  console.log("data messages parsed interval >>>", dataMessagesParsed);
+  // console.log("data messages parsed interval >>>", dataMessagesParsed);
   const messageLog = dataMessagesParsed;
   if (Object.keys(messageLog).length === 0 || messageLog == null) {
-    console.log("returning none >>>> ");
+    // console.log("returning none >>>> ");
     return;
   }
   for (let idx = 0; idx < dataMessagesParsed.length; idx++) {
@@ -106,6 +108,7 @@ export default function MessagingPage({
   toggleOpenModalChainSelect,
   toggleOpenCommAddressModal,
   toggleOpenNewChatModal,
+  toggleOpenProfileModal,
   toggleOpenNFTOfferModal,
   toggleOpenSendModal,
   chatAddresses,
@@ -122,17 +125,31 @@ export default function MessagingPage({
   const { disconnect } = useDisconnect();
   const { chain } = useNetwork();
   const { chains } = useSwitchNetwork();
-  const graphClient = useTheGraphClient();
+
   const [unknownChatAddresses, setUnknownChatAddresses] = useState({});
   const [messages, setMessageLog] = useState({});
   const [openP2P, setOpenP2P] = useState(false);
   const [showTrustedAddressList, setShowTrustedAddressList] = useState(true);
+  const [profilePicture, setProfilePicture] = useState("");
 
   const messagesRef = useRef(messages);
 
+  const contracts = ContractInstance();
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const graphClient = chain.id in CONTRACT_META_DATA ? useTheGraphClient() : "";
+
   useEffect(() => {
     messagesRef.current = messages;
+    async function placeholder() {
+      setProfilePicture(await getPFP(address));
+    }
+    placeholder();
   });
+
+  const getPFP = async (userAddress) => {
+    return await contracts.contractPFP.getProfilePicture(userAddress);
+  };
 
   const intervalCallback = useCallback(
     (
@@ -166,8 +183,8 @@ export default function MessagingPage({
           senderAddress: senderAddress,
         })
         .toPromise();
-      console.log("graph client >>>", graphClient);
-      console.log("data identity >>>", dataIdentity);
+      // console.log("graph client >>>", graphClient);
+      // console.log("data identity >>>", dataIdentity);
       const dataIdentityTimestamp = dataIdentity.data.identities[0].timestamp;
 
       const dataMessages = await graphClient
@@ -195,10 +212,36 @@ export default function MessagingPage({
         const decryptedMessage = await EthCrypto.decryptWithPrivateKey(
           senderPrivateKey,
           EthCrypto.cipher.parse(message)
-        );
+        ).catch((err) => {
+          console.log("Sending Message Error:", err);
+          // TODO: make message indicative of error by changing color
+          let newReceiverMessageLog = [
+            {
+              from: address,
+              message: "Error: Encryption error. Change keys.",
+              timestamp: `${moment().unix()}`,
+            },
+          ];
+
+          if (
+            Object.keys(messages).length !== 0 ||
+            activeReceiverAddress in messages
+          ) {
+            newReceiverMessageLog = [
+              ...messages[activeReceiverAddress],
+              ...newReceiverMessageLog,
+            ];
+          } else {
+            newReceiverMessageLog = [newReceiverMessageLog];
+          }
+
+          const newMessageLog = messages;
+          newMessageLog[activeReceiverAddress] = newReceiverMessageLog;
+          setMessageLog(newMessageLog);
+        });
         messageLog[idx].message = decryptedMessage;
 
-        console.log(`Decrypted message ${idx} >>>`, decryptedMessage);
+        // console.log(`Decrypted message ${idx} >>>`, decryptedMessage);
       }
 
       const newMessageLog = {
@@ -217,7 +260,7 @@ export default function MessagingPage({
     }
     if (activeReceiverAddress !== "") {
       if (messages[activeReceiverAddress] == null) {
-        console.log("running active >>>");
+        // console.log("running active >>>");
         fetchMessagesAsyncCallback();
       } else {
         const interval = setInterval(
@@ -243,7 +286,7 @@ export default function MessagingPage({
           graphClient
         );
         return () => {
-          console.log("clean up >>>");
+          // console.log("clean up >>>");
           return clearInterval(interval);
         };
       }
@@ -332,8 +375,21 @@ export default function MessagingPage({
                     New chat
                     <img src={textBubbleSVG} alt=""></img>
                   </button>
-                  <button className="flex justify-center items-center w-[54px] bg-white rounded-[30px]">
-                    <img src={profileIconSVG} alt=""></img>
+                  <button
+                    className="flex justify-center items-center w-[54px] bg-white rounded-[30px]"
+                    onClick={() => {
+                      toggleOpenProfileModal();
+                    }}
+                  >
+                    {Boolean(profilePicture) ? (
+                      <img
+                        className="rounded-[30px] h-[54px]"
+                        src={profilePicture}
+                        alt=""
+                      ></img>
+                    ) : (
+                      <img src={profileIconSVG} alt=""></img>
+                    )}
                   </button>
                 </>
               ) : (

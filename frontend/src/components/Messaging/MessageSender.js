@@ -1,17 +1,20 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { useAccount } from "wagmi";
+import { useAccount, useNetwork } from "wagmi";
 import EthCrypto from "eth-crypto";
 import { useTheGraphClient } from "../../config";
 import { Oval } from "react-loader-spinner";
 import moment from "moment";
 
-import { GQL_QUERY_GET_COMMUNICATION_ADDRESS } from "../../constants";
+import {
+  GQL_QUERY_GET_COMMUNICATION_ADDRESS,
+  CONTRACT_META_DATA,
+} from "../../constants";
 import { ContractInstance } from "../../hooks";
 import {
   plusIconSVG,
   sendMessagesIconSVG,
   exchangeIconSVG,
-  lendingArrowIconSVG,
+  lendingIconSVG,
   minusIconSVG,
   transferTokenIconSVG,
 } from "../../assets";
@@ -28,12 +31,14 @@ const MessageSender = ({
   openP2P,
   setOpenP2P,
 }) => {
-  const graphClient = useTheGraphClient();
+  const { chain } = useNetwork();
+  const { address } = useAccount();
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const graphClient = chain.id in CONTRACT_META_DATA ? useTheGraphClient() : "";
   const [senderMessage, setSenderMessage] = useState("");
 
   const toggleOpenP2P = () => setOpenP2P(!openP2P);
-
-  const { address } = useAccount();
 
   const contracts = ContractInstance();
 
@@ -122,7 +127,7 @@ const MessageSender = ({
           {
             from: address,
             message:
-              "Error: This address likely doesn't have a communication address",
+              "Error: Address likely doesn't have a communication address",
             timestamp: `${moment().unix()}`,
           },
         ];
@@ -133,13 +138,7 @@ const MessageSender = ({
             ...newReceiverMessageLog,
           ];
         } else {
-          newReceiverMessageLog = [
-            {
-              from: address,
-              message: senderMessage,
-              timestamp: `${moment().unix()}`,
-            },
-          ];
+          newReceiverMessageLog = [newReceiverMessageLog];
         }
 
         const newMessageLog = messages;
@@ -163,7 +162,7 @@ const MessageSender = ({
       />
       <div className="flex flex-col items-end relative">
         {openP2P ? (
-          <div className="absolute flex flex-col bottom-[70px] w-[200px] rounded-[10px] border border-[#eeeeee] z-10">
+          <div className="absolute flex flex-col bottom-[70px] w-[240px] rounded-[10px] border border-[#eeeeee] bg-white">
             <button
               className="flex flex-row items-center gap-2 p-3 rounded-t-[10px] hover:bg-[#eeeeee]"
               onClick={() => {
@@ -172,7 +171,7 @@ const MessageSender = ({
               }}
             >
               <img className="h-[25px]" src={transferTokenIconSVG} alt=""></img>
-              <code>Send a token</code>
+              <code>Send tokens</code>
             </button>
             <button
               className="flex flex-row items-center gap-2 p-3 hover:bg-[#eeeeee]"
@@ -185,8 +184,8 @@ const MessageSender = ({
               <code>Make NFT offer</code>
             </button>
             <button className="flex flex-row items-center gap-2 p-3 rounded-b-[10px] hover:bg-[#eeeeee]">
-              <img className="h-[25px]" src={lendingArrowIconSVG} alt=""></img>
-              <code>Offer lending</code>
+              <img className="h-[25px]" src={lendingIconSVG} alt=""></img>
+              <code>Make lending offer</code>
             </button>
           </div>
         ) : (
@@ -205,7 +204,7 @@ const MessageSender = ({
         </button>
       </div>
       {messagesState[receiverAddress] ? (
-        <div className="flex flex-row w-[384px] items-center justify-center gap-[20px]">
+        <div className="flex flex-row items-center justify-center gap-[20px]">
           <Oval
             ariaLabel="loading-indicator"
             height={40}
@@ -215,7 +214,7 @@ const MessageSender = ({
             color="black"
             secondaryColor="white"
           />
-          <div className="text-xl font-medium">Sending message...</div>
+          <div className="text-xl font-medium">Sending...</div>
         </div>
       ) : (
         <button
