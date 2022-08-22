@@ -25,7 +25,7 @@ import {
 } from "../../assets";
 import "./receivers.css";
 
-const intervalGetMessages = async (
+const intervalFetchMessages = async (
   address,
   newMessage,
   activeReceiverAddress,
@@ -77,6 +77,11 @@ const intervalGetMessages = async (
     let metaDataMessages = await dataMessagesParsed[idx];
     let message = "";
 
+    // check that encrypted message is correct ex: someone could send an empty string that would grief the chat
+    if (metaDataMessages.senderMessage.length !== 194 || metaDataMessages.receiverMessage.length !== 194) {
+      continue;
+    }
+    
     // Decrypt sender message
     if (metaDataMessages.from === senderAddress) {
       message = metaDataMessages.senderMessage;
@@ -142,7 +147,7 @@ export default function MessagingPage({
       setMessageLog,
       graphClient
     ) => {
-      intervalGetMessages(
+      intervalFetchMessages(
         address,
         newMessage,
         activeReceiverAddress,
@@ -182,6 +187,11 @@ export default function MessagingPage({
       const messageLog = dataMessagesParsed;
       for (let idx = 0; idx < dataMessagesParsed.length; idx++) {
         let metaDataMessages = await dataMessagesParsed[idx];
+
+        // check that encrypted message is correct ex: someone could send an empty string that would grief the chat
+        if (metaDataMessages.senderMessage.length !== 194 || metaDataMessages.receiverMessage.length !== 194) {
+          continue;
+        }
         let message = "";
 
         // Decrypt sender message
