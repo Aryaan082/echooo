@@ -7,6 +7,7 @@ import ChainSelectorModal from "./Chain/ChainSelectorModal";
 import NewChatModal from "./StartChat/NewChatModal";
 import MessagingPage from "./Messaging/MessagingPage";
 import CommAddressModal from "./ChangeKeys/CommAddressModal";
+import ProfilePictureModal from "./ProfilePicture/ProfilePictureModal.js";
 import NFTOfferModal from "./Messaging/PeerToPeer/NFTOfferModal";
 import TokenTransfer from "./Messaging/PeerToPeer/TokenTransfer";
 
@@ -15,13 +16,12 @@ import { gradientOneSVG, gradientTwoSVG, echoooLogoSVG } from "../assets/";
 
 export default function App() {
   const { chain } = useNetwork();
-  const { chains, error, isLoading, pendingChainId, switchNetwork } =
-    useSwitchNetwork();
   const { address } = useAccount();
 
   const [connectedWallet, setConnectedWallet] = useState(false);
   const [chainSelect, setChainSelect] = useState(false);
   const [openModalConnect, setOpenModalConnect] = useState(false);
+  const [openProfileModal, setOpenProfileModal] = useState(false);
   const [openNewChatModal, setOpenNewChatModal] = useState(false);
   const [newChatAddress, setNewChatAddress] = useState("");
   const [activeReceiverAddress, setActiveReceiver] = useState(
@@ -67,6 +67,7 @@ export default function App() {
   const toggleOpenModalConnect = () => setOpenModalConnect(!openModalConnect);
   const toggleOpenModalChainSelect = () => setChainSelect(!chainSelect);
   const toggleOpenNewChatModal = () => setOpenNewChatModal(!openNewChatModal);
+  const toggleOpenProfileModal = () => setOpenProfileModal(!openProfileModal);
   const toggleOpenCommAddressModal = () =>
     setOpenCommAddressModal(!openCommAddressModal);
   const toggleOpenSendModal = () => setOpenSend(!openSend);
@@ -158,6 +159,10 @@ export default function App() {
             setActiveReceiver={setActiveReceiver}
             setActiveIndex={setActiveIndex}
           />
+          <ProfilePictureModal
+            openModal={openProfileModal}
+            toggleOpenModal={toggleOpenProfileModal}
+          />
           <TokenTransfer
             openModal={openSend}
             toggleOpenModal={toggleOpenSendModal}
@@ -172,6 +177,7 @@ export default function App() {
             toggleOpenModalChainSelect={toggleOpenModalChainSelect}
             toggleOpenCommAddressModal={toggleOpenCommAddressModal}
             toggleOpenNewChatModal={toggleOpenNewChatModal}
+            toggleOpenProfileModal={toggleOpenProfileModal}
             toggleOpenSendModal={toggleOpenSendModal}
             toggleOpenNFTOfferModal={toggleOpenNFTOfferModal}
             chatAddresses={chatAddresses}
