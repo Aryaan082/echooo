@@ -8,10 +8,12 @@ contract RequestNFT {
     bytes public constant NAME = "RequestNFT";
 
     bytes32 private constant EIP712_DOMAIN  = keccak256("EIP712Domain(string name,uint256 chainId,address verifyingContract)");
-    bytes32 private constant BUY_TYPE_HASH = keccak256("Buy(uint256 tokenAmount,uint256 tokenId,uint256 timeExpiry,address sender,address receiver,address tokenAddress,address NFTAddress)");    
+    bytes32 private constant BUY_TYPE_HASH = keccak256("Buy(uint256 tokenAmount,uint256 tokenId,uint256 timeExpiry,address buyer,address seller,address tokenAddress,address NFTAddress)");    
     
     bytes4 private constant SELECTOR = bytes4(keccak256(bytes("transfer(address,uint256)")));
     bytes4 private constant SELECTOR_TRANSFER_FROM = bytes4(keccak256(bytes("transferFrom(address,address,uint256)")));
+
+    event exchangeEvent(address indexed _buyer, address indexed _seller, Offer _offer);
 
     function _safeTransfer(
         address _contractAddress,
@@ -48,35 +50,36 @@ contract RequestNFT {
         uint256 tokenAmount;
         uint256 tokenId;
         uint256 timeExpiry;
-        address sender;
-        address receiver;
+        address buyer;
+        address seller;
         address tokenAddress;
         address NFTAddress;
     }
 
     constructor() {}    
-
+    
     function exchange(Offer calldata offer, uint8 v, bytes32 r, bytes32 s) external {
-        require(msg.sender == offer.receiver, "RequestNFT:exchange: caller must be the offer receiver");
+        require(msg.sender == offer.seller, "RequestNFT:exchange: caller must be the offer seller");
         require(block.timestamp <= offer.timeExpiry, "RequestNFT:exchange: offer has expired");
-        require(IERC20(offer.tokenAddress).balanceOf(offer.sender) >= offer.tokenAmount, "Request:NFT:exchange: balance of sender is less than tokenAmount");
+        require(IERC20(offer.tokenAddress).balanceOf(offer.buyer) >= offer.tokenAmount, "Request:NFT:exchange: balance of buyer is less than tokenAmount");
         // TODO: additonal checks???
         bytes32 domainSeparator = keccak256(abi.encode(EIP712_DOMAIN, keccak256(NAME), block.chainid, address(this)));
-        bytes32 exchangeHash = keccak256(abi.encode(BUY_TYPE_HASH, offer.tokenAmount, offer.tokenId, offer.timeExpiry, offer.sender, offer.receiver, offer.tokenAddress, offer.NFTAddress));
+        bytes32 exchangeHash = keccak256(abi.encode(BUY_TYPE_HASH, offer.tokenAmount, offer.tokenId, offer.timeExpiry, offer.buyer, offer.seller, offer.tokenAddress, offer.NFTAddress));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, exchangeHash));
         address signer = ecrecover(digest, v, r, s);
         require(signer != address(0), "RequestNFT:exchange: signer is invalid");
         
         // TODO: could add a tax here
         // TODO: gas savings by replacing struct with raw parameters?
-        _safeTransferFrom(offer.tokenAddress, offer.sender, address(this), offer.tokenAmount);
-        _safeTransfer(offer.tokenAddress, offer.receiver, offer.tokenAmount);
+        _safeTransferFrom(offer.tokenAddress, offer.buyer, address(this), offer.tokenAmount);
+        _safeTransfer(offer.tokenAddress, msg.sender, offer.tokenAmount);
         
         // is it better to use this over safe transfer?
         // the ERC20 standard can be messed with on the other side so we do additonal checks using safe transfer
-        // IERC20(offer.tokenAddress).transferFrom(offer.sender, offer.receiver, offer.tokenAmount);
-        IERC721(offer.NFTAddress).safeTransferFrom(offer.sender, offer.receiver, offer.tokenId);
+        // IERC20(offer.tokenAddress).transferFrom(offer.buyer, offer.seller, offer.tokenAmount);
+        IERC721(offer.NFTAddress).safeTransferFrom(msg.sender, offer.buyer, offer.tokenId);
 
+        emit exchangeEvent(offer.buyer, msg.sender, offer);
     }
    
     // TODO: add event?
