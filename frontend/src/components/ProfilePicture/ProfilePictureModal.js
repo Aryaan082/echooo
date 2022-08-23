@@ -26,7 +26,8 @@ export default function ProfilePictureModal({ openModal, toggleOpenModal }) {
   const [NFTsOwned, setNFTsOwned] = useState([]);
   const [NFTTokenIndex, setNFTTokenIndex] = useState();
   const [NFTTokenURI, setNFTTokenURI] = useState("");
-
+  // TODO: add to constants
+  const IPFS_PREFIX_URL = "https://ipfs.io/ipfs/";
   const contracts = ContractInstance();
 
   useEffect(() => {
@@ -45,10 +46,10 @@ export default function ProfilePictureModal({ openModal, toggleOpenModal }) {
 
     ownedNFTs = ownedNFTs._data.result.reverse();
 
-    for (var i = 0; i < ownedNFTs.length; i++) {
+    for (let i = 0; i < ownedNFTs.length; i++) {
       if (ownedNFTs[i].metadata) {
         ownedNFTs[i].imageURL =
-          "https://ipfs.io/ipfs/" +
+        IPFS_PREFIX_URL +
           JSON.parse(ownedNFTs[i].metadata).image.slice(7);
       }
     }

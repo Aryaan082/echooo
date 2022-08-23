@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 contract ProfilePicture {
     mapping(address => string) private _addressToPfpMapping;
 
-    function setProfilePicture(string memory pfpPointer_) external {
+    function setProfilePicture(string calldata pfpPointer_) external {
         _addressToPfpMapping[msg.sender] = pfpPointer_;
     }
 

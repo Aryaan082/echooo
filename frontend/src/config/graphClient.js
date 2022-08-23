@@ -13,6 +13,7 @@ export const theGraphClient = () => {
   return graphClient;
 };
 
+// TODO: move to hooks
 export const useTheGraphClient = () => {
   const { chain } = useNetwork();
   const graphApiUrl = CONTRACT_META_DATA[chain.id].theGraphAPI;

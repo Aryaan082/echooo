@@ -56,6 +56,11 @@ export default function NFTOfferModal({
   const contracts = ContractInstance();
   
   useEffect(() => {
+    // TODO: this useEffect is fired twice at init this shouldn't
+    // If not activeReceiver selected do not fire
+    if (activeReceiverAddress == null) {
+      return 
+    }
     getNFTInfo();
     getETHPrice();
   }, [openModal]);
@@ -85,9 +90,12 @@ export default function NFTOfferModal({
     setNFTsOwned(ownedNFTs);
   };
 
+  
   const getETHPrice = async () => {
+    // TODO: add to constants - also is this URL safe to hardcode? what if it changes?
+    const ETH_USD_API_ENDPOINT = "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD&api_key=58cddf6c19d0f436c15409ad20c236d10ee173c0b77be1ee4f4a1f6b7c53c843"
     fetch(
-      "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD&api_key=58cddf6c19d0f436c15409ad20c236d10ee173c0b77be1ee4f4a1f6b7c53c843"
+      ETH_USD_API_ENDPOINT
     )
       .then((response) => response.json())
       .then((data) => {

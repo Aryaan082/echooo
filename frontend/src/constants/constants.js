@@ -4,7 +4,7 @@ import { avalancheIconSVG, ethereumIconSVG, polygonIconSVG } from "../assets";
 
 export const CONTRACT_META_DATA = {
   43113: {
-    contractEcho: "0x81B9DE4383571a209cB4290D98716e8Cf4eF86Fe",
+    contractEcho: "0x31d635F65a21309BC3115b1D61fAffF003f740Fb",
     contractTokenTransfer: "0xA370673393CdEf99756F5289Bd03a46d31bdA4d8",
     contractWETH: "0xBA6De068521f757D8Bbbfc06041e6b768980F0Bf",
     contractUSDC: "0x10f0395866108E527e4687Ba9fAfbEB6A2030fF5",
