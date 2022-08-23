@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAccount, useNetwork } from "wagmi";
 
 import { useTheGraphClient } from "../../config";
@@ -76,6 +76,9 @@ export default function FriendsList({
     return await contracts.contractPFP.getProfilePicture(userAddress);
   };
 
+  const initRef = useRef();
+
+  // TODO: combine the useEffects?
   useEffect(() => {
     if (
       address in unknownChatAddresses &&
@@ -91,23 +94,20 @@ export default function FriendsList({
   }, [showTrustedAddressList]);
 
   useEffect(() => {
-    async function setupProfilePictures() {
+    async function setupProfilePictures() {      
       const tempFriendsListPFP = [];
+      let tempChatAddresses = unknownChatAddresses;
       if (showTrustedAddressList) {
-        for (var i = 0; i < chatAddresses[address].length; i++) {
-          tempFriendsListPFP.push(await getPFP(chatAddresses[address][i]));
-        }
-      } else {
-        for (var ii = 0; ii < unknownChatAddresses[address].length; ii++) {
-          tempFriendsListPFP.push(
-            await getPFP(unknownChatAddresses[address][ii])
-          );
-        }
+        tempChatAddresses = chatAddresses;
       }
-      setFriendsListPFP(tempFriendsListPFP);
-    }
+
+      for (var idx = 0; idx < tempChatAddresses[address].length; idx++) {
+        tempFriendsListPFP.push(await getPFP(tempChatAddresses[address][idx])
+      )};
+      setFriendsListPFP(tempFriendsListPFP);      
+    };
     setupProfilePictures();
-  });
+  }, [showTrustedAddressList]);
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const graphClient = chain.id in CONTRACT_META_DATA ? useTheGraphClient() : "";

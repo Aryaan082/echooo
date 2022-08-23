@@ -52,6 +52,7 @@ const intervalFetchMessages = async (
   //   "recent message >>>",
   //   recentMessage == null || recentMessage.length === 0
   // );
+ 
   let recentTimestamp;
   if (recentMessage == null || recentMessage.length === 0) {
     return;
@@ -66,7 +67,7 @@ const intervalFetchMessages = async (
       recentMessageTimestamp: recentTimestamp,
     })
     .toPromise();
-  // console.log("data messages interval >>>", dataMessages);
+  console.log("data messages interval >>>", dataMessages);
   // console.log("data interval length >>>", Object.keys(dataMessages).length);
   const dataMessagesParsed = dataMessages.data.messages;
   // console.log("data messages parsed interval >>>", dataMessagesParsed);
@@ -95,7 +96,12 @@ const intervalFetchMessages = async (
     const decryptedMessage = await EthCrypto.decryptWithPrivateKey(
       senderPrivateKey,
       EthCrypto.cipher.parse(message)
-    );
+    ).catch((err) => {
+      console.log("Sending Message Error:", err);
+      // TODO: make message indicative of error by changing color
+      let errorMessage = "Error: Encryption error. Change communication keys"
+      return errorMessage;
+    });
     messageLog[idx].message = decryptedMessage;
   }
   const newReceiverMessages = [
@@ -181,8 +187,9 @@ export default function MessagingPage({
       localStorage.getItem("private-communication-address")
     );
     senderPrivateKey = senderPrivateKey[address];
+  
 
-    if (messages[activeReceiverAddress] == null) {
+    if (activeReceiverAddress != null && messages[activeReceiverAddress] == null) {
       const dataIdentity = await graphClient
         .query(GQL_QUERY_IDENTITY_TIMESTAMP_RECENT, {
           senderAddress: senderAddress,
@@ -199,6 +206,8 @@ export default function MessagingPage({
           recentTimestamp: dataIdentityTimestamp,
         })
         .toPromise();
+
+      console.log("data messages >>>", dataMessages);
       const dataMessagesParsed = dataMessages.data.messages;
 
       const messageLog = dataMessagesParsed;
@@ -225,10 +234,11 @@ export default function MessagingPage({
         ).catch((err) => {
           console.log("Sending Message Error:", err);
           // TODO: make message indicative of error by changing color
+          let errorMessage = "Error: Encryption error. Change communication keys"
           let newReceiverMessageLog = [
             {
               from: address,
-              message: "Error: Encryption error. Change keys.",
+              message: errorMessage,
               timestamp: `${moment().unix()}`,
             },
           ];
@@ -248,6 +258,7 @@ export default function MessagingPage({
           const newMessageLog = messages;
           newMessageLog[activeReceiverAddress] = newReceiverMessageLog;
           setMessageLog(newMessageLog);
+          return errorMessage;
         });
         messageLog[idx].message = decryptedMessage;
 
@@ -258,10 +269,12 @@ export default function MessagingPage({
         ...messages,
         [activeReceiverAddress]: messageLog,
       };
-
+      console.log("new message log >>>", newMessageLog)
       setMessageLog(newMessageLog);
       return newMessageLog;
     }
+    // Do nothing is conditions are not met
+    return;
   }, [activeReceiverAddress]);
 
   useEffect(() => {

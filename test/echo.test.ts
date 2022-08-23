@@ -37,7 +37,7 @@ describe("Echo Contract", () => {
   });
 
 
-  it.only("Can send and receive a message with JSON metadata", async () => {
+  it("Can send and receive a message with JSON metadata", async () => {
     const ethWallet2 = EthCrypto.createIdentity();
     const message = "wassup Aryaan";
     const messageMetadata = {
