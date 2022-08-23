@@ -4,11 +4,11 @@ schema:
 dataSources:
   - kind: ethereum
     name: Echo
-    network: mumbai
+    network: fuji
     source:
-      address: "0x5122f8a3f18d3ECa05aD26890647948FA319b633"
+      address: "0x197B537b91Be74d60c964Cda6f0B277516340B5d"
       abi: Echo
-      startBlock: 27561980
+      startBlock: 12425177
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -22,6 +22,6 @@ dataSources:
       eventHandlers:
         - event: IdentityEvent(string)
           handler: handleIdentityEvent
-        - event: MessageEvent(indexed address,indexed address,uint256,string,string)
+        - event: MessageEvent(uint256,indexed address,string,string)
           handler: handleMessageEvent
       file: ./src/mapping.ts

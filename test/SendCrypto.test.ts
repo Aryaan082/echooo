@@ -1,8 +1,7 @@
 import * as dotenv from "dotenv";
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { SendCrypto, TestERC20Token } from "../typechain";
-import SendCryptoJSON from "../artifacts/contracts/SendCrypto.sol/SendCrypto.json";
+import { TokenTransfer, TestERC20Token } from "../typechain";
 import ERC20JSON from "../artifacts/@openzeppelin/contracts/token/ERC20/ERC20.sol/ERC20.json";
 import { Contract } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -15,14 +14,14 @@ describe("SendCrypto Contract", () => {
   let deployer: SignerWithAddress;
   let alice: SignerWithAddress;
   let bob: SignerWithAddress;
-  let sendCryptoContract: SendCrypto;
+  let sendCryptoContract: TokenTransfer;
   let testERC20TokenContract: TestERC20Token;
   let testERC20TokenInstance: Contract;
 
   beforeEach(async () => {
     [deployer, alice, bob] = await ethers.getSigners();
     const SendCrypto = await ethers.getContractFactory("SendCrypto");
-    sendCryptoContract = (await SendCrypto.deploy()) as SendCrypto;
+    sendCryptoContract = (await SendCrypto.deploy()) as TokenTransfer;
     await sendCryptoContract.deployed();
 
     const TestERC20Token = await ethers.getContractFactory("TestERC20Token");

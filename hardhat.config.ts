@@ -37,7 +37,12 @@ const config: HardhatUserConfig = {
     path: "./frontend/src/",
     clear: true,
   },
+  defaultNetwork: "hardhat",
   networks: {
+    hardhat: {
+      chainId: 1337,
+      allowUnlimitedContractSize: true
+    },
     ropsten: {
       url:
         "https://ropsten.infura.io/v3/a5adc84c994b4d7bbdec98a637c43304" || "",
