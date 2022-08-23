@@ -80,7 +80,7 @@ const intervalFetchMessages = async (
     let message = "";
 
     // check that encrypted message is correct ex: someone could send an empty string that would grief the chat
-    if (metaDataMessages.senderMessage.length !== 194 || metaDataMessages.receiverMessage.length !== 194) {
+    if (metaDataMessages.senderMessage.length < 194 || metaDataMessages.receiverMessage.length < 194) {
       continue;
     }
     
@@ -206,7 +206,7 @@ export default function MessagingPage({
         let metaDataMessages = await dataMessagesParsed[idx];
 
         // check that encrypted message is correct ex: someone could send an empty string that would grief the chat
-        if (metaDataMessages.senderMessage.length !== 194 || metaDataMessages.receiverMessage.length !== 194) {
+        if (metaDataMessages.senderMessage.length < 194 || metaDataMessages.receiverMessage.length < 194) {
           continue;
         }
         let message = "";

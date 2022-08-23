@@ -55,9 +55,8 @@ contract RequestNFT {
         address tokenAddress;
         address NFTAddress;
     }
-
-    constructor() {}    
     
+    // TODO: add logic to remove approval when offer expires?
     function exchange(Offer calldata offer, uint8 v, bytes32 r, bytes32 s) external {
         require(msg.sender == offer.seller, "RequestNFT:exchange: caller must be the offer seller");
         require(block.timestamp <= offer.timeExpiry, "RequestNFT:exchange: offer has expired");

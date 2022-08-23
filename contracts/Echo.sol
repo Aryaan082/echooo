@@ -3,9 +3,8 @@ pragma solidity ^0.8.13;
 
 contract Echo {
     event MessageEvent(
-        address indexed _sender,
-        address indexed _receiver,
         uint256 _messageType,
+        address indexed _receiver,
         string _senderMessage,
         string _receiverMessage
     );
@@ -18,9 +17,8 @@ contract Echo {
         string calldata _receiverMessage
     ) external {
         emit MessageEvent(
-            msg.sender,
-            _receiver,
             _messageType,
+            _receiver,
             _senderMessage,
             _receiverMessage
         );
