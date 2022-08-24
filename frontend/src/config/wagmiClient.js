@@ -32,7 +32,7 @@ const avalancheChain = {
 };
 
 const { chains, provider, webSocketProvider } = configureChains(
-    [avalancheChain, chain.polygonMumbai, chain.ropsten],
+    [avalancheChain, chain.polygonMumbai, chain.goerli],
     [alchemyProvider({ alchemyId }), publicProvider()]
 );
 
