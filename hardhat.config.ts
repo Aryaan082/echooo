@@ -45,7 +45,7 @@ const config: HardhatUserConfig = {
     },
     ropsten: {
       url:
-        "https://ropsten.infura.io/v3/a5adc84c994b4d7bbdec98a637c43304" || "",
+        "https://ropsten.infura.io/v3/a5adc84c994b4d7bbdec98a637c43304",
       accounts: [process.env.PRIVATE_KEY_ROPSTEN || ""],
     },
     fuji: {
@@ -56,6 +56,10 @@ const config: HardhatUserConfig = {
       url: "https://rpc-mumbai.maticvigil.com",
       accounts: [process.env.PRIVATE_KEY_MATIC || ""],
     },
+    goerli: {
+      url: "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+      accounts: [process.env.PRIVATE_KEY_GOERLI || ""],
+    }
   },
   gasReporter: {
     enabled: true,
