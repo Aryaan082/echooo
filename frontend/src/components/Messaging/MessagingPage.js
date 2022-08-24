@@ -218,19 +218,21 @@ export default function MessagingPage({
         if (metaDataMessages.senderMessage.length < 194 || metaDataMessages.receiverMessage.length < 194) {
           continue;
         }
+        let messageEncrypted = "";
+        let messageMetadata = {};
         let message = "";
 
         // Decrypt sender message
-        if (metaDataMessages.from === senderAddress) {
-          message = metaDataMessages.senderMessage;
+        if (metaDataMessages.from === senderAddress) {          
+          messageEncrypted = metaDataMessages.senderMessage;
         } else {
           // Decrypt receiver message
-          message = metaDataMessages.receiverMessage;
+          messageEncrypted = metaDataMessages.receiverMessage;
         }
 
-        const decryptedMessage = await EthCrypto.decryptWithPrivateKey(
+        let decryptedMessage = await EthCrypto.decryptWithPrivateKey(
           senderPrivateKey,
-          EthCrypto.cipher.parse(message)
+          EthCrypto.cipher.parse(messageEncrypted)
         ).catch((err) => {
           console.log("Sending Message Error:", err);
           // TODO: make message indicative of error by changing color
@@ -258,11 +260,22 @@ export default function MessagingPage({
           const newMessageLog = messages;
           newMessageLog[activeReceiverAddress] = newReceiverMessageLog;
           setMessageLog(newMessageLog);
-          return errorMessage;
+          const result = {message: errorMessage, metadata: {}, messageType: "0"}
+          return result;
         });
-        messageLog[idx].message = decryptedMessage;
-
-        // console.log(`Decrypted message ${idx} >>>`, decryptedMessage);
+ 
+        if (metaDataMessages.messageType === "1") {
+          decryptedMessage = JSON.parse(decryptedMessage);
+        
+          message = decryptedMessage.message;
+          messageMetadata = decryptedMessage.metadata;
+        } else {
+          message = decryptedMessage;
+        }
+        
+        messageLog[idx].message = message;
+        messageLog[idx].metadata = messageMetadata;
+        messageLog[idx].messageType = metaDataMessages.messageType;
       }
 
       const newMessageLog = {

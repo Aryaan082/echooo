@@ -48,8 +48,7 @@ export default function NFTOfferModal({
   const [NFTPrice, setNFTPrice] = useState("");
   const [NFTFilter, setNFTFilter] = useState("");
   const [isLoading, setLoading] = useState(false);
-  const [ETH_USD, setETH_USD] = useState(0);
-
+  const [ETH_USD, setETH_USD] = useState(0);  
   const handleNFTFilterChange = (e) => setNFTFilter(e.target.value);
   const handleNFTPriceChange = (e) => setNFTPrice(e.target.value);
 
@@ -113,7 +112,7 @@ export default function NFTOfferModal({
 
   const increaseAllowance = async () => {
     // _operator is NFT exchange contract
-    // TODO: don't hardcode this
+    // TODO: fetch contract address from contract metadata
     const _operator = "0x6ef0d67Ca702fAE10E133c885df41F43c3a56136";
 
     const tx = await contracts.contractWETH.approve(
@@ -129,48 +128,62 @@ export default function NFTOfferModal({
       .catch((err) => console.log("Error occurred: " + err));
   };
 
-  const signExchangeOffer = async () => {
+  const signExchangeOffer = async (tokenAmount, tokenId, timeExpiry, buyer, seller, tokenAddress, NFTAddress) => {
     const domain = {
-      name: "NFTExchange",
-      version: "1",
+      name: "RequestNFT",
       chainId: chain.id,
-      verifyingContract: "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC",
+      verifyingContract: contracts.contractNFTTransfer.address,
     };
 
     const types = {
-      Person: [
-        { name: "name", type: "string" },
-        { name: "wallet", type: "address" },
-      ],
-      Mail: [
-        { name: "from", type: "Person" },
-        { name: "to", type: "Person" },
-        { name: "contents", type: "string" },
-      ],
+      Buy: [
+        {name: "tokenAmount", type: "uint256"},
+        {name: "tokenId", type: "uint256"},
+        {name: "timeExpiry", type: "uint256"},
+        {name: "buyer", type: "address"},
+        {name: "seller", type: "address"},
+        {name: "tokenAddress", type: "address"},
+        {name: "NFTAddress", type: "address"},
+      ]
     };
 
-    const value = {
-      from: {
-        name: "Cow",
-        wallet: "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826",
-      },
-      to: {
-        name: "Bob",
-        wallet: "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB",
-      },
-      contents: "Hello, Bob!",
+    const data = {
+      tokenAmount: tokenAmount,
+      tokenId: tokenId,
+      timeExpiry: timeExpiry,
+      buyer: buyer,
+      seller: seller,
+      tokenAddress: tokenAddress,
+      NFTAddress: NFTAddress
     };
+    console.log("data nft >>>", data)
 
-    const signature = await signer._signTypedData(domain, types, value);
-    console.log(signature);
+    let digest = await signer._signTypedData(
+      domain,
+      types,
+      data
+    )
+
+    console.log("digest nft >>>", digest)
+
+    let { v,r,s } = await ethers.utils.splitSignature(digest);
+    
+    const metadata = {
+      ...data,
+      v: v,
+      r: r,
+      s: s
+    }
+    console.log("generate metadata >>>>", metadata)
+    return metadata;
   };
 
-  const handleSendOffer = async () => {
+  const handleSendOffer = async (metadata) => {
     let senderPublicKey = JSON.parse(
       localStorage.getItem("public-communication-address")
     );
     senderPublicKey = senderPublicKey[address];
-
+    console.log("metadata >>>", metadata)
     const graphClient = theGraphClient();
     const data = await graphClient
       .query(GQL_QUERY_GET_COMMUNICATION_ADDRESS, {
@@ -178,36 +191,31 @@ export default function NFTOfferModal({
       })
       .toPromise();
     const receiverPublicKey = data.data.identities[0].communicationAddress;
+    
+    const senderMessageOffer = `You have offered to buy NFT _ from _`;
+    const receiverMessageOffer = `${address} offered to buy NFT _`;
 
-    const senderMessage = [NFTAddress, NFTTokenId, NFTPrice].toString();
+    const senderMessage = {message: senderMessageOffer, metadata: metadata}
+    const receiverMessage = {message: receiverMessageOffer, metadata: metadata}
+
+    const senderMessageJSON = JSON.stringify(senderMessage);
+    const receiverMessageJSON = JSON.stringify(receiverMessage);
 
     let messageEncryptedSender = await EthCrypto.encryptWithPublicKey(
       senderPublicKey,
-      senderMessage
+      senderMessageJSON
     );
     let messageEncryptedReceiver = await EthCrypto.encryptWithPublicKey(
       receiverPublicKey,
-      senderMessage
+      receiverMessageJSON
     );
 
     messageEncryptedSender = EthCrypto.cipher.stringify(messageEncryptedSender);
-    messageEncryptedReceiver = EthCrypto.cipher.stringify(
-      messageEncryptedReceiver
-    );
+    messageEncryptedReceiver = EthCrypto.cipher.stringify(messageEncryptedReceiver);
 
-    // const tx = await contracts.contractEcho.logNFTOffer(
-    //   1,
-    //   activeReceiverAddress,
-    //   messageEncryptedSender,
-    //   messageEncryptedReceiver
-    // );
-    // await tx
-    //   .wait()
-    //   .then(() => {
-    //     setNFTOfferStage(0);
-    //     toggleOpenModal();
-    //   })
-    //   .catch((err) => console.log("Error occurred: " + err));
+    const tx = await contracts.contractEcho.logMessage(1, activeReceiverAddress, messageEncryptedSender, messageEncryptedReceiver);
+    await tx.wait();
+
   };
 
   return (
@@ -399,11 +407,15 @@ export default function NFTOfferModal({
                 ></input>
                 <button
                   className="flex flex-row justify-center text-lg items-center gap-[15px] px-5 py-3 bg-[#333333] text-white font-bold rounded-[8px] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={() => {
+                  onClick={async () => {
                     setLoading(true);
                     increaseAllowance();
-                    signExchangeOffer();
-                    handleSendOffer();
+                    const ERC20_WETH_ADDRESS = contracts.contractWETH.address;
+                    // (tokenAmount, tokenId, timeExpiry, buyer, seller, tokenAddress, NFTAddress)
+                    const timeStamp = (await ethers.provider.getBlock("latest")).timestamp
+                    const metadata = signExchangeOffer(NFTPrice, NFTTokenId, 10000, address, activeReceiverAddress, ERC20_WETH_ADDRESS, NFTAddress);
+                    console.log("metadata offer modal >>>", metadata)
+                    handleSendOffer(metadata);                  
                   }}
                   disabled={!Boolean(NFTPrice)}
                 >

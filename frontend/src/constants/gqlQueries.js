@@ -14,6 +14,7 @@ query ($senderAddress: String!, $receiverAddress: String!, $recentTimestamp: Big
     senderMessage
     receiverMessage
     timestamp
+    messageType
   }
 }
 `;
