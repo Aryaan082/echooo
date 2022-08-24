@@ -9,7 +9,7 @@ async function main() {
 
   console.log("Deploying contracts with the account:", deployer.address);
   console.log("Account balance:", (await deployer.getBalance()).toString());
-  console.log("Token Transfer deployed to:", requestNFT.address);
+  console.log("RequestNFT deployed to:", requestNFT.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

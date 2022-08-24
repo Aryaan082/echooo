@@ -21,7 +21,7 @@ import {
 import "./receivers.css";
 
 const MessageSender = ({
-  receiverAddress,
+  activeReceiverAddress,
   messages,
   setMessageLog,
   messagesState,
@@ -44,7 +44,7 @@ const MessageSender = ({
 
   const handleSubmitMessage = async (e) => {
     e.preventDefault();
-    setMessagesState({ [receiverAddress]: true });
+    setMessagesState({ [activeReceiverAddress]: true });
 
     let senderPublicKey = JSON.parse(
       localStorage.getItem("public-communication-address")
@@ -52,15 +52,17 @@ const MessageSender = ({
     senderPublicKey = senderPublicKey[address];
 
     // TODO: break up into smaller functions
-    const sendMessage = async (receiverAddress) => {
+    const sendMessage = async (activeReceiverAddress) => {
       // TODO: sanitize graphQL queries b/c currently dynamic and exposes injection vulnerability
 
       // Query for the receiver's communication public key
       const data = await graphClient
         .query(GQL_QUERY_GET_COMMUNICATION_ADDRESS, {
-          receiverAddress: receiverAddress,
+          activeReceiverAddress: activeReceiverAddress,
         })
         .toPromise();
+
+      console.log(data);
 
       const receiverPublicKey = data.data.identities[0].communicationAddress;
 
@@ -81,23 +83,29 @@ const MessageSender = ({
 
       const tx = await contracts.contractEcho.logMessage(
         0,
-        receiverAddress,
+        activeReceiverAddress,
         messageEncryptedSender,
         messageEncryptedReceiver
       );
       await tx.wait();
     };
 
-    const newMessageState = { ...messagesState, [receiverAddress]: false };
+    const newMessageState = {
+      ...messagesState,
+      [activeReceiverAddress]: false,
+    };
 
     // Sends transaction to blockchain
-    sendMessage(receiverAddress, messages)
+    sendMessage(activeReceiverAddress, messages)
       .then(() => {
         let newReceiverMessageLog;
 
-        if (Object.keys(messages).length !== 0 || receiverAddress in messages) {
+        if (
+          Object.keys(messages).length !== 0 ||
+          activeReceiverAddress in messages
+        ) {
           newReceiverMessageLog = [
-            ...messages[receiverAddress],
+            ...messages[activeReceiverAddress],
             {
               from: address,
               message: senderMessage,
@@ -115,7 +123,7 @@ const MessageSender = ({
         }
 
         const newMessageLog = messages;
-        newMessageLog[receiverAddress] = newReceiverMessageLog;
+        newMessageLog[activeReceiverAddress] = newReceiverMessageLog;
         setMessageLog(newMessageLog);
         setMessagesState(newMessageState);
       })
@@ -132,9 +140,12 @@ const MessageSender = ({
           },
         ];
 
-        if (Object.keys(messages).length !== 0 || receiverAddress in messages) {
+        if (
+          Object.keys(messages).length !== 0 ||
+          activeReceiverAddress in messages
+        ) {
           newReceiverMessageLog = [
-            ...messages[receiverAddress],
+            ...messages[activeReceiverAddress],
             ...newReceiverMessageLog,
           ];
         } else {
@@ -142,7 +153,7 @@ const MessageSender = ({
         }
 
         const newMessageLog = messages;
-        newMessageLog[receiverAddress] = newReceiverMessageLog;
+        newMessageLog[activeReceiverAddress] = newReceiverMessageLog;
         setMessageLog(newMessageLog);
         setMessagesState(newMessageState);
       });
@@ -203,7 +214,7 @@ const MessageSender = ({
           ></img>
         </button>
       </div>
-      {messagesState[receiverAddress] ? (
+      {messagesState[activeReceiverAddress] ? (
         <div className="flex flex-row items-center justify-center gap-[20px]">
           <Oval
             ariaLabel="loading-indicator"

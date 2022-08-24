@@ -78,7 +78,6 @@ const ContractInstance = () => {
     signerOrProvider: signer,
   });
 
-
   return {
     contractEcho,
     contractTokenTransfer,
