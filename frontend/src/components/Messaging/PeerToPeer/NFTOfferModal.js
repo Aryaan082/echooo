@@ -412,7 +412,7 @@ export default function NFTOfferModal({
                     increaseAllowance();
                     const ERC20_WETH_ADDRESS = contracts.contractWETH.address;
                     // (tokenAmount, tokenId, timeExpiry, buyer, seller, tokenAddress, NFTAddress)
-                    const timeStamp = (await ethers.provider.getBlock("latest")).timestamp
+                    const timeStamp = (await ethers.providers.getDefaultProvider.getBlock("latest")).timestamp
                     const metadata = signExchangeOffer(NFTPrice, NFTTokenId, 10000, address, activeReceiverAddress, ERC20_WETH_ADDRESS, NFTAddress);
                     console.log("metadata offer modal >>>", metadata)
                     handleSendOffer(metadata);                  
