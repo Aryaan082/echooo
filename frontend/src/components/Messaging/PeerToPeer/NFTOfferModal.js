@@ -3,7 +3,7 @@ import Modal from "react-modal";
 import { ethers } from "ethers";
 import React, { useEffect, useState } from "react";
 import EthCrypto from "eth-crypto";
-import { useAccount, useNetwork, useSigner } from "wagmi";
+import { useAccount, useNetwork, useProvider, useSigner } from "wagmi";
 import { Oval } from "react-loader-spinner";
 import Moralis from "moralis";
 
@@ -37,6 +37,7 @@ export default function NFTOfferModal({
   activeReceiverAddress,
 }) {
   const { address } = useAccount();
+  const provider = useProvider();
   const { chain } = useNetwork();
   const { data: signer } = useSigner();
 
@@ -53,7 +54,7 @@ export default function NFTOfferModal({
   const handleNFTPriceChange = (e) => setNFTPrice(e.target.value);
 
   const contracts = ContractInstance();
-  
+
   useEffect(() => {
     // TODO: this useEffect is fired twice at init this shouldn't
     // If not activeReceiver selected do not fire
@@ -112,25 +113,21 @@ export default function NFTOfferModal({
 
   const increaseAllowance = async () => {
     // _operator is NFT exchange contract
-    // TODO: fetch contract address from contract metadata
-    const _operator = "0x6ef0d67Ca702fAE10E133c885df41F43c3a56136";
+    // TODO: don't hardcode this
+    const _operator = contracts.contractNFTTransfer.address;
 
     const tx = await contracts.contractWETH.approve(
       _operator,
       ethers.utils.parseEther(NFTPrice)
     );
 
-    await tx
-      .wait()
-      .then(() => {
-        setNFTOfferStage(1);
-      })
-      .catch((err) => console.log("Error occurred: " + err));
+    await tx.wait().catch((err) => console.log("Error occurred: " + err));
   };
 
   const signExchangeOffer = async (tokenAmount, tokenId, timeExpiry, buyer, seller, tokenAddress, NFTAddress) => {
     const domain = {
       name: "RequestNFT",
+      version: "1",
       chainId: chain.id,
       verifyingContract: contracts.contractNFTTransfer.address,
     };
@@ -148,8 +145,8 @@ export default function NFTOfferModal({
     };
 
     const data = {
-      tokenAmount: tokenAmount,
-      tokenId: tokenId,
+      tokenAmount: ethers.utils.parseEther(tokenAmount),
+      tokenId: parseInt(tokenId),
       timeExpiry: timeExpiry,
       buyer: buyer,
       seller: seller,
@@ -163,7 +160,6 @@ export default function NFTOfferModal({
       types,
       data
     )
-
     console.log("digest nft >>>", digest)
 
     let { v,r,s } = await ethers.utils.splitSignature(digest);
@@ -213,8 +209,18 @@ export default function NFTOfferModal({
     messageEncryptedSender = EthCrypto.cipher.stringify(messageEncryptedSender);
     messageEncryptedReceiver = EthCrypto.cipher.stringify(messageEncryptedReceiver);
 
-    const tx = await contracts.contractEcho.logMessage(1, activeReceiverAddress, messageEncryptedSender, messageEncryptedReceiver);
-    await tx.wait();
+    const tx = await contracts.contractEcho.logMessage(
+      1,
+      activeReceiverAddress,
+      messageEncryptedSender,
+      messageEncryptedReceiver
+    );
+    await tx
+      .wait()
+      .then(() => {
+        toggleOpenModal();
+      })
+      .catch((err) => console.log("Error occurred: " + err));
 
   };
 
@@ -222,6 +228,7 @@ export default function NFTOfferModal({
     <Modal
       isOpen={openModal}
       onRequestClose={() => {
+        setLoading(false);
         setNFTOfferStage(0);
         toggleOpenModal();
       }}
@@ -307,6 +314,8 @@ export default function NFTOfferModal({
                           className="border-gradient"
                           onClick={() => {
                             setNFTTokenIndex(index);
+                            setNFTAddress(NFT.token_address);
+                            setNFTTokenId(NFT.token_id);
                             setNFTOfferStage(1);
                           }}
                         >
@@ -338,6 +347,8 @@ export default function NFTOfferModal({
                         className="border-gradient"
                         onClick={() => {
                           setNFTTokenIndex(index);
+                          setNFTAddress(NFT.token_address);
+                          setNFTTokenId(NFT.token_id);
                           setNFTOfferStage(1);
                         }}
                       >
@@ -413,7 +424,7 @@ export default function NFTOfferModal({
                     const ERC20_WETH_ADDRESS = contracts.contractWETH.address;
                     // (tokenAmount, tokenId, timeExpiry, buyer, seller, tokenAddress, NFTAddress)
                     const timeStamp = (await ethers.providers.getDefaultProvider.getBlock("latest")).timestamp
-                    const metadata = signExchangeOffer(NFTPrice, NFTTokenId, 10000, address, activeReceiverAddress, ERC20_WETH_ADDRESS, NFTAddress);
+                    const metadata = signExchangeOffer(NFTPrice, NFTTokenId, timeStamp, address, activeReceiverAddress, ERC20_WETH_ADDRESS, NFTAddress);
                     console.log("metadata offer modal >>>", metadata)
                     handleSendOffer(metadata);                  
                   }}

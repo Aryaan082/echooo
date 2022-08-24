@@ -24,7 +24,7 @@ export const CONTRACT_META_DATA = {
     contractUSDC: "0xDDDC35FFAe3cabf560e36e23d18B36927d9b5a09",
     contractBAYC: "0x02e26af7ee5fED9DaB493cFf9B57F7fc78edd917",
     contractPFP: "0xD92BC54aAAdd1Fe84C87AB55f415e85B12643Ac5",
-    contractRequestNFT: "",
+    contractRequestNFT: "0x9E209b9103f84A72c5F66519C78582b8CD863860",
     logo: polygonIconSVG,
     name: "Polygon",
     baseToken: "MATIC",
