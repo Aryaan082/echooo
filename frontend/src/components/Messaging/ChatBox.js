@@ -11,7 +11,9 @@ const renderChat = (
   currentETHTime,
   receiverAddress,
   messages,
-  acceptOffer
+  acceptOffer,
+  cancelOffer,
+  updateNFTStatus
 ) => {
   const chatJSX = [];
 
@@ -28,31 +30,44 @@ const renderChat = (
   for (let idx = 0; idx < messageLog.length; idx++) {
     let messageMetaData = messageLog[idx];
     let message = messageMetaData.message;
+    let messageData = message;
     let timestamp = messageMetaData.timestamp;
     let messageType = messageMetaData.messageType;
     if (receiverAddressLowerCase === messageMetaData.from) {
       if (messageType === "1") {
-        const messageJSON = JSON.parse(messageMetaData.message);
         message = (
           <div className="flex flex-col gap-4">
-            <code className="text-lg">NFT Offer</code>
+            <div className="flex flex-row gap-4">
+              <code className="text-lg">NFT Offer</code>
+              {messageData.offerStatus === 1 ? (
+                <div className="flex justify-center items-center text-white text-sm bg-[#27AE60] rounded-[20px] px-3">
+                  Accepted
+                </div>
+              ) : messageData.offerStatus === 2 ? (
+                <div className="flex justify-center items-center text-white text-sm bg-[#ff0a00] rounded-[20px] px-3">
+                  Cancelled
+                </div>
+              ) : (
+                <></>
+              )}
+            </div>
             <div className="flex flex-col text-sm">
               <div className="font-bold">From</div>
-              <code>{messageJSON.buyer}</code>
+              <code>{messageData.buyer}</code>
             </div>
             <div className="flex flex-row gap-16">
               <div className="flex flex-col text-sm">
                 <div className="font-bold">Price</div>
                 <code>
                   {ethers.utils.formatEther(
-                    ethers.BigNumber.from(messageJSON.tokenAmount)
+                    ethers.BigNumber.from(messageData.tokenAmount)
                   )}{" "}
                   WETH{" "}
                   <span className="opacity-50">{`($${(
                     ETH_USD *
                     parseFloat(
                       ethers.utils.formatEther(
-                        ethers.BigNumber.from(messageJSON.tokenAmount)
+                        ethers.BigNumber.from(messageData.tokenAmount)
                       )
                     )
                   ).toLocaleString()} USD)`}</span>
@@ -61,7 +76,7 @@ const renderChat = (
               <div className="flex flex-col text-sm">
                 <div className="font-bold">Expires</div>
                 <code>
-                  {((messageJSON.timeExpiry - currentETHTime) / 86400).toFixed(
+                  {((messageData.timeExpiry - currentETHTime) / 86400).toFixed(
                     2
                   )}{" "}
                   Days
@@ -69,10 +84,10 @@ const renderChat = (
               </div>
             </div>
             <div className="flex flex-row gap-[12px]">
-              {messageJSON.imageURL ? (
+              {messageData.imageURL ? (
                 <img
                   className="h-[50px] rounded-[5px]"
-                  src={messageJSON.imageURL}
+                  src={messageData.imageURL}
                   alt=""
                 ></img>
               ) : (
@@ -80,39 +95,43 @@ const renderChat = (
               )}
               <div className="flex flex-col text-left">
                 <div className="text-lg font-medium">
-                  {messageJSON.name} #{messageJSON.tokenId}
+                  {messageData.name} #{messageData.tokenId}
                 </div>
                 <div className="text-sm font-medium">
                   Address{" "}
-                  {`${messageJSON.NFTAddress.substring(
+                  {`${messageData.NFTAddress.substring(
                     0,
                     4
-                  )}...${messageJSON.NFTAddress.substring(38)}`}
+                  )}...${messageData.NFTAddress.substring(38)}`}
                 </div>
               </div>
             </div>
             <div className="flex justify-end">
-              <button
-                className="bg-[#27AE60] text-white rounded-[8px] py-2 w-[150px]"
-                onClick={() => {
-                  acceptOffer(
-                    ethers.BigNumber.from(
-                      messageJSON.tokenAmount.hex
-                    ).toString(),
-                    messageJSON.tokenId,
-                    messageJSON.timeExpiry,
-                    messageJSON.buyer,
-                    messageJSON.seller,
-                    messageJSON.tokenAddress,
-                    messageJSON.NFTAddress,
-                    messageJSON.v,
-                    messageJSON.r,
-                    messageJSON.s
-                  );
-                }}
-              >
-                Accept
-              </button>
+              {messageData.offerStatus !== 0 ? (
+                <></>
+              ) : (
+                <button
+                  className="bg-[#27AE60] text-white rounded-[8px] py-2 w-[150px]"
+                  onClick={() => {
+                    acceptOffer(
+                      ethers.BigNumber.from(
+                        messageData.tokenAmount.hex
+                      ).toString(),
+                      messageData.tokenId,
+                      messageData.timeExpiry,
+                      messageData.buyer,
+                      messageData.seller,
+                      messageData.tokenAddress,
+                      messageData.NFTAddress,
+                      messageData.v,
+                      messageData.r,
+                      messageData.s
+                    );
+                  }}
+                >
+                  Accept
+                </button>
+              )}
             </div>
           </div>
         );
@@ -128,27 +147,39 @@ const renderChat = (
       );
     } else {
       if (messageType === "1") {
-        message = JSON.parse(messageMetaData.message);
         message = (
           <div className="flex flex-col gap-4">
-            <code className="text-lg">NFT Offer</code>
+            <div className="flex flex-row gap-4">
+              <code className="text-lg">NFT Offer</code>
+              {messageData.offerStatus === 1 ? (
+                <div className="flex justify-center items-center text-white text-sm bg-[#27AE60] rounded-[20px] px-3">
+                  Accepted
+                </div>
+              ) : messageData.offerStatus === 2 ? (
+                <div className="flex justify-center items-center text-white text-sm bg-[#ff0a00] rounded-[20px] px-3">
+                  Cancelled
+                </div>
+              ) : (
+                <></>
+              )}
+            </div>
             <div className="flex flex-col text-sm">
               <div className="font-bold">To</div>
-              <code>{message.seller}</code>
+              <code>{messageData.seller}</code>
             </div>
             <div className="flex flex-row gap-16">
               <div className="flex flex-col text-sm">
                 <div className="font-bold">Price</div>
                 <code>
                   {ethers.utils.formatEther(
-                    ethers.BigNumber.from(message.tokenAmount)
+                    ethers.BigNumber.from(messageData.tokenAmount)
                   )}{" "}
                   WETH{" "}
                   <span className="opacity-50">{`($${(
                     ETH_USD *
                     parseFloat(
                       ethers.utils.formatEther(
-                        ethers.BigNumber.from(message.tokenAmount)
+                        ethers.BigNumber.from(messageData.tokenAmount)
                       )
                     )
                   ).toLocaleString()} USD)`}</span>
@@ -157,16 +188,18 @@ const renderChat = (
               <div className="flex flex-col text-sm">
                 <div className="font-bold">Expires</div>
                 <code>
-                  {((message.timeExpiry - currentETHTime) / 86400).toFixed(2)}{" "}
+                  {((messageData.timeExpiry - currentETHTime) / 86400).toFixed(
+                    2
+                  )}{" "}
                   Days
                 </code>
               </div>
             </div>
             <div className="flex flex-row gap-[12px]">
-              {message.imageURL ? (
+              {messageData.imageURL ? (
                 <img
                   className="h-[50px] rounded-[5px]"
-                  src={message.imageURL}
+                  src={messageData.imageURL}
                   alt=""
                 ></img>
               ) : (
@@ -174,16 +207,43 @@ const renderChat = (
               )}
               <div className="flex flex-col text-left">
                 <div className="text-lg font-medium">
-                  {message.name} #{message.tokenId}
+                  {messageData.name} #{messageData.tokenId}
                 </div>
                 <div className="text-sm font-medium">
                   Address{" "}
-                  {`${message.NFTAddress.substring(
+                  {`${messageData.NFTAddress.substring(
                     0,
                     4
-                  )}...${message.NFTAddress.substring(38)}`}
+                  )}...${messageData.NFTAddress.substring(38)}`}
                 </div>
               </div>
+            </div>
+            <div className="flex justify-end">
+              {messageData.offerStatus !== 0 ? (
+                <></>
+              ) : (
+                <button
+                  className="bg-[#ff0a00] text-white rounded-[8px] py-2 w-[150px]"
+                  onClick={() => {
+                    cancelOffer(
+                      ethers.BigNumber.from(
+                        messageData.tokenAmount.hex
+                      ).toString(),
+                      messageData.tokenId,
+                      messageData.timeExpiry,
+                      messageData.buyer,
+                      messageData.seller,
+                      messageData.tokenAddress,
+                      messageData.NFTAddress,
+                      messageData.v,
+                      messageData.r,
+                      messageData.s
+                    );
+                  }}
+                >
+                  Cancel
+                </button>
+              )}
             </div>
           </div>
         );
@@ -261,17 +321,65 @@ const ChatBox = ({ activeReceiverAddress, messages }) => {
     await tx.wait();
   };
 
+  const cancelOffer = async (
+    tokenAmount,
+    tokenId,
+    timeExpiry,
+    buyer,
+    seller,
+    tokenAddress,
+    NFTAddress,
+    v,
+    r,
+    s
+  ) => {
+    const data = {
+      tokenAmount: tokenAmount,
+      tokenId: tokenId,
+      timeExpiry: timeExpiry,
+      buyer: buyer,
+      seller: seller,
+      tokenAddress: tokenAddress,
+      NFTAddress: NFTAddress,
+    };
+
+    const tx = await contracts.contractRequestNFT.cancelOffer(data, v, r, s);
+
+    await tx.wait();
+  };
+
+  const updateNFTStatus = async () => {
+    for (var i = 0; i < messages[activeReceiverAddress].length; i++) {
+      if (messages[activeReceiverAddress][i].messageType === "1") {
+        const data = {
+          tokenAmount: messages[activeReceiverAddress][i].message.tokenAmount,
+          tokenId: messages[activeReceiverAddress][i].message.tokenId,
+          timeExpiry: messages[activeReceiverAddress][i].message.timeExpiry,
+          buyer: messages[activeReceiverAddress][i].message.buyer,
+          seller: messages[activeReceiverAddress][i].message.seller,
+          tokenAddress: messages[activeReceiverAddress][i].message.tokenAddress,
+          NFTAddress: messages[activeReceiverAddress][i].message.NFTAddress,
+        };
+        messages[activeReceiverAddress][i].message.offerStatus =
+          await contracts.contractRequestNFT.getOfferStatus(data);
+      }
+    }
+  };
+
   useEffect(() => {
     getETHPrice();
     getCurrentETHTime();
-  }, [messages]);
+    updateNFTStatus();
+  });
 
   const chat = renderChat(
     ETH_USD,
     currentETHTime,
     activeReceiverAddress,
     messages,
-    acceptOffer
+    acceptOffer,
+    cancelOffer,
+    updateNFTStatus
   );
 
   if (activeReceiverAddress in messages) {

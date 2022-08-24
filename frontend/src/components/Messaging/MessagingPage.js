@@ -262,11 +262,13 @@ export default function MessagingPage({
           setMessageLog(newMessageLog);
           const result = {
             message: errorMessage,
-            metadata: {},
-            messageType: "0",
           };
           return result;
         });
+
+        if (metaDataMessages.messageType === "1") {
+          decryptedMessage = JSON.parse(decryptedMessage);
+        }
 
         messageLog[idx].message = decryptedMessage;
         messageLog[idx].messageType = metaDataMessages.messageType;

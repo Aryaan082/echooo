@@ -5,6 +5,7 @@ import { RequestNFT, TestERC20Token, TestERC721Token } from "../typechain";
 
 import { Contract } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { request } from "http";
 
 dotenv.config();
 
@@ -88,7 +89,15 @@ describe("SendCrypto Contract", () => {
     await testERC721TokenContract
       .connect(bob)
       .approve(requestNFTContract.address, 1);
+
+    expect(await requestNFTContract.getOfferStatus(data)).to.equal(0);
+
     await requestNFTContract.connect(bob).exchange(data, v, r, s);
+
+    expect(await requestNFTContract.getOfferStatus(data)).to.equal(1);
+
+    await expect(requestNFTContract.connect(bob).exchange(data, v, r, s)).to.be
+      .reverted;
 
     expect(
       await testERC20TokenContract.connect(bob).balanceOf(bob.address)

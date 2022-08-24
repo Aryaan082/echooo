@@ -41,12 +41,7 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       chainId: 1337,
-      allowUnlimitedContractSize: true
-    },
-    ropsten: {
-      url:
-        "https://ropsten.infura.io/v3/a5adc84c994b4d7bbdec98a637c43304",
-      accounts: [process.env.PRIVATE_KEY_ROPSTEN || ""],
+      allowUnlimitedContractSize: true,
     },
     fuji: {
       url: "https://api.avax-test.network/ext/bc/C/rpc",
@@ -59,7 +54,7 @@ const config: HardhatUserConfig = {
     goerli: {
       url: "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
       accounts: [process.env.PRIVATE_KEY_GOERLI || ""],
-    }
+    },
   },
   gasReporter: {
     enabled: true,
