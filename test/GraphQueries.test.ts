@@ -16,30 +16,28 @@ const graphClient = createClient({
 });
 
 describe.only("The Graph Queries", () => {
-    let walletOne: Wallet;
-    let walletTwo: Wallet;
-    let contractEcho: Contract;
-    let message: string;
-    let byteMessage: Uint8Array;
-    let originalMessage: string;
-  
-    beforeEach(async () => {
-      const provider = new ethers.providers.JsonRpcProvider(
-        `https://rpc.ankr.com/avalanche_fuji`
-      );
-      const privateKeyOne = process.env.PRIVATE_KEY_MATIC || "";
-      const privateKeyTwo = process.env.PRIVATE_KEY_MATIC_TWO || "";
-      walletOne = new ethers.Wallet(privateKeyOne, provider);
-      walletTwo = new ethers.Wallet(privateKeyTwo, provider);
-      const contractAddress = "0x916AbE4ee97D6288eE7A8F24857C7e20a4dfe621";
-      contractEcho = await new ethers.Contract(
-        contractAddress,
-        EchoJSON.abi,
-        provider
-      );
-    });
+  let walletOne: Wallet;
+  let walletTwo: Wallet;
+  let contractEcho: Contract;
+  let message: string;
+  let byteMessage: Uint8Array;
+  let originalMessage: string;
 
-    it("Can get unknown addresses relative to a trusted list of addresses", async () => {
-        
-    })
+  beforeEach(async () => {
+    const provider = new ethers.providers.JsonRpcProvider(
+      `https://rpc.ankr.com/avalanche_fuji`
+    );
+    const privateKeyOne = process.env.PRIVATE_KEY_MATIC || "";
+    const privateKeyTwo = process.env.PRIVATE_KEY_MATIC_TWO || "";
+    walletOne = new ethers.Wallet(privateKeyOne, provider);
+    walletTwo = new ethers.Wallet(privateKeyTwo, provider);
+    const contractAddress = "0x916AbE4ee97D6288eE7A8F24857C7e20a4dfe621";
+    contractEcho = await new ethers.Contract(
+      contractAddress,
+      EchoJSON.abi,
+      provider
+    );
+  });
+
+  it("Can get unknown addresses relative to a trusted list of addresses", async () => {});
 });

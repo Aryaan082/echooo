@@ -69,7 +69,7 @@ const ContractInstance = () => {
     signerOrProvider: signer,
   });
 
-  const contractNFTTransfer = useContract({
+  const contractRequestNFT = useContract({
     addressOrName:
       chain.id in CONTRACT_META_DATA
         ? CONTRACT_META_DATA[chain.id].contractRequestNFT
@@ -85,7 +85,7 @@ const ContractInstance = () => {
     contractUSDC,
     contractBAYC,
     contractPFP,
-    contractNFTTransfer
+    contractRequestNFT,
   };
 };
 

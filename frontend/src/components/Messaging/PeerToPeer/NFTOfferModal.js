@@ -6,6 +6,7 @@ import EthCrypto from "eth-crypto";
 import { useAccount, useNetwork, useProvider, useSigner } from "wagmi";
 import { Oval } from "react-loader-spinner";
 import Moralis from "moralis";
+import moment from "moment";
 
 import { theGraphClient } from "../../../config";
 import {
@@ -35,6 +36,10 @@ export default function NFTOfferModal({
   openModal,
   toggleOpenModal,
   activeReceiverAddress,
+  messages,
+  setMessageLog,
+  messagesState,
+  setMessagesState,
 }) {
   const { address } = useAccount();
   const provider = useProvider();
@@ -47,9 +52,13 @@ export default function NFTOfferModal({
   const [NFTTokenIndex, setNFTTokenIndex] = useState();
   const [NFTTokenId, setNFTTokenId] = useState("");
   const [NFTPrice, setNFTPrice] = useState("");
+  const [NFTImage, setNFTImage] = useState("");
+  const [NFTName, setNFTName] = useState("");
   const [NFTFilter, setNFTFilter] = useState("");
   const [isLoading, setLoading] = useState(false);
-  const [ETH_USD, setETH_USD] = useState(0);  
+  const [ETH_USD, setETH_USD] = useState(0);
+  const [currentETHTime, setCurrentETHTime] = useState(0);
+
   const handleNFTFilterChange = (e) => setNFTFilter(e.target.value);
   const handleNFTPriceChange = (e) => setNFTPrice(e.target.value);
 
@@ -59,10 +68,11 @@ export default function NFTOfferModal({
     // TODO: this useEffect is fired twice at init this shouldn't
     // If not activeReceiver selected do not fire
     if (activeReceiverAddress == null) {
-      return 
+      return;
     }
     getNFTInfo();
     getETHPrice();
+    getCurrentETHTime();
   }, [openModal]);
 
   // TODO: add to config folder
@@ -90,17 +100,19 @@ export default function NFTOfferModal({
     setNFTsOwned(ownedNFTs);
   };
 
-  
   const getETHPrice = async () => {
     // TODO: add to constants - also is this URL safe to hardcode? what if it changes?
-    const ETH_USD_API_ENDPOINT = "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD&api_key=58cddf6c19d0f436c15409ad20c236d10ee173c0b77be1ee4f4a1f6b7c53c843"
-    fetch(
-      ETH_USD_API_ENDPOINT
-    )
+    const ETH_USD_API_ENDPOINT =
+      "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD&api_key=58cddf6c19d0f436c15409ad20c236d10ee173c0b77be1ee4f4a1f6b7c53c843";
+    fetch(ETH_USD_API_ENDPOINT)
       .then((response) => response.json())
       .then((data) => {
         setETH_USD(data.USD);
       });
+  };
+
+  const getCurrentETHTime = async () => {
+    setCurrentETHTime((await provider.getBlock()).timestamp);
   };
 
   const mintNFT = async (receiver) => {
@@ -112,116 +124,247 @@ export default function NFTOfferModal({
   };
 
   const increaseAllowance = async () => {
-    // _operator is NFT exchange contract
-    // TODO: don't hardcode this
-    const _operator = contracts.contractNFTTransfer.address;
+    const _operator = contracts.contractRequestNFT.address;
 
-    const tx = await contracts.contractWETH.approve(
-      _operator,
-      ethers.utils.parseEther(NFTPrice)
-    );
+    const tx = await contracts.contractWETH
+      .approve(_operator, ethers.utils.parseEther(NFTPrice))
+      .catch(() => setLoading(false));
 
-    await tx.wait().catch((err) => console.log("Error occurred: " + err));
+    await tx.wait();
   };
 
-  const signExchangeOffer = async (tokenAmount, tokenId, timeExpiry, buyer, seller, tokenAddress, NFTAddress) => {
+  const signExchangeOffer = async () => {
     const domain = {
       name: "RequestNFT",
-      version: "1",
       chainId: chain.id,
-      verifyingContract: contracts.contractNFTTransfer.address,
+      verifyingContract: contracts.contractRequestNFT.address,
     };
 
     const types = {
       Buy: [
-        {name: "tokenAmount", type: "uint256"},
-        {name: "tokenId", type: "uint256"},
-        {name: "timeExpiry", type: "uint256"},
-        {name: "buyer", type: "address"},
-        {name: "seller", type: "address"},
-        {name: "tokenAddress", type: "address"},
-        {name: "NFTAddress", type: "address"},
-      ]
+        { name: "tokenAmount", type: "uint256" },
+        { name: "tokenId", type: "uint256" },
+        { name: "timeExpiry", type: "uint256" },
+        { name: "buyer", type: "address" },
+        { name: "seller", type: "address" },
+        { name: "tokenAddress", type: "address" },
+        { name: "NFTAddress", type: "address" },
+      ],
     };
 
     const data = {
-      tokenAmount: ethers.utils.parseEther(tokenAmount),
-      tokenId: parseInt(tokenId),
-      timeExpiry: timeExpiry,
-      buyer: buyer,
-      seller: seller,
-      tokenAddress: tokenAddress,
-      NFTAddress: NFTAddress
+      tokenAmount: ethers.utils.parseEther(NFTPrice),
+      tokenId: parseInt(NFTTokenId),
+      timeExpiry: (await provider.getBlock()).timestamp + 1000 * 1000,
+      buyer: address,
+      seller: activeReceiverAddress,
+      tokenAddress: contracts.contractWETH.address,
+      NFTAddress: NFTAddress,
     };
-    console.log("data nft >>>", data)
 
-    let digest = await signer._signTypedData(
-      domain,
-      types,
-      data
-    )
-    console.log("digest nft >>>", digest)
+    let digest = await signer._signTypedData(domain, types, data).catch(() => {
+      setLoading(false);
+    });
 
-    let { v,r,s } = await ethers.utils.splitSignature(digest);
-    
+    let { v, r, s } = await ethers.utils.splitSignature(digest);
+
     const metadata = {
       ...data,
       v: v,
       r: r,
-      s: s
-    }
-    console.log("generate metadata >>>>", metadata)
+      s: s,
+      name: NFTName,
+      imageURL: NFTImage,
+    };
+
     return metadata;
   };
 
-  const handleSendOffer = async (metadata) => {
+  const handleSendOffer = async () => {
+    await increaseAllowance();
+    let senderMessage = await signExchangeOffer();
+    senderMessage = JSON.stringify(senderMessage);
+
     let senderPublicKey = JSON.parse(
       localStorage.getItem("public-communication-address")
     );
+
     senderPublicKey = senderPublicKey[address];
-    console.log("metadata >>>", metadata)
+
     const graphClient = theGraphClient();
-    const data = await graphClient
-      .query(GQL_QUERY_GET_COMMUNICATION_ADDRESS, {
-        receiverAddress: activeReceiverAddress,
-      })
-      .toPromise();
-    const receiverPublicKey = data.data.identities[0].communicationAddress;
-    
-    const senderMessageOffer = `You have offered to buy NFT _ from _`;
-    const receiverMessageOffer = `${address} offered to buy NFT _`;
 
-    const senderMessage = {message: senderMessageOffer, metadata: metadata}
-    const receiverMessage = {message: receiverMessageOffer, metadata: metadata}
+    const sendMessage = async (activeReceiverAddress) => {
+      // TODO: sanitize graphQL queries b/c currently dynamic and exposes injection vulnerability
 
-    const senderMessageJSON = JSON.stringify(senderMessage);
-    const receiverMessageJSON = JSON.stringify(receiverMessage);
+      // Query for the receiver's communication public key
+      const data = await graphClient
+        .query(GQL_QUERY_GET_COMMUNICATION_ADDRESS, {
+          receiverAddress: activeReceiverAddress,
+        })
+        .toPromise();
+      const receiverPublicKey = data.data.identities[0].communicationAddress;
 
-    let messageEncryptedSender = await EthCrypto.encryptWithPublicKey(
-      senderPublicKey,
-      senderMessageJSON
-    );
-    let messageEncryptedReceiver = await EthCrypto.encryptWithPublicKey(
-      receiverPublicKey,
-      receiverMessageJSON
-    );
+      let messageEncryptedSender = await EthCrypto.encryptWithPublicKey(
+        senderPublicKey,
+        senderMessage
+      );
+      let messageEncryptedReceiver = await EthCrypto.encryptWithPublicKey(
+        receiverPublicKey,
+        senderMessage
+      );
 
-    messageEncryptedSender = EthCrypto.cipher.stringify(messageEncryptedSender);
-    messageEncryptedReceiver = EthCrypto.cipher.stringify(messageEncryptedReceiver);
+      messageEncryptedSender = EthCrypto.cipher.stringify(
+        messageEncryptedSender
+      );
+      messageEncryptedReceiver = EthCrypto.cipher.stringify(
+        messageEncryptedReceiver
+      );
 
-    const tx = await contracts.contractEcho.logMessage(
-      1,
-      activeReceiverAddress,
-      messageEncryptedSender,
-      messageEncryptedReceiver
-    );
-    await tx
-      .wait()
-      .then(() => {
+      const tx = await contracts.contractEcho
+        .logMessage(
+          "1",
+          activeReceiverAddress,
+          messageEncryptedSender,
+          messageEncryptedReceiver
+        )
+        .catch(() => {
+          setLoading(false);
+        });
+
+      await tx.wait().then(() => {
         toggleOpenModal();
-      })
-      .catch((err) => console.log("Error occurred: " + err));
+        setNFTOfferStage(0);
+        setLoading(false);
+      });
+    };
 
+    const newMessageState = {
+      ...messagesState,
+      [activeReceiverAddress]: false,
+    };
+
+    // Sends transaction to blockchain
+    sendMessage(activeReceiverAddress, messages)
+      .then(() => {
+        let newReceiverMessageLog;
+
+        const message = JSON.parse(senderMessage);
+
+        senderMessage = (
+          <div className="flex flex-col gap-4">
+            <code className="text-lg">NFT Offer</code>
+            <div className="flex flex-col text-sm">
+              <div className="font-bold">To</div>
+              <code>{message.seller}</code>
+            </div>
+            <div className="flex flex-row gap-16">
+              <div className="flex flex-col text-sm">
+                <div className="font-bold">Price</div>
+                <code>
+                  {ethers.utils.formatEther(
+                    ethers.BigNumber.from(message.tokenAmount)
+                  )}{" "}
+                  <span className="opacity-50">{`($${(
+                    ETH_USD *
+                    parseInt(
+                      ethers.utils.formatEther(
+                        ethers.BigNumber.from(message.tokenAmount)
+                      )
+                    )
+                  ).toLocaleString()} USD)`}</span>
+                </code>
+              </div>
+              <div className="flex flex-col text-sm">
+                <div className="font-bold">Expires</div>
+                <code>
+                  {((message.timeExpiry - currentETHTime) / 86400).toFixed(2)}{" "}
+                  Days
+                </code>
+              </div>
+            </div>
+            <div className="flex flex-row gap-[12px]">
+              {message.imageURL ? (
+                <img
+                  className="h-[50px] rounded-[5px]"
+                  src={message.imageURL}
+                  alt=""
+                ></img>
+              ) : (
+                <div className="bg-black w-[50px] h-[50px] rounded-[5px]"></div>
+              )}
+              <div className="flex flex-col text-left">
+                <div className="text-lg font-medium">
+                  {message.name} #{message.tokenId}
+                </div>
+                <div className="text-sm font-medium">
+                  Address{" "}
+                  {`${message.NFTAddress.substring(
+                    0,
+                    4
+                  )}...${message.NFTAddress.substring(38)}`}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+        if (
+          Object.keys(messages).length !== 0 ||
+          activeReceiverAddress in messages
+        ) {
+          newReceiverMessageLog = [
+            ...messages[activeReceiverAddress],
+            {
+              from: address,
+              message: senderMessage,
+              timestamp: `${moment().unix()}`,
+            },
+          ];
+        } else {
+          newReceiverMessageLog = [
+            {
+              from: address,
+              message: senderMessage,
+              timestamp: `${moment().unix()}`,
+            },
+          ];
+        }
+
+        const newMessageLog = messages;
+        newMessageLog[activeReceiverAddress] = newReceiverMessageLog;
+        setMessageLog(newMessageLog);
+        setMessagesState(newMessageState);
+      })
+      .catch((err) => {
+        console.log("Sending Message Error:", err);
+        // TODO: make message indicative of error by changing color
+
+        let newReceiverMessageLog = [
+          {
+            from: address,
+            message:
+              "Error: Address likely doesn't have a communication address",
+            timestamp: `${moment().unix()}`,
+          },
+        ];
+
+        if (
+          Object.keys(messages).length !== 0 ||
+          activeReceiverAddress in messages
+        ) {
+          newReceiverMessageLog = [
+            ...messages[activeReceiverAddress],
+            ...newReceiverMessageLog,
+          ];
+        } else {
+          newReceiverMessageLog = [newReceiverMessageLog];
+        }
+
+        const newMessageLog = messages;
+        newMessageLog[activeReceiverAddress] = newReceiverMessageLog;
+        setMessageLog(newMessageLog);
+        setMessagesState(newMessageState);
+      });
   };
 
   return (
@@ -316,6 +459,8 @@ export default function NFTOfferModal({
                             setNFTTokenIndex(index);
                             setNFTAddress(NFT.token_address);
                             setNFTTokenId(NFT.token_id);
+                            setNFTImage(NFT.imageURL);
+                            setNFTName(NFT.name);
                             setNFTOfferStage(1);
                           }}
                         >
@@ -349,6 +494,8 @@ export default function NFTOfferModal({
                           setNFTTokenIndex(index);
                           setNFTAddress(NFT.token_address);
                           setNFTTokenId(NFT.token_id);
+                          setNFTImage(NFT.imageURL);
+                          setNFTName(NFT.name);
                           setNFTOfferStage(1);
                         }}
                       >
@@ -420,13 +567,7 @@ export default function NFTOfferModal({
                   className="flex flex-row justify-center text-lg items-center gap-[15px] px-5 py-3 bg-[#333333] text-white font-bold rounded-[8px] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={async () => {
                     setLoading(true);
-                    increaseAllowance();
-                    const ERC20_WETH_ADDRESS = contracts.contractWETH.address;
-                    // (tokenAmount, tokenId, timeExpiry, buyer, seller, tokenAddress, NFTAddress)
-                    const timeStamp = (await ethers.providers.getDefaultProvider.getBlock("latest")).timestamp
-                    const metadata = signExchangeOffer(NFTPrice, NFTTokenId, timeStamp, address, activeReceiverAddress, ERC20_WETH_ADDRESS, NFTAddress);
-                    console.log("metadata offer modal >>>", metadata)
-                    handleSendOffer(metadata);                  
+                    handleSendOffer();
                   }}
                   disabled={!Boolean(NFTPrice)}
                 >

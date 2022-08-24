@@ -23,6 +23,7 @@ export default function App() {
   const [openModalConnect, setOpenModalConnect] = useState(false);
   const [openProfileModal, setOpenProfileModal] = useState(false);
   const [openNewChatModal, setOpenNewChatModal] = useState(false);
+  const [messages, setMessageLog] = useState({});
   const [newChatAddress, setNewChatAddress] = useState("");
   const [activeReceiverAddress, setActiveReceiver] = useState(
     Boolean(JSON.parse(localStorage.getItem("chats"))) &&
@@ -172,6 +173,10 @@ export default function App() {
             openModal={openNFTOfferModal}
             toggleOpenModal={toggleOpenNFTOfferModal}
             activeReceiverAddress={activeReceiverAddress}
+            messagesState={messagesState}
+            setMessagesState={setMessagesState}
+            messages={messages}
+            setMessageLog={setMessageLog}
           />
           <MessagingPage
             toggleOpenModalChainSelect={toggleOpenModalChainSelect}
@@ -189,6 +194,8 @@ export default function App() {
             setChatAddresses={setChatAddresses}
             messagesState={messagesState}
             setMessagesState={setMessagesState}
+            messages={messages}
+            setMessageLog={setMessageLog}
           />
         </div>
       )}

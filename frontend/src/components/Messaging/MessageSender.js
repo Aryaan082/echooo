@@ -58,11 +58,9 @@ const MessageSender = ({
       // Query for the receiver's communication public key
       const data = await graphClient
         .query(GQL_QUERY_GET_COMMUNICATION_ADDRESS, {
-          activeReceiverAddress: activeReceiverAddress,
+          receiverAddress: activeReceiverAddress,
         })
         .toPromise();
-
-      console.log(data);
 
       const receiverPublicKey = data.data.identities[0].communicationAddress;
 

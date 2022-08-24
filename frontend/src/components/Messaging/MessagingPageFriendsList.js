@@ -76,7 +76,6 @@ export default function FriendsList({
     return await contracts.contractPFP.getProfilePicture(userAddress);
   };
 
-
   // TODO: combine the useEffects?
   useEffect(() => {
     if (
@@ -93,7 +92,7 @@ export default function FriendsList({
   }, [showTrustedAddressList]);
 
   useEffect(() => {
-    async function setupProfilePictures() {      
+    async function setupProfilePictures() {
       const tempFriendsListPFP = [];
       let tempChatAddresses = unknownChatAddresses;
       if (showTrustedAddressList) {
@@ -101,12 +100,12 @@ export default function FriendsList({
       }
 
       for (var idx = 0; idx < tempChatAddresses[address].length; idx++) {
-        tempFriendsListPFP.push(await getPFP(tempChatAddresses[address][idx])
-      )};
-      setFriendsListPFP(tempFriendsListPFP);      
-    };
+        tempFriendsListPFP.push(await getPFP(tempChatAddresses[address][idx]));
+      }
+      setFriendsListPFP(tempFriendsListPFP);
+    }
     setupProfilePictures();
-  }, [showTrustedAddressList]);
+  });
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const graphClient = chain.id in CONTRACT_META_DATA ? useTheGraphClient() : "";

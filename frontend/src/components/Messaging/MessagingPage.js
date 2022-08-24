@@ -122,6 +122,8 @@ export default function MessagingPage({
   setChatAddresses,
   messagesState,
   setMessagesState,
+  messages,
+  setMessageLog,
 }) {
   const { address } = useAccount();
   const { disconnect } = useDisconnect();
@@ -129,7 +131,6 @@ export default function MessagingPage({
   const { chains } = useSwitchNetwork();
 
   const [unknownChatAddresses, setUnknownChatAddresses] = useState({});
-  const [messages, setMessageLog] = useState({});
   const [openP2P, setOpenP2P] = useState(false);
   const [showTrustedAddressList, setShowTrustedAddressList] = useState(true);
   const [profilePicture, setProfilePicture] = useState("");
@@ -219,11 +220,9 @@ export default function MessagingPage({
           continue;
         }
         let messageEncrypted = "";
-        let messageMetadata = {};
-        let message = "";
 
         // Decrypt sender message
-        if (metaDataMessages.from === senderAddress) {          
+        if (metaDataMessages.from === senderAddress) {
           messageEncrypted = metaDataMessages.senderMessage;
         } else {
           // Decrypt receiver message
@@ -261,21 +260,15 @@ export default function MessagingPage({
           const newMessageLog = messages;
           newMessageLog[activeReceiverAddress] = newReceiverMessageLog;
           setMessageLog(newMessageLog);
-          const result = {message: errorMessage, metadata: {}, messageType: "0"}
+          const result = {
+            message: errorMessage,
+            metadata: {},
+            messageType: "0",
+          };
           return result;
         });
 
-        if (metaDataMessages.messageType === "1") {
-          decryptedMessage = JSON.parse(decryptedMessage);
-        
-          message = decryptedMessage.message;
-          messageMetadata = decryptedMessage.metadata;
-        } else {
-          message = decryptedMessage;
-        }
-        
-        messageLog[idx].message = message;
-        messageLog[idx].metadata = messageMetadata;
+        messageLog[idx].message = decryptedMessage;
         messageLog[idx].messageType = metaDataMessages.messageType;
       }
 
