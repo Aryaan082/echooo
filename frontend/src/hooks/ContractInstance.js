@@ -7,6 +7,7 @@ import USDCJSON from "../contracts/USDC.json";
 import ERC20JSON from "../contracts/ERC20.json";
 import BAYCJSON from "../contracts/BoredApeYachtClubTest.json";
 import PFPJSON from "../contracts/ProfilePicture.json";
+import RequestNFTJSON from "../contracts/RequestNFT.json";
 
 import { CONTRACT_META_DATA } from "../constants";
 
@@ -69,6 +70,15 @@ const ContractInstance = () => {
     signerOrProvider: signer,
   });
 
+  const contractRequestNFT = useContract({
+    addressOrName:
+      chain.id in CONTRACT_META_DATA
+        ? CONTRACT_META_DATA[chain.id].contractRequestNFT
+        : "",
+    contractInterface: RequestNFTJSON.abi,
+    signerOrProvider: signer,
+  });
+
   return {
     contractEcho,
     contractTokenTransfer,
@@ -76,6 +86,7 @@ const ContractInstance = () => {
     contractUSDC,
     contractBAYC,
     contractPFP,
+    contractRequestNFT,
   };
 };
 

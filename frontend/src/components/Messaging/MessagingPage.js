@@ -35,11 +35,6 @@ const intervalFetchMessages = async (
   graphClient
 ) => {
   const senderAddress = address.toLowerCase();
-  // console.log("receiever address >>>", activeReceiverAddress);
-  // console.log(
-  //   "new message active interval >>>",
-  //   newMessage[activeReceiverAddress]
-  // );
 
   let senderPrivateKey = JSON.parse(
     localStorage.getItem("private-communication-address")
@@ -47,19 +42,14 @@ const intervalFetchMessages = async (
   senderPrivateKey = senderPrivateKey[address];
 
   const recentMessage = newMessage[activeReceiverAddress];
-  // console.log("recent message >>>", recentMessage);
-  // console.log(
-  //   "recent message >>>",
-  //   recentMessage == null || recentMessage.length === 0
-  // );
- 
+
   let recentTimestamp;
   if (recentMessage == null || recentMessage.length === 0) {
     return;
   } else {
     recentTimestamp = recentMessage.at(-1).timestamp;
   }
-  // console.log("recentTimestamp >>>", recentTimestamp);
+
   const dataMessages = await graphClient
     .query(GQL_QUERY_MESSAGE_LOG_INTERVAL, {
       senderAddress: senderAddress,
@@ -67,13 +57,11 @@ const intervalFetchMessages = async (
       recentMessageTimestamp: recentTimestamp,
     })
     .toPromise();
-  console.log("data messages interval >>>", dataMessages);
+  // console.log("data messages interval >>>", dataMessages);
   // console.log("data interval length >>>", Object.keys(dataMessages).length);
   const dataMessagesParsed = dataMessages.data.messages;
-  // console.log("data messages parsed interval >>>", dataMessagesParsed);
   const messageLog = dataMessagesParsed;
   if (Object.keys(messageLog).length === 0 || messageLog == null) {
-    // console.log("returning none >>>> ");
     return;
   }
   for (let idx = 0; idx < dataMessagesParsed.length; idx++) {
@@ -81,10 +69,13 @@ const intervalFetchMessages = async (
     let message = "";
 
     // check that encrypted message is correct ex: someone could send an empty string that would grief the chat
-    if (metaDataMessages.senderMessage.length < 194 || metaDataMessages.receiverMessage.length < 194) {
+    if (
+      metaDataMessages.senderMessage.length < 194 ||
+      metaDataMessages.receiverMessage.length < 194
+    ) {
       continue;
     }
-    
+
     // Decrypt sender message
     if (metaDataMessages.from === senderAddress) {
       message = metaDataMessages.senderMessage;
@@ -99,7 +90,7 @@ const intervalFetchMessages = async (
     ).catch((err) => {
       console.log("Sending Message Error:", err);
       // TODO: make message indicative of error by changing color
-      let errorMessage = "Error: Encryption error. Change communication keys"
+      let errorMessage = "Error: Encryption error. Change communication keys";
       return errorMessage;
     });
     messageLog[idx].message = decryptedMessage;
@@ -187,9 +178,11 @@ export default function MessagingPage({
       localStorage.getItem("private-communication-address")
     );
     senderPrivateKey = senderPrivateKey[address];
-  
 
-    if (activeReceiverAddress != null && messages[activeReceiverAddress] == null) {
+    if (
+      activeReceiverAddress != null &&
+      messages[activeReceiverAddress] == null
+    ) {
       const dataIdentity = await graphClient
         .query(GQL_QUERY_IDENTITY_TIMESTAMP_RECENT, {
           senderAddress: senderAddress,
@@ -211,11 +204,18 @@ export default function MessagingPage({
       const dataMessagesParsed = dataMessages.data.messages;
 
       const messageLog = dataMessagesParsed;
+      const newMessageState = {
+        ...messagesState,
+        [activeReceiverAddress]: false,
+      };
       for (let idx = 0; idx < dataMessagesParsed.length; idx++) {
         let metaDataMessages = await dataMessagesParsed[idx];
 
         // check that encrypted message is correct ex: someone could send an empty string that would grief the chat
-        if (metaDataMessages.senderMessage.length < 194 || metaDataMessages.receiverMessage.length < 194) {
+        if (
+          metaDataMessages.senderMessage.length < 194 ||
+          metaDataMessages.receiverMessage.length < 194
+        ) {
           continue;
         }
         let message = "";
@@ -234,7 +234,8 @@ export default function MessagingPage({
         ).catch((err) => {
           console.log("Sending Message Error:", err);
           // TODO: make message indicative of error by changing color
-          let errorMessage = "Error: Encryption error. Change communication keys"
+          let errorMessage =
+            "Error: Encryption error. Change communication keys";
           let newReceiverMessageLog = [
             {
               from: address,
@@ -261,15 +262,13 @@ export default function MessagingPage({
           return errorMessage;
         });
         messageLog[idx].message = decryptedMessage;
-
-        // console.log(`Decrypted message ${idx} >>>`, decryptedMessage);
       }
 
       const newMessageLog = {
         ...messages,
         [activeReceiverAddress]: messageLog,
       };
-      console.log("new message log >>>", newMessageLog)
+      console.log("new message log >>>", newMessageLog);
       setMessageLog(newMessageLog);
       return newMessageLog;
     }
@@ -443,15 +442,12 @@ export default function MessagingPage({
           <div className="relative flex flex-col justify-end">
             <ChatBox
               messages={messages}
-              setMessageLog={setMessageLog}
-              receiverAddress={activeReceiverAddress}
-              chatAddresses={chatAddresses}
-              openP2P={openP2P}
+              activeReceiverAddress={activeReceiverAddress}
             />
             <MessageSender
               messages={messages}
               setMessageLog={setMessageLog}
-              receiverAddress={activeReceiverAddress}
+              activeReceiverAddress={activeReceiverAddress}
               messagesState={messagesState}
               setMessagesState={setMessagesState}
               toggleOpenSendModal={toggleOpenSendModal}

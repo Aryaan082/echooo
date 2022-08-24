@@ -40,13 +40,11 @@ const renderChat = (receiverAddress, messages) => {
   return chatJSX;
 };
 
-const ChatBox = ({ receiverAddress, messages, openP2P }) => {
-  const { address } = useAccount();
+const ChatBox = ({ activeReceiverAddress, messages }) => {
+  const chat = renderChat(activeReceiverAddress, messages);
 
-  const chat = renderChat(receiverAddress, messages);
-
-  if (receiverAddress in messages) {
-    messages[receiverAddress].reverse();
+  if (activeReceiverAddress in messages) {
+    messages[activeReceiverAddress].reverse();
   }
 
   return (

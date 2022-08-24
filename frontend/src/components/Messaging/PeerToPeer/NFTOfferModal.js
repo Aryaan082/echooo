@@ -3,7 +3,7 @@ import Modal from "react-modal";
 import { ethers } from "ethers";
 import React, { useEffect, useState } from "react";
 import EthCrypto from "eth-crypto";
-import { useAccount, useNetwork, useSigner } from "wagmi";
+import { useAccount, useNetwork, useProvider, useSigner } from "wagmi";
 import { Oval } from "react-loader-spinner";
 import Moralis from "moralis";
 
@@ -37,6 +37,7 @@ export default function NFTOfferModal({
   activeReceiverAddress,
 }) {
   const { address } = useAccount();
+  const provider = useProvider();
   const { chain } = useNetwork();
   const { data: signer } = useSigner();
 
@@ -54,7 +55,7 @@ export default function NFTOfferModal({
   const handleNFTPriceChange = (e) => setNFTPrice(e.target.value);
 
   const contracts = ContractInstance();
-  
+
   useEffect(() => {
     // TODO: this useEffect is fired twice at init this shouldn't
     // If not activeReceiver selected do not fire
@@ -114,58 +115,59 @@ export default function NFTOfferModal({
   const increaseAllowance = async () => {
     // _operator is NFT exchange contract
     // TODO: don't hardcode this
-    const _operator = "0x6ef0d67Ca702fAE10E133c885df41F43c3a56136";
+    const _operator = contracts.contractRequestNFT.address;
 
     const tx = await contracts.contractWETH.approve(
       _operator,
       ethers.utils.parseEther(NFTPrice)
     );
 
-    await tx
-      .wait()
-      .then(() => {
-        setNFTOfferStage(1);
-      })
-      .catch((err) => console.log("Error occurred: " + err));
+    await tx.wait().catch((err) => console.log("Error occurred: " + err));
   };
 
   const signExchangeOffer = async () => {
     const domain = {
-      name: "NFTExchange",
+      name: "RequestNFT",
       version: "1",
       chainId: chain.id,
-      verifyingContract: "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC",
+      verifyingContract: contracts.contractRequestNFT.address,
     };
 
     const types = {
-      Person: [
-        { name: "name", type: "string" },
-        { name: "wallet", type: "address" },
-      ],
-      Mail: [
-        { name: "from", type: "Person" },
-        { name: "to", type: "Person" },
-        { name: "contents", type: "string" },
+      Buy: [
+        { name: "tokenAmount", type: "uint256" },
+        { name: "tokenId", type: "uint256" },
+        { name: "timeExpiry", type: "uint256" },
+        { name: "buyer", type: "address" },
+        { name: "seller", type: "address" },
+        { name: "tokenAddress", type: "address" },
+        { name: "NFTAddress", type: "address" },
       ],
     };
 
     const value = {
-      from: {
-        name: "Cow",
-        wallet: "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826",
-      },
-      to: {
-        name: "Bob",
-        wallet: "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB",
-      },
-      contents: "Hello, Bob!",
+      tokenAmount: ethers.utils.parseEther(NFTPrice),
+      tokenId: parseInt(NFTTokenId),
+      timeExpiry: (await provider.getBlock("latest")).timestamp + 1000 * 1000,
+      buyer: address,
+      seller: activeReceiverAddress,
+      tokenAddress: NFTAddress,
+      NFTAddress: NFTAddress,
     };
 
+    console.log(value);
+
     const signature = await signer._signTypedData(domain, types, value);
-    console.log(signature);
+
+    const { v, r, s } = await ethers.utils.splitSignature(signature);
+
+    return { v, r, s };
   };
 
   const handleSendOffer = async () => {
+    await increaseAllowance();
+    const { v, r, s } = await signExchangeOffer();
+
     let senderPublicKey = JSON.parse(
       localStorage.getItem("public-communication-address")
     );
@@ -179,7 +181,19 @@ export default function NFTOfferModal({
       .toPromise();
     const receiverPublicKey = data.data.identities[0].communicationAddress;
 
-    const senderMessage = [NFTAddress, NFTTokenId, NFTPrice].toString();
+    const senderMessage = JSON.stringify({
+      v: v,
+      r: r,
+      s: s,
+      tokenAmount: ethers.utils.parseEther(NFTPrice),
+      tokenId: NFTTokenId,
+      timeExpiry: (await provider.getBlock("latest")).timestamp + 1000 * 1000,
+      buyer: address,
+      seller: activeReceiverAddress,
+      tokenAddress: NFTAddress,
+      NFTAddress: NFTAddress,
+    });
+    console.log(senderMessage);
 
     let messageEncryptedSender = await EthCrypto.encryptWithPublicKey(
       senderPublicKey,
@@ -195,25 +209,25 @@ export default function NFTOfferModal({
       messageEncryptedReceiver
     );
 
-    // const tx = await contracts.contractEcho.logNFTOffer(
-    //   1,
-    //   activeReceiverAddress,
-    //   messageEncryptedSender,
-    //   messageEncryptedReceiver
-    // );
-    // await tx
-    //   .wait()
-    //   .then(() => {
-    //     setNFTOfferStage(0);
-    //     toggleOpenModal();
-    //   })
-    //   .catch((err) => console.log("Error occurred: " + err));
+    const tx = await contracts.contractEcho.logMessage(
+      1,
+      activeReceiverAddress,
+      messageEncryptedSender,
+      messageEncryptedReceiver
+    );
+    await tx
+      .wait()
+      .then(() => {
+        toggleOpenModal();
+      })
+      .catch((err) => console.log("Error occurred: " + err));
   };
 
   return (
     <Modal
       isOpen={openModal}
       onRequestClose={() => {
+        setLoading(false);
         setNFTOfferStage(0);
         toggleOpenModal();
       }}
@@ -299,6 +313,8 @@ export default function NFTOfferModal({
                           className="border-gradient"
                           onClick={() => {
                             setNFTTokenIndex(index);
+                            setNFTAddress(NFT.token_address);
+                            setNFTTokenId(NFT.token_id);
                             setNFTOfferStage(1);
                           }}
                         >
@@ -330,6 +346,8 @@ export default function NFTOfferModal({
                         className="border-gradient"
                         onClick={() => {
                           setNFTTokenIndex(index);
+                          setNFTAddress(NFT.token_address);
+                          setNFTTokenId(NFT.token_id);
                           setNFTOfferStage(1);
                         }}
                       >
@@ -401,8 +419,6 @@ export default function NFTOfferModal({
                   className="flex flex-row justify-center text-lg items-center gap-[15px] px-5 py-3 bg-[#333333] text-white font-bold rounded-[8px] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() => {
                     setLoading(true);
-                    increaseAllowance();
-                    signExchangeOffer();
                     handleSendOffer();
                   }}
                   disabled={!Boolean(NFTPrice)}
