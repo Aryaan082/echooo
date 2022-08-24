@@ -7,8 +7,7 @@ import USDCJSON from "../contracts/USDC.json";
 import ERC20JSON from "../contracts/ERC20.json";
 import BAYCJSON from "../contracts/BoredApeYachtClubTest.json";
 import PFPJSON from "../contracts/ProfilePicture.json";
-import RequestNFTJSON from "../contracts/RequestNFT.json";
-
+import REQUESTNFTJSON from "../contracts/RequestNFT.json";
 import { CONTRACT_META_DATA } from "../constants";
 
 // TODO: change this to a hook instead of a react component
@@ -70,12 +69,12 @@ const ContractInstance = () => {
     signerOrProvider: signer,
   });
 
-  const contractRequestNFT = useContract({
+  const contractNFTTransfer = useContract({
     addressOrName:
       chain.id in CONTRACT_META_DATA
         ? CONTRACT_META_DATA[chain.id].contractRequestNFT
         : "",
-    contractInterface: RequestNFTJSON.abi,
+    contractInterface: REQUESTNFTJSON.abi,
     signerOrProvider: signer,
   });
 
@@ -86,7 +85,7 @@ const ContractInstance = () => {
     contractUSDC,
     contractBAYC,
     contractPFP,
-    contractRequestNFT,
+    contractNFTTransfer
   };
 };
 

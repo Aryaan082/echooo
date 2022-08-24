@@ -18,20 +18,55 @@ const renderChat = (receiverAddress, messages) => {
 
   for (let idx = 0; idx < messageLog.length; idx++) {
     let messageMetaData = messageLog[idx];
+    let message = messageMetaData.message;
+    let timestamp = messageMetaData.timestamp;
+    let metadata = messageMetaData.metadata;
+    console.log("message meta data", messageMetaData)
     if (receiverAddressLowerCase === messageMetaData.from) {
+      if (messageMetaData.messageType === "1") {
+        message = (
+          <div>
+            <h2>
+              NFT Offer
+            </h2>
+            <h3>From</h3>
+            <code>{metadata.buyer}</code>
+            <div className="flex-row">
+              <div>
+                <h3>Price</h3>
+                <code>{metadata.tokenAmount}</code>
+              </div>
+              <div>
+                <h3>Expires</h3>
+                <code>{metadata.timeExpiry}</code>
+              </div>
+              <div>
+
+              </div>
+              <button>
+                Cancel Offer
+              </button>
+            </div>            
+          </div>
+        )
+      }
+
       chatJSX.push(
         <ReceiveMessageContainer
           receiverAddress={receiverAddressLowerCase}
-          message={messageMetaData.message}
-          timestamp={messageMetaData.timestamp}
+          message={message}
+          timestamp={timestamp}
           key={idx}
         />
       );
     } else {
+      if (messageMetaData.messageType === "1") {
+      
+      }
       chatJSX.push(
         <SendMessageContainer
-          message={messageMetaData.message}
-          timestamp={messageMetaData.timestamp}
+          message={message}
+          timestamp={timestamp}
           key={idx}
         />
       );

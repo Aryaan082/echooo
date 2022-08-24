@@ -76,7 +76,6 @@ export default function FriendsList({
     return await contracts.contractPFP.getProfilePicture(userAddress);
   };
 
-  const initRef = useRef();
 
   // TODO: combine the useEffects?
   useEffect(() => {
