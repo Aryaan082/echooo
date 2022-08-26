@@ -15,6 +15,10 @@ export class Identity extends Entity {
   constructor(id: string) {
     super();
     this.set("id", Value.fromString(id));
+
+    this.set("communicationAddress", Value.fromString(""));
+    this.set("from", Value.fromBytes(Bytes.empty()));
+    this.set("timestamp", Value.fromBigInt(BigInt.zero()));
   }
 
   save(): void {
@@ -74,6 +78,13 @@ export class Message extends Entity {
   constructor(id: string) {
     super();
     this.set("id", Value.fromString(id));
+
+    this.set("messageType", Value.fromBigInt(BigInt.zero()));
+    this.set("receiver", Value.fromBytes(Bytes.empty()));
+    this.set("senderMessage", Value.fromString(""));
+    this.set("receiverMessage", Value.fromString(""));
+    this.set("from", Value.fromBytes(Bytes.empty()));
+    this.set("timestamp", Value.fromBigInt(BigInt.zero()));
   }
 
   save(): void {

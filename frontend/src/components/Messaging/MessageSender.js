@@ -122,7 +122,7 @@ const MessageSender = ({
 
         const newMessageLog = messages;
         newMessageLog[activeReceiverAddress] = newReceiverMessageLog;
-        setMessageLog(newMessageLog);
+        // setMessageLog(newMessageLog); // do not need this b/c of WS afaik
         setMessagesState(newMessageState);
       })
       .catch((err) => {
