@@ -41,7 +41,7 @@ export const CONTRACT_META_DATA = {
     contractWETH: "0xEb1a2E15D3BfA3c536ff8C2a4f5f7270667417b3",
     contractUSDC: "0x71A14752A60520Fcb2fF7aeD410F3a9eD6774a1C",
     contractBAYC: "0x1Bcef880B67072ba0D8e7B6a6d104446ADD46E53",
-    quickNodeWSURL: "",
+    quickNodeWSURL: "wss://magical-dark-arm.ethereum-goerli.quiknode.pro/ec84510b2889fc4b70550370396586807f9cce62/",
     logo: ethereumIconSVG,
     name: "Ethereum",
     baseToken: "ETHER",
