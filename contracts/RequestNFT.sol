@@ -144,7 +144,7 @@ contract RequestNFT {
         uint256 offerId = _offerId(offer);
         bytes32 digest = _getOfferDigest(offer);
         address signer = ecrecover(digest, v, r, s);
-        require(signer != address(0), "RequestNFT:exchange: signer is invalid");
+        require(signer == offer.buyer, "RequestNFT:cancelOffer: signer is invalid");
 
         _offerStatus[offerId] = OfferState.CANCELLED;
     }
