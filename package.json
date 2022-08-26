@@ -44,6 +44,7 @@
     "test": "nodemon -x 'npx hardhat test' -w contracts -w test -e js,ts,sol"
   },
   "dependencies": {
+    "@chainlink/contracts": "^0.4.1",
     "@openzeppelin/contracts": "^4.7.2",
     "@tatumio/tatum": "^1.35.8",
     "@web3-onboard/core": "^2.3.1",
