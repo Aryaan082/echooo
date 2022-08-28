@@ -1,10 +1,11 @@
-import { useAccount, useProvider } from "wagmi";
+import { useAccount, useContract, useProvider, useSigner } from "wagmi";
 import { ethers } from "ethers";
 import React, { useEffect, useState } from "react";
 
 import SendMessageContainer from "./SendMessageContainer";
 import ReceiveMessageContainer from "./ReceiveMessageContainer";
 import { ContractInstance } from "../../hooks";
+import ERC721JSON from "../../contracts/ERC721.json";
 
 const renderChat = (
   ETH_USD,
@@ -107,9 +108,13 @@ const renderChat = (
               </div>
             </div>
             <div className="flex justify-end">
-              {messageData.offerStatus !== 0 ? (
-                <></>
-              ) : (
+              {/* {console.log(messageData.offerStatus)}
+              {console.log(
+                !Boolean(messageData.offerStatus) ||
+                  messageData.offerStatus === 0
+              )} */}
+              {!Boolean(messageData.offerStatus) ||
+              messageData.offerStatus === 0 ? (
                 <button
                   className="bg-[#27AE60] text-white rounded-[8px] py-2 w-[150px]"
                   onClick={() => {
@@ -131,6 +136,8 @@ const renderChat = (
                 >
                   Accept
                 </button>
+              ) : (
+                <></>
               )}
             </div>
           </div>
@@ -219,9 +226,8 @@ const renderChat = (
               </div>
             </div>
             <div className="flex justify-end">
-              {messageData.offerStatus !== 0 ? (
-                <></>
-              ) : (
+              {!Boolean(messageData.offerStatus) ||
+              messageData.offerStatus === 0 ? (
                 <button
                   className="bg-[#ff0a00] text-white rounded-[8px] py-2 w-[150px]"
                   onClick={() => {
@@ -243,6 +249,8 @@ const renderChat = (
                 >
                   Cancel
                 </button>
+              ) : (
+                <></>
               )}
             </div>
           </div>
@@ -262,6 +270,7 @@ const renderChat = (
 
 const ChatBox = ({ activeReceiverAddress, messages }) => {
   const provider = useProvider();
+  const { data: signer } = useSigner();
 
   const [ETH_USD, setETH_USD] = useState(0);
   const [currentETHTime, setCurrentETHTime] = useState(0);
@@ -283,13 +292,17 @@ const ChatBox = ({ activeReceiverAddress, messages }) => {
     setCurrentETHTime((await provider.getBlock()).timestamp);
   };
 
-  const approveNFTTransfer = async (tokenId) => {
-    const tx = await contracts.contractBAYC.approve(
+  const approveNFTTransfer = async (NFTAddress, tokenId) => {
+    const NFTContract = new ethers.Contract(NFTAddress, ERC721JSON.abi, signer);
+
+    const tx = await NFTContract.approve(
       contracts.contractRequestNFT.address,
       tokenId
     );
 
-    await tx.wait();
+    await tx.wait().then(() => {
+      updateNFTStatus();
+    });
   };
 
   const acceptOffer = async (
@@ -304,7 +317,7 @@ const ChatBox = ({ activeReceiverAddress, messages }) => {
     r,
     s
   ) => {
-    await approveNFTTransfer(tokenId);
+    await approveNFTTransfer(NFTAddress, tokenId);
 
     const data = {
       tokenAmount: tokenAmount,
@@ -318,7 +331,7 @@ const ChatBox = ({ activeReceiverAddress, messages }) => {
 
     const tx = await contracts.contractRequestNFT.exchange(data, v, r, s);
 
-    await tx.wait();
+    await tx.wait().then(() => updateNFTStatus());
   };
 
   const cancelOffer = async (
@@ -345,7 +358,7 @@ const ChatBox = ({ activeReceiverAddress, messages }) => {
 
     const tx = await contracts.contractRequestNFT.cancelOffer(data, v, r, s);
 
-    await tx.wait();
+    await tx.wait().then(() => updateNFTStatus());
   };
 
   const updateNFTStatus = async () => {
@@ -367,10 +380,13 @@ const ChatBox = ({ activeReceiverAddress, messages }) => {
   };
 
   useEffect(() => {
-    getETHPrice();
-    getCurrentETHTime();
-    updateNFTStatus();
-  });
+    const interval = setInterval(() => {
+      getETHPrice();
+      getCurrentETHTime();
+      updateNFTStatus();
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const chat = renderChat(
     ETH_USD,

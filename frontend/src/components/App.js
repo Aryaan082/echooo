@@ -10,6 +10,7 @@ import CommAddressModal from "./ChangeKeys/CommAddressModal";
 import ProfilePictureModal from "./ProfilePicture/ProfilePictureModal.js";
 import NFTOfferModal from "./Messaging/PeerToPeer/NFTOfferModal";
 import TokenTransfer from "./Messaging/PeerToPeer/TokenTransfer";
+import LendingOfferModal from "./Messaging/PeerToPeer/LendingOfferModal";
 
 import { BURNER_ADDRESS } from "../constants";
 import { gradientOneSVG, gradientTwoSVG, echoooLogoSVG } from "../assets/";
@@ -64,6 +65,7 @@ export default function App() {
   );
   const [openSend, setOpenSend] = useState(false);
   const [openNFTOfferModal, setOpenNFTOfferModal] = useState(false);
+  const [openLendingOfferModal, setOpenLendingOfferModal] = useState(false);
 
   const toggleOpenModalConnect = () => setOpenModalConnect(!openModalConnect);
   const toggleOpenModalChainSelect = () => setChainSelect(!chainSelect);
@@ -74,6 +76,8 @@ export default function App() {
   const toggleOpenSendModal = () => setOpenSend(!openSend);
   const toggleOpenNFTOfferModal = () =>
     setOpenNFTOfferModal(!openNFTOfferModal);
+  const toggleOpenLendingOfferModal = () =>
+    setOpenLendingOfferModal(!openLendingOfferModal);
 
   useAccount({
     onDisconnect() {
@@ -178,6 +182,11 @@ export default function App() {
             messages={messages}
             setMessageLog={setMessageLog}
           />
+          <LendingOfferModal
+            openModal={openLendingOfferModal}
+            toggleOpenModal={toggleOpenLendingOfferModal}
+            activeReceiverAddress={activeReceiverAddress}
+          ></LendingOfferModal>
           <MessagingPage
             toggleOpenModalChainSelect={toggleOpenModalChainSelect}
             toggleOpenCommAddressModal={toggleOpenCommAddressModal}
@@ -185,6 +194,7 @@ export default function App() {
             toggleOpenProfileModal={toggleOpenProfileModal}
             toggleOpenSendModal={toggleOpenSendModal}
             toggleOpenNFTOfferModal={toggleOpenNFTOfferModal}
+            toggleOpenLendingOfferModal={toggleOpenLendingOfferModal}
             chatAddresses={chatAddresses}
             activeIndex={activeIndex}
             setActiveIndex={setActiveIndex}

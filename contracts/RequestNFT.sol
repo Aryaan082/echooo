@@ -154,6 +154,9 @@ contract RequestNFT {
         view
         returns (OfferState)
     {
+        if (block.timestamp <= offer.timeExpiry) {
+            return OfferState.CANCELLED;
+        }
         uint256 offerId = _offerId(offer);
         return _offerStatus[offerId];
     }

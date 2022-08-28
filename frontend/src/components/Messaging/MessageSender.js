@@ -28,6 +28,7 @@ const MessageSender = ({
   setMessagesState,
   toggleOpenSendModal,
   toggleOpenNFTOfferModal,
+  toggleOpenLendingOfferModal,
   openP2P,
   setOpenP2P,
 }) => {
@@ -192,7 +193,10 @@ const MessageSender = ({
               <img src={exchangeIconSVG} alt=""></img>
               <code>Make NFT offer</code>
             </button>
-            <button className="flex flex-row items-center gap-2 p-3 rounded-b-[10px] hover:bg-[#eeeeee]">
+            <button
+              className="flex flex-row items-center gap-2 p-3 rounded-b-[10px] hover:bg-[#eeeeee]"
+              onClick={toggleOpenLendingOfferModal}
+            >
               <img className="h-[25px]" src={lendingIconSVG} alt=""></img>
               <code>Make lending offer</code>
             </button>

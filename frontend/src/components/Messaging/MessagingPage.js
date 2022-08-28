@@ -122,6 +122,7 @@ export default function MessagingPage({
   toggleOpenProfileModal,
   toggleOpenNFTOfferModal,
   toggleOpenSendModal,
+  toggleOpenLendingOfferModal,
   chatAddresses,
   activeReceiverAddress,
   setActiveReceiver,
@@ -612,6 +613,7 @@ export default function MessagingPage({
               setMessagesState={setMessagesState}
               toggleOpenSendModal={toggleOpenSendModal}
               toggleOpenNFTOfferModal={toggleOpenNFTOfferModal}
+              toggleOpenLendingOfferModal={toggleOpenLendingOfferModal}
               openP2P={openP2P}
               setOpenP2P={setOpenP2P}
             />

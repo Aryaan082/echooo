@@ -56,8 +56,10 @@ export default function NFTOfferModal({
   const [NFTName, setNFTName] = useState("");
   const [NFTFilter, setNFTFilter] = useState("");
   const [isLoading, setLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(0);
   const [ETH_USD, setETH_USD] = useState(0);
   const [currentETHTime, setCurrentETHTime] = useState(0);
+  const [WETHBalance, setWETHBalance] = useState(0);
 
   const handleNFTFilterChange = (e) => setNFTFilter(e.target.value);
   const handleNFTPriceChange = (e) => setNFTPrice(e.target.value);
@@ -70,10 +72,20 @@ export default function NFTOfferModal({
     if (activeReceiverAddress == null) {
       return;
     }
+
     getNFTInfo();
     getETHPrice();
     getCurrentETHTime();
+    getWETHBalance();
   }, [openModal]);
+
+  const getWETHBalance = async () => {
+    setWETHBalance(
+      ethers.utils.formatEther(
+        (await contracts.contractWETH.balanceOf(address)).toString()
+      )
+    );
+  };
 
   // TODO: add to config folder
   const getNFTInfo = async () => {
@@ -128,9 +140,12 @@ export default function NFTOfferModal({
 
     const tx = await contracts.contractWETH
       .approve(_operator, ethers.utils.parseEther(NFTPrice))
-      .catch(() => setLoading(false));
+      .catch(() => {
+        setLoading(false);
+        setLoadingStep(0);
+      });
 
-    await tx.wait();
+    await tx.wait().then(() => setLoadingStep(1));
   };
 
   const signExchangeOffer = async () => {
@@ -155,7 +170,7 @@ export default function NFTOfferModal({
     const data = {
       tokenAmount: ethers.utils.parseEther(NFTPrice),
       tokenId: parseInt(NFTTokenId),
-      timeExpiry: (await provider.getBlock()).timestamp + 1000 * 1000,
+      timeExpiry: (await provider.getBlock()).timestamp + 86400,
       buyer: address,
       seller: activeReceiverAddress,
       tokenAddress: contracts.contractWETH.address,
@@ -164,9 +179,12 @@ export default function NFTOfferModal({
 
     let digest = await signer._signTypedData(domain, types, data).catch(() => {
       setLoading(false);
+      setLoadingStep(0);
     });
 
-    let { v, r, s } = await ethers.utils.splitSignature(digest);
+    setLoadingStep(2);
+
+    let { v, r, s } = ethers.utils.splitSignature(digest);
 
     const metadata = {
       ...data,
@@ -229,11 +247,15 @@ export default function NFTOfferModal({
         )
         .catch(() => {
           setLoading(false);
+          setLoadingStep(0);
         });
+
+      setLoadingStep(3);
 
       await tx.wait().then(() => {
         toggleOpenModal();
         setNFTOfferStage(0);
+        setLoadingStep(0);
         setLoading(false);
       });
     };
@@ -372,6 +394,7 @@ export default function NFTOfferModal({
       isOpen={openModal}
       onRequestClose={() => {
         setLoading(false);
+        setLoadingStep(0);
         setNFTOfferStage(0);
         toggleOpenModal();
       }}
@@ -388,7 +411,9 @@ export default function NFTOfferModal({
             color="black"
             secondaryColor="white"
           />
-          <div className="text-xl font-medium">Sending offer...</div>
+          <div className="text-xl font-medium">
+            Sending offer {loadingStep}/3...
+          </div>
         </div>
       ) : (
         <div className="flex flex-col py-4 px-4 gap-4">
@@ -569,11 +594,14 @@ export default function NFTOfferModal({
                     setLoading(true);
                     handleSendOffer();
                   }}
-                  disabled={!Boolean(NFTPrice)}
+                  disabled={!Boolean(NFTPrice) || NFTPrice > WETHBalance}
                 >
                   Send offer
                   <img className="h-[25px]" src={sendMessagesIconSVG}></img>
                 </button>
+              </div>
+              <div className="font-medium">
+                Balance: {parseFloat(WETHBalance).toFixed(2)} WETH
               </div>
             </>
           ) : (
