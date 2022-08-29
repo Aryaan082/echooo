@@ -258,7 +258,7 @@ export default function FriendsList({
                         4
                       )}...${friendAddress.substring(38)}`}
                     </code>
-                    <button
+                    <a
                       onClick={() => handleRemoveAddress(index, friendAddress)}
                     >
                       <img
@@ -266,7 +266,7 @@ export default function FriendsList({
                         src={cancelIconSVG}
                         alt=""
                       ></img>
-                    </button>
+                    </a>
                   </button>
                 );
               })
@@ -301,15 +301,13 @@ export default function FriendsList({
                           4
                         )}...${friendAddress.substring(38)}`}
                       </code>
-                      <button
-                        onClick={() => handleAddAddress(index, friendAddress)}
-                      >
+                      <a onClick={() => handleAddAddress(index, friendAddress)}>
                         <img
                           className="rotate-45 h-6 p-1 hover:bg-[#ffffff] rounded-[50px]"
                           src={cancelIconSVG}
                           alt=""
                         ></img>
-                      </button>
+                      </a>
                     </button>
                   );
                 })
