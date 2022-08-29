@@ -1,10 +1,10 @@
+import { ethers } from "ethers";
 import { useContract, useNetwork, useSigner } from "wagmi";
 
 import EchoJSON from "../contracts/Echo.json";
 import TokenTransferJSON from "../contracts/TokenTransfer.json";
 import WETHJSON from "../contracts/WETH.json";
 import USDCJSON from "../contracts/USDC.json";
-import ERC20JSON from "../contracts/ERC20.json";
 import BAYCJSON from "../contracts/BoredApeYachtClubTest.json";
 import PFPJSON from "../contracts/ProfilePicture.json";
 import REQUESTNFTJSON from "../contracts/RequestNFT.json";
@@ -12,8 +12,11 @@ import { CONTRACT_META_DATA } from "../constants";
 
 // TODO: change this to a hook instead of a react component
 const ContractInstance = () => {
-  const { data: signer } = useSigner();
+  // const { data: signer } = useSigner();
   const { chain } = useNetwork();
+
+  const provider = new ethers.providers.Web3Provider(window.ethereum);
+  const signer = provider.getSigner();
 
   const contractEcho = useContract({
     addressOrName:

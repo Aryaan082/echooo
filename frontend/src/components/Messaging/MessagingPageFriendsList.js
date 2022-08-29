@@ -99,13 +99,18 @@ export default function FriendsList({
         tempChatAddresses = chatAddresses;
       }
 
-      for (var idx = 0; idx < tempChatAddresses[address].length; idx++) {
-        tempFriendsListPFP.push(await getPFP(tempChatAddresses[address][idx]));
+      if (address in tempChatAddresses) {
+        for (var idx = 0; idx < tempChatAddresses[address].length; idx++) {
+          tempFriendsListPFP.push(
+            await getPFP(tempChatAddresses[address][idx])
+          );
+        }
+        setFriendsListPFP(tempFriendsListPFP);
       }
-      setFriendsListPFP(tempFriendsListPFP);
     }
+
     setupProfilePictures();
-  });
+  }, [chatAddresses, unknownChatAddresses]);
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const graphClient = chain.id in CONTRACT_META_DATA ? useTheGraphClient() : "";

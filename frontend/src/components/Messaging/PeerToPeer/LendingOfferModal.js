@@ -69,7 +69,7 @@ export default function LendingOfferModal({
   useEffect(() => {
     // TODO: this useEffect is fired twice at init this shouldn't
     // If not activeReceiver selected do not fire
-    if (activeReceiverAddress == null) {
+    if (Boolean(activeReceiverAddress)) {
       return;
     }
 

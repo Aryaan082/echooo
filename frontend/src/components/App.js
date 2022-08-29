@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { ethers } from "ethers";
-import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useNetwork } from "wagmi";
 
 import WalletModal from "./Wallet/WalletModal";
 import ChainSelectorModal from "./Chain/ChainSelectorModal";
@@ -12,12 +12,12 @@ import NFTOfferModal from "./Messaging/PeerToPeer/NFTOfferModal";
 import TokenTransfer from "./Messaging/PeerToPeer/TokenTransfer";
 import LendingOfferModal from "./Messaging/PeerToPeer/LendingOfferModal";
 
-import { BURNER_ADDRESS } from "../constants";
+import { BURNER_ADDRESS, CONTRACT_META_DATA } from "../constants";
 import { gradientOneSVG, gradientTwoSVG, echoooLogoSVG } from "../assets/";
 
 export default function App() {
-  const { chain } = useNetwork();
   const { address } = useAccount();
+  const { chain } = useNetwork();
 
   const [connectedWallet, setConnectedWallet] = useState(false);
   const [chainSelect, setChainSelect] = useState(false);
@@ -55,13 +55,14 @@ export default function App() {
       : ""
   );
   const [openCommAddressModal, setOpenCommAddressModal] = useState(
-    !(
-      Boolean(
+    !(chain.id in CONTRACT_META_DATA) ||
+      (Boolean(
         JSON.parse(localStorage.getItem("public-communication-address"))
       ) &&
-      address in
-        JSON.parse(localStorage.getItem("public-communication-address"))
-    ) || ""
+        address in
+          JSON.parse(localStorage.getItem("public-communication-address")))
+      ? false
+      : true
   );
   const [openSend, setOpenSend] = useState(false);
   const [openNFTOfferModal, setOpenNFTOfferModal] = useState(false);
@@ -103,9 +104,8 @@ export default function App() {
     },
   });
 
-  // successfully switched network
-  useSwitchNetwork({
-    onSuccess() {},
+  window.ethereum.on("chainChanged", (chainId) => {
+    window.location.reload();
   });
 
   useEffect(() => {

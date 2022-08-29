@@ -104,8 +104,9 @@ export default function CommAddressModal({
             color="black"
             secondaryColor="white"
           />
-          <div className="text-xl font-medium">Broadcasting...</div>
-          <div className="text-xl font-medium">Do Not Leave the Page</div>
+          <div className="text-xl font-medium">
+            Broadcasting... Do not leave this page
+          </div>
         </div>
       ) : (
         <div className="flex flex-col py-4 px-4 gap-6">

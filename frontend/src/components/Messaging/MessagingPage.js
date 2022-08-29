@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useAccount, useDisconnect, useNetwork, useSwitchNetwork } from "wagmi";
 import EthCrypto from "eth-crypto";
-import Web3 from 'web3';
+import Web3 from "web3";
 
 import moment from "moment";
 
@@ -32,8 +32,6 @@ import { ContractInstance } from "../../hooks";
 import "./receivers.css";
 
 // TODO: using both web3 and ethers... needs some thought
-
-
 
 const intervalFetchMessages = async (
   address,
@@ -114,7 +112,6 @@ const intervalFetchMessages = async (
   setMessageLog(newMessageLog);
 };
 
-
 export default function MessagingPage({
   toggleOpenModalChainSelect,
   toggleOpenCommAddressModal,
@@ -146,8 +143,8 @@ export default function MessagingPage({
   const [profilePicture, setProfilePicture] = useState("");
 
   const messagesRef = useRef(messages);
-  const wsRef = useRef(null)
-  const web3Ref = useRef(null)
+  const wsRef = useRef(null);
+  const web3Ref = useRef(null);
 
   const contracts = ContractInstance();
 
@@ -156,10 +153,10 @@ export default function MessagingPage({
 
   useEffect(() => {
     messagesRef.current = messages;
-    async function placeholder() {
+    async function fetchProfilePicture() {
       setProfilePicture(await getPFP(address));
     }
-    placeholder();
+    fetchProfilePicture();
   });
 
   const getPFP = async (userAddress) => {
@@ -302,29 +299,29 @@ export default function MessagingPage({
   useEffect(() => {
     let wsCurrent = wsRef.current;
     let web3Current = web3Ref.current;
-    
-    // clean up current websocket
-    if (wsCurrent != null) {
-      web3Current.eth.clearSubscriptions();
-      console.log("Clearing web3 subscriptions ...")
-      wsCurrent.unsubscribe((error, success) => {
-        if (success) {
-          console.log("Successfully unsubscribed!")
-        }
-      })      
-    } else {
-      web3Current = new Web3(CONTRACT_META_DATA[chain.id].quickNodeWSURL)
-      web3Ref.current = web3Current;
-    }
 
-    web3Current.setProvider(CONTRACT_META_DATA[chain.id].quickNodeWSURL);
-    
-  }, [chain])
-  
+    if (chain.id in CONTRACT_META_DATA) {
+      // clean up current websocket
+      if (wsCurrent != null) {
+        web3Current.eth.clearSubscriptions();
+        console.log("Clearing web3 subscriptions ...");
+        wsCurrent.unsubscribe((error, success) => {
+          if (success) {
+            console.log("Successfully unsubscribed!");
+          }
+        });
+      } else {
+        web3Current = new Web3(CONTRACT_META_DATA[chain.id].quickNodeWSURL);
+        web3Ref.current = web3Current;
+      }
+      web3Current.setProvider(CONTRACT_META_DATA[chain.id].quickNodeWSURL);
+    }
+  }, [chain]);
+
   // fetch messages and connect websocket
   useEffect(() => {
     let wsCurrent = null;
-    let web3Current = web3Ref.current
+    let web3Current = web3Ref.current;
 
     if (activeReceiverAddress === BURNER_ADDRESS) {
       return;
@@ -337,7 +334,7 @@ export default function MessagingPage({
       const abi = EchoJSON.abi;
       const eventABI = abi.find((item) => {
         return item.name === "MessageEvent";
-      })
+      });
 
       // TODO: filter based on topic for sender & receiever address -> path is unclear atm
       // TODO: test switching chains
@@ -353,115 +350,136 @@ export default function MessagingPage({
           EthCrypto.cipher.parse(message)
         ).catch((err) => {
           console.log("Sending Message Error:", err);
-          let errorMessage = "Error: Encryption error. Change communication keys";
+          let errorMessage =
+            "Error: Encryption error. Change communication keys";
           return errorMessage;
         });
         return decryptedMessage;
-      }
-      wsRef.current = web3Current.eth.subscribe('logs', {
-        address: contracts.contractEcho.address,
-        topics: [eventABI.signature]
-      }, (error, result) => {
-        if (error) {
-          console.log("Subscription error >>>", error)
-          // Long poll instead of using websockets
-          const interval = setInterval(
-            async (
-              senderAddress,
-              newMessage,
-              activeReceiverAddress,
-              setMessageLog,
-              graphClient
-            ) =>
-              intervalCallback(
-                senderAddress,
-                newMessage,
+      };
+      wsRef.current = web3Current.eth
+        .subscribe(
+          "logs",
+          {
+            address: contracts.contractEcho.address,
+            topics: [eventABI.signature],
+          },
+          (error, result) => {
+            if (error) {
+              console.log("Subscription error >>>", error);
+              // Long poll instead of using websockets
+              const interval = setInterval(
+                async (
+                  senderAddress,
+                  newMessage,
+                  activeReceiverAddress,
+                  setMessageLog,
+                  graphClient
+                ) =>
+                  intervalCallback(
+                    senderAddress,
+                    newMessage,
+                    activeReceiverAddress,
+                    setMessageLog,
+                    graphClient
+                  ),
+                5 * 1000,
+                address,
+                messagesRef.current,
                 activeReceiverAddress,
                 setMessageLog,
                 graphClient
-              ),
-            5 * 1000,
-            address,
-            messagesRef.current,
-            activeReceiverAddress,
-            setMessageLog,
-            graphClient
-          );
-          return () => {
-            // console.log("clean up >>>");
-            return clearInterval(interval);
+              );
+              return () => {
+                // console.log("clean up >>>");
+                return clearInterval(interval);
+              };
+            }
+          }
+        )
+        .on("connected", (subscriptionId) => {
+          console.log("Subscription connected >>>", subscriptionId);
+        })
+        .on("data", (log) => {
+          console.log("log data >>>", log.data);
+          console.log("log topics >>>", log.topics);
+          const addNewMessage = async () => {
+            // remove the anon topic
+            const topicsSliced = log.topics.slice(1, log.topics.length);
+            const messageAddress = web3Current.eth.abi.decodeParameter(
+              "address",
+              topicsSliced[0]
+            );
+            console.log("messageAddress >>>", messageAddress);
+            // ensure that address is from the sender or receiver
+            if (
+              address !== messageAddress &&
+              activeReceiverAddress !== messageAddress
+            ) {
+              return;
+            }
+
+            const messageEvent = web3Current.eth.abi.decodeLog(
+              eventABI.inputs,
+              log.data,
+              topicsSliced
+            );
+            // check that encrypted message is correct ex: someone could send an empty string that would grief the chat
+            if (
+              messageEvent._senderMessage.length < 194 ||
+              messageEvent._receiverMessage.length < 194
+            ) {
+              return;
+            }
+
+            console.log("message event >>>", messageEvent);
+            let encryptedMessage;
+            if (address === messageAddress) {
+              encryptedMessage = messageEvent._receiverMessage;
+            } else {
+              encryptedMessage = messageEvent._senderMessage;
+            }
+
+            let message = await decryptMessage(
+              senderPrivateKey,
+              encryptedMessage
+            );
+
+            if (messageEvent._messageType === "1") {
+              message = JSON.parse(message);
+            }
+            console.log("messages ws >>>", messagesRef.current);
+            const messages = messagesRef.current;
+            const messageLog = messages[activeReceiverAddress];
+            console.log("message log old log >>>", messageLog);
+            const newMessageData = {
+              from:
+                messageAddress === address
+                  ? activeReceiverAddress.toLowerCase()
+                  : address.toLowerCase(),
+              message: message,
+              messageType: messageEvent._messageType,
+              receiverMessage: messageEvent._receiverMessage,
+              senderMessage: messageEvent._senderMessage,
+              timestamp: `${moment().unix()}`,
+            };
+            messageLog.push(newMessageData);
+            console.log("message log new log >>>", messageLog);
+            const newMessageLog = {
+              ...messages,
+              [activeReceiverAddress]: messageLog,
+            };
+            setMessageLog(newMessageLog);
           };
-        }
-      }).on("connected", (subscriptionId) => {
-        console.log("Subscription connected >>>", subscriptionId)
-      }).on("data", (log) => {
-        console.log("log data >>>", log.data)
-        console.log("log topics >>>", log.topics)
-        const addNewMessage = async () => {
-          // remove the anon topic     
-          const topicsSliced = log.topics.slice(1, log.topics.length)
-          const messageAddress = web3Current.eth.abi.decodeParameter("address", topicsSliced[0]);
-          console.log("messageAddress >>>", messageAddress)
-          // ensure that address is from the sender or receiver
-          if (address !== messageAddress && activeReceiverAddress !== messageAddress) {
-            return;
-          }
-
-          const messageEvent = web3Current.eth.abi.decodeLog(eventABI.inputs, log.data, topicsSliced)
-          // check that encrypted message is correct ex: someone could send an empty string that would grief the chat
-          if (
-            messageEvent._senderMessage.length < 194 ||
-            messageEvent._receiverMessage.length < 194
-          ) {
-            return;
-          }
-
-          console.log("message event >>>", messageEvent)
-          let encryptedMessage;
-          if (address === messageAddress) {
-            encryptedMessage = messageEvent._receiverMessage;
-
-          } else {
-            encryptedMessage = messageEvent._senderMessage;
-          }
-
-          let message = await decryptMessage(senderPrivateKey, encryptedMessage);
-
-          if (messageEvent._messageType === "1") {
-            message = JSON.parse(message);
-          }
-          console.log("messages ws >>>", messagesRef.current)
-          const messages = messagesRef.current
-          const messageLog = messages[activeReceiverAddress]
-          console.log("message log old log >>>", messageLog)
-          const newMessageData = {
-            from: messageAddress === address ? activeReceiverAddress.toLowerCase() : address.toLowerCase(),
-            message: message,
-            messageType: messageEvent._messageType,
-            receiverMessage: messageEvent._receiverMessage,
-            senderMessage: messageEvent._senderMessage,
-            timestamp: `${moment().unix()}`
-          }
-          messageLog.push(newMessageData);
-          console.log("message log new log >>>", messageLog)
-          const newMessageLog = {
-            ...messages,
-            [activeReceiverAddress]: messageLog,
-          };
-          setMessageLog(newMessageLog);
-        }
-        addNewMessage();
-        
-
-      }).on("error", (error) => {
-        // TODO: if a websocket event fails, just fetch all messages
-        // TODO: could grab most recent message but this is easier for now
-        console.log("websockets error:", error);
-        fetchMessagesAsyncCallback();
-      })
+          addNewMessage();
+        })
+        .on("error", (error) => {
+          // TODO: if a websocket event fails, just fetch all messages
+          // TODO: could grab most recent message but this is easier for now
+          console.log("websockets error:", error);
+          fetchMessagesAsyncCallback();
+        });
 
       wsCurrent = wsRef.current;
-      
     }
     return () => {
       if (wsCurrent == null) {
@@ -470,9 +488,9 @@ export default function MessagingPage({
 
       wsCurrent.unsubscribe((error, success) => {
         if (success) {
-          console.log("Successfully unsubscribed!")
+          console.log("Successfully unsubscribed!");
         }
-      })
+      });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeReceiverAddress]);
@@ -538,17 +556,22 @@ export default function MessagingPage({
                 {`${address.substring(0, 4)}...${address.substring(38)}`}
                 <img src={logoutIconSVG} alt=""></img>
               </button>
-              <button
-                className="flex flex-row justify-center items-center gap-[10px] px-5 py-3 bg-[rgb(44,157,218)] text-white font-bold rounded-[30px]"
-                onClick={toggleOpenCommAddressModal}
-              >
-                Change keys
-                <img
-                  className="h-[20px] w-[20px]"
-                  src={changeKeysIconSVG}
-                  alt=""
-                ></img>
-              </button>
+              {chain.id in CONTRACT_META_DATA ? (
+                <button
+                  className="flex flex-row justify-center items-center gap-[10px] px-5 py-3 bg-[rgb(44,157,218)] text-white font-bold rounded-[30px]"
+                  onClick={toggleOpenCommAddressModal}
+                >
+                  Change keys
+                  <img
+                    className="h-[20px] w-[20px]"
+                    src={changeKeysIconSVG}
+                    alt=""
+                  ></img>
+                </button>
+              ) : (
+                <></>
+              )}
+
               {communicationAddress ? (
                 <>
                   <button
@@ -582,8 +605,8 @@ export default function MessagingPage({
           </div>
           {/* Receiver Address */}
           {(address in chatAddresses && chatAddresses[address].length > 0) ||
-            (address in unknownChatAddresses &&
-              unknownChatAddresses[address].length > 0) ? (
+          (address in unknownChatAddresses &&
+            unknownChatAddresses[address].length > 0) ? (
             <div className="w-full" style={{ height: "calc(5vh - 100px}" }}>
               <div className="flex justify-center align-center">
                 <div className="shadow-md flex flex-wrap rounded-[10px] border-[1px] p-5 bg-[rgba(255,255,255,0.45)] text-center text-md break-words">
@@ -598,8 +621,8 @@ export default function MessagingPage({
 
         {/* Chat */}
         {(address in chatAddresses && chatAddresses[address].length > 0) ||
-          (address in unknownChatAddresses &&
-            unknownChatAddresses[address].length > 0) ? (
+        (address in unknownChatAddresses &&
+          unknownChatAddresses[address].length > 0) ? (
           <div className="relative flex flex-col justify-end">
             <ChatBox
               messages={messages}
