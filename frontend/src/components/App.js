@@ -17,7 +17,7 @@ import { gradientOneSVG, gradientTwoSVG, echoooLogoSVG } from "../assets/";
 
 export default function App() {
   const { address } = useAccount();
-  const { chain } = useNetwork();
+  // const { chain } = useNetwork();
 
   const [connectedWallet, setConnectedWallet] = useState(false);
   const [chainSelect, setChainSelect] = useState(false);
@@ -101,9 +101,9 @@ export default function App() {
     },
   });
 
-  window.ethereum.on("chainChanged", (chainId) => {
-    window.location.reload();
-  });
+  // window.ethereum.on("chainChanged", (chainId) => {
+  //   window.location.reload();
+  // });
 
   useEffect(() => {
     localStorage.setItem("chats", JSON.stringify(chatAddresses));
