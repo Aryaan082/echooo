@@ -33,14 +33,17 @@ contract Lending {
     mapping(address => uint256) owedLenderToken;
     mapping(address => uint256) owedBorrowerToken;
     State public state;
+    uint256 immutable public TOTAL_INTEREST;
 
     // modifier isLoan
     // TODO: probably save more gas by creating variables for items in Offer instead?
     constructor(Offer memory _offer) {
         offer = _offer;
+        TOTAL_INTEREST = _offer.loanAmount * _offer.interestRate;
         priceFeedLender = AggregatorV3Interface(_offer.chainlinkLenderFeed);
         priceFeedBorrower = AggregatorV3Interface(_offer.chainlinkBorrowerFeed);
         state = State.RUNNING;
+        
     }
 
     function getLatestPrice(AggregatorV3Interface priceFeed)
@@ -66,27 +69,23 @@ contract Lending {
         }
     }
 
-    function liquidate() public {
+    function liquidate() external {
         // require(block.timestamp < offer.loanDuration, "Lending:liquidate: contract has already completed");
         require(
             state == State.RUNNING,
             "Lending: liquidate: must be in the 'running' state"
         );
-        // TODO: assign this as a global variable in constructor and set to zero in liquidate function to prevent reentrancy
-        // uint256 totalCollateral = (2 * offer.loanAmount) + (offer.loanAmount * offer.interestRate);
-        uint256 totalCollateral = offer.totalCollateral; 
+        uint256 totalCollateral = offer.totalCollateral;  // on the factory contract side just should set collateral at (2 * offer.loanAmount) + (offer.loanAmount * offer.interestRate)
 
-        uint256 loanAmount = offer.loanAmount;
-        uint256 currentCollateral = totalCollateral * getLatestPrice(priceFeedBorrower); // CollateralToken * (ETH / CollateralToken)
-        uint256 currentLoan = loanAmount * getLatestPrice(priceFeedLender); // LoanToken * (ETH / LoanToken)
+        bool isHealthFactor = calculateHealthFactor();
 
-        // TODO: make 1 days a variable set by the factory contract
+        // TODO: make 1 days a variable set by the factory contract which is the time at which liquidate can be called (1 day buffer time)
         // time period at which liquidation can be called
-        uint256 timeDelta = offer.loanDuration + offer.loanStartTime + 1 days;
+        uint256 timeDelta = offer.loanDuration + offer.loanStartTime;
         
         // liquidate if health factor is below 1.1 or time stamp is above timeDelta
         require(
-            ((currentCollateral < (currentLoan * 110) / 100) || (block.timestamp > timeDelta)), "Lending:liquidate: loan is not eligible for liquidation"
+            (isHealthFactor || (block.timestamp > timeDelta)), "Lending:liquidate: loan is not eligible for liquidation"
         );
 
         uint256 timeDeltaBorrower; 
@@ -94,10 +93,8 @@ contract Lending {
 
         (timeDeltaBorrower, timeDeltaLender) = calculateTimeDelta();
         
-        // TODO: could make totalInterest a constant
-        uint256 totalInterest = loanAmount * offer.interestRate;
-        uint256 owedInterestBorrower = (timeDeltaBorrower / offer.loanDuration) * totalInterest;
-        uint256 owedInterestLender = (timeDeltaLender / offer.loanDuration) * totalInterest;
+        uint256 owedInterestBorrower = (timeDeltaBorrower / offer.loanDuration) * TOTAL_INTEREST;
+        uint256 owedInterestLender = (timeDeltaLender / offer.loanDuration) * TOTAL_INTEREST;
 
         // prevent reentrancy
         offer.totalCollateral = 0;
@@ -122,13 +119,14 @@ contract Lending {
         state = State.LIQUIDATED;
     }
 
-    function payLoan(uint256 _amount) public {
+    function payLoan() public {
         require(state == State.RUNNING, "Lending: payloan: must be in the 'running' state");
         require(msg.sender == offer.borrower, "Lending: payLoan: only borrower can pay loan");
-        // TODO: check for amount in IERC20 contract
-        require(_amount >= offer.loanAmount, "Lending: payloan: amount owing must be more than loan amount");
+        // TODO: check for amount in IERC20 contract?
+        // TODO: is this bad to do?
+        require(IERC20(offer.lenderToken).balanceOf(msg.sender) >= offer.loanAmount, "Lending:payLoan: amount of token owned must be more than the loan amount");
+        require(IERC20(offer.lenderToken).allowance(msg.sender, address(this)) >= offer.loanAmount, "Lending:payLoan: amount owing must be more than loan amount");
         
-        uint256 loanAmount = offer.loanAmount;
         uint256 totalCollateral = offer.totalCollateral;
         
         uint256 timeDeltaBorrower; 
@@ -136,25 +134,31 @@ contract Lending {
 
         (timeDeltaBorrower, timeDeltaLender) = calculateTimeDelta();
 
-        // TODO: could make totalInterest a constant
-        uint256 totalInterest = loanAmount * offer.interestRate;
-        uint256 owedInterestBorrower = (timeDeltaBorrower / offer.loanDuration) * totalInterest;
-        uint256 owedInterestLender = (timeDeltaLender / offer.loanDuration) * totalInterest;
+        uint256 owedInterestBorrower = (timeDeltaBorrower / offer.loanDuration) * TOTAL_INTEREST;
+        uint256 owedInterestLender = (timeDeltaLender / offer.loanDuration) * TOTAL_INTEREST;
         
+        uint256 loanAmountOwing = offer.loanAmount;
+        require(IERC20(offer.borrowerToken).transferFrom(msg.sender, address(this), loanAmountOwing), "Lending:payLoan: transfer from borrower token failed");
+
         // prevent reentrancy
         offer.totalCollateral = 0;
         offer.interestRate = 0;
         offer.loanAmount = 0;
 
-        // TODO: check paidLoan to verify
-        uint256 paidLoan;
-        // TODO: add transferFrom from borrower
         owedBorrowerToken[offer.lender] = 0;
-        owedBorrowerToken[offer.borrower] += paidLoan;
+        owedBorrowerToken[offer.borrower] += loanAmountOwing;
         owedLenderToken[offer.lender] += totalCollateral + owedInterestLender;
         owedLenderToken[offer.borrower] += owedInterestBorrower;
 
         state = State.SUCCESSFUL;
+    }
+
+    function calculateHealthFactor() private returns (bool) {
+        uint256 totalCollateral = offer.totalCollateral;
+        uint256 loanAmount = offer.loanAmount;
+        uint256 currentCollateral = totalCollateral * getLatestPrice(priceFeedBorrower); // CollateralToken * (ETH / CollateralToken)
+        uint256 currentLoan = loanAmount * getLatestPrice(priceFeedLender); // LoanToken * (ETH / LoanToken)
+        return (currentCollateral < (currentLoan * 110) / 100);
     }
 
     function calculateTimeDelta() private view returns (uint, uint) {
