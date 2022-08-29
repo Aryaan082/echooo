@@ -362,31 +362,37 @@ const ChatBox = ({ activeReceiverAddress, messages }) => {
   };
 
   const updateNFTStatus = async () => {
-    for (var i = 0; i < messages[activeReceiverAddress].length; i++) {
-      if (messages[activeReceiverAddress][i].messageType === "1") {
-        const data = {
-          tokenAmount: messages[activeReceiverAddress][i].message.tokenAmount,
-          tokenId: messages[activeReceiverAddress][i].message.tokenId,
-          timeExpiry: messages[activeReceiverAddress][i].message.timeExpiry,
-          buyer: messages[activeReceiverAddress][i].message.buyer,
-          seller: messages[activeReceiverAddress][i].message.seller,
-          tokenAddress: messages[activeReceiverAddress][i].message.tokenAddress,
-          NFTAddress: messages[activeReceiverAddress][i].message.NFTAddress,
-        };
-        messages[activeReceiverAddress][i].message.offerStatus =
-          await contracts.contractRequestNFT.getOfferStatus(data);
+    if (Boolean(messages) && activeReceiverAddress in messages) {
+      for (var i = 0; i < messages[activeReceiverAddress].length; i++) {
+        if (messages[activeReceiverAddress][i].messageType === "1") {
+          const data = {
+            tokenAmount: messages[activeReceiverAddress][i].message.tokenAmount,
+            tokenId: messages[activeReceiverAddress][i].message.tokenId,
+            timeExpiry: messages[activeReceiverAddress][i].message.timeExpiry,
+            buyer: messages[activeReceiverAddress][i].message.buyer,
+            seller: messages[activeReceiverAddress][i].message.seller,
+            tokenAddress:
+              messages[activeReceiverAddress][i].message.tokenAddress,
+            NFTAddress: messages[activeReceiverAddress][i].message.NFTAddress,
+          };
+          messages[activeReceiverAddress][i].message.offerStatus =
+            await contracts.contractRequestNFT.getOfferStatus(data);
+        }
       }
     }
   };
 
   useEffect(() => {
     const interval = setInterval(() => {
-      getETHPrice();
-      getCurrentETHTime();
       updateNFTStatus();
     }, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    getETHPrice();
+    getCurrentETHTime();
+  }, [activeReceiverAddress]);
 
   const chat = renderChat(
     ETH_USD,

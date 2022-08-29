@@ -479,6 +479,7 @@ export default function NFTOfferModal({
                     ) {
                       return (
                         <button
+                          key={index}
                           className="border-gradient"
                           onClick={() => {
                             setNFTTokenIndex(index);
@@ -514,6 +515,7 @@ export default function NFTOfferModal({
                   } else {
                     return (
                       <button
+                        key={index}
                         className="border-gradient"
                         onClick={() => {
                           setNFTTokenIndex(index);

@@ -114,6 +114,7 @@ export default function ProfilePictureModal({ openModal, toggleOpenModal }) {
               if (NFT.metadata) {
                 return (
                   <button
+                    key={index}
                     className={
                       "hover:opacity-50 " +
                       (index === NFTTokenIndex
