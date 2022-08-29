@@ -55,12 +55,9 @@ export default function App() {
       : ""
   );
   const [openCommAddressModal, setOpenCommAddressModal] = useState(
-    !(chain.id in CONTRACT_META_DATA) ||
-      (Boolean(
+    Boolean(JSON.parse(localStorage.getItem("public-communication-address"))) &&
+      address in
         JSON.parse(localStorage.getItem("public-communication-address"))
-      ) &&
-        address in
-          JSON.parse(localStorage.getItem("public-communication-address")))
       ? false
       : true
   );
