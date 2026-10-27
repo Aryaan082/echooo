@@ -1,56 +1,91 @@
-# Echooo Messaging Application
-<img width="1717" alt="Screen Shot 2022-08-09 at 10 38 45 PM" src="https://user-images.githubusercontent.com/33464965/183823889-12f95f92-b3d5-4422-8849-3bd4eb543650.png"> 
+# Echooo
 
-<img width="1718" alt="Screen Shot 2022-08-09 at 10 39 44 PM" src="https://user-images.githubusercontent.com/33464965/183823975-cbc5b737-75a2-47db-a5bb-dbf6265ffc48.png">
+Private messaging on a public blockchain. Messages are encrypted to separate, rotatable *communication keys* instead of your wallet key, so a stolen wallet key doesn't expose your chat history.
 
-Echooo is a messaging protocol that uses cryptography which allows users to communicate privately and safely. Echooo prevents users with compromised private keys from hackers to access their full history messages by creating a communication address that's renewed in the user’s preferred frequency. This communication address functions as a safe and temporarily encrypted channel that is owned only by the users involved. Echooo also utilizes Elliptic-curve Diffie–Hellman to create a shared identity for each two users and anonymize the receiver of the messages on chain.
+**ETHNewYork 2022 winner:** Optimism "Just Deploy!" and Polygon "Top 10". See the [project page on ETHGlobal](https://ethglobal.com/showcase/echooo-messaging-protocol-h7oms).
 
-Echooo was a project created at ETH NYC and won a top 10 placing in the Polygon sponsor prize: https://ethglobal.com/showcase/echooo-messaging-protocol-h7oms
+![Echooo demo: creating a communication address, starting a chat and exchanging messages](docs/echooo-demo.gif)
 
-## Development
-### Frontend
-Running the frontend.
+*Forty seconds of the hackathon demo: create a communication address, start a chat, send and receive messages. [MP4 version](docs/echooo-demo.mp4) · [Full two-minute demo on ETHGlobal](https://ethglobal.com/showcase/echooo-messaging-protocol-h7oms). The demo shows the hackathon build; the code in this repo includes later work.*
 
-1. Change directory into the `frontend` folder
-2. Install dependencies by running `npm install`
-3. Run `npm start` to start the application
-4. Go to `localhost:3000` in the browser
-### Backend
-Running the smart contract tests.
+## How it works
 
-1. Install dependencies by running `npm install` in the root directory
-2. Compile the smart contract first `npx hardhat compile`
-3. Run `npx hardhat test` to run the smart contract tests
+1. **Communication address.** The browser generates a fresh key pair that is separate from your wallet and publishes the public key on-chain through `Echo.logIdentity`. The private key stays in the browser's local storage.
+2. **Sending.** The sender's client looks up the recipient's communication public key through the subgraph and encrypts the message twice with public-key encryption ([`eth-crypto`](https://github.com/pubkey/eth-crypto), ECIES): once to the sender's key and once to the recipient's, so both sides can read the conversation back. It then calls `Echo.logMessage` with both ciphertexts.
+3. **No contract state.** `Echo.sol` keeps no storage. It only emits events (`IdentityEvent`, `MessageEvent`).
+4. **Reading.** A [The Graph](https://thegraph.com) subgraph indexes those events. The recipient's client queries it and decrypts with their private communication key.
+5. **Rotation.** Creating a new communication address publishes a new public key, so keys can be replaced whenever you want.
 
-## Deployment
-### The Graph
-If want to re-deploy the graph follow the instructions below.
-1. Navigate to the `graph` folder and install the dependencies with `npm install`
-2. Go to the `config` folder and modify the files corresponding to your network. Replace the addresses with the
-smart contract you'd like to connect to
-3. Modify `package.json` to include your new graph end point API URL by replacing any string leading with `mtwichan/...` with your end point
-4. Deploy the graph by running `npm run deploy:<network-name>` where `<network-name>` is the name of the network you want to deploy to
+## Features
 
-### Smart Contracts
-Deploy the smart contracts by following the instructions below.
+- Connect with MetaMask or WalletConnect, and start chats by address or ENS name
+- Encrypted one-to-one chat
+- Offers inside a chat: NFT swaps that can be accepted, cancelled or left to expire (`RequestNFT.sol`), token transfers (`TokenTransfer.sol`) and lending offers (`Lending.sol`, `LendingFactory.sol`)
+- NFT profile pictures (`ProfilePicture.sol`)
 
-1. Configure the deploy script in `scripts/deploy.ts` if required
-2. Configure `hardhat.config.ts` if required
-3. Add the required environment variables shown in `hardhat.config.ts` to a `.env` file
-4. Deploy to hardhat by running `npx hardhat run scripts/deploy.ts --network <network-name>` where `<network>` is the name of the network you want to deploy to
+## Screenshots
 
-### Etherscan Verification
+<img width="1717" alt="Echooo chat view" src="https://user-images.githubusercontent.com/33464965/183823889-12f95f92-b3d5-4422-8849-3bd4eb543650.png">
 
-To try out Etherscan verification, you first need to deploy a contract to an Ethereum network that's supported by Etherscan, such as Ropsten.
+<img width="1718" alt="Echooo NFT offers" src="https://user-images.githubusercontent.com/33464965/183823975-cbc5b737-75a2-47db-a5bb-dbf6265ffc48.png">
 
-In this project, copy the .env.example file to a file named .env, and then edit it to fill in the details. Enter your Etherscan API key, your Ropsten node URL (eg from Alchemy), and the private key of the account which will send the deployment transaction. With a valid .env file in place, first deploy your contract:
+## Tech stack
 
-```shell
-hardhat run --network ropsten scripts/deploy.ts
+| Layer | What it uses |
+|---|---|
+| Contracts | Solidity, Hardhat, OpenZeppelin, tests in TypeScript (Waffle, Chai) |
+| Indexing | The Graph subgraph (mappings in `graph/src`), GraphQL |
+| Frontend | React 18, Tailwind CSS, wagmi, ethers v5, urql, `eth-crypto`, Moralis API for NFT data |
+| Networks | The code is configured for Polygon Mumbai, Avalanche Fuji and Goerli. The hackathon deployment targeted Polygon, Optimism, SKALE, Cronos and Boba. |
+
+## Repository layout
+
+```
+contracts/   Echo (messaging events), RequestNFT, TokenTransfer, ProfilePicture, Lending
+frontend/    React app
+graph/       The Graph subgraph (schema, mappings, per-network config)
+scripts/     Hardhat deploy scripts
+test/        Contract tests
+docs/        Demo clip
 ```
 
-Then, copy the deployment address and paste it in to replace `DEPLOYED_CONTRACT_ADDRESS` in this command:
+## Running it yourself
 
-```shell
-npx hardhat verify --network ropsten DEPLOYED_CONTRACT_ADDRESS "Hello, Hardhat!"
+The hosted demo is offline and the original deployments targeted testnets that have since been retired, so running Echooo means deploying your own copies.
+
+**Contracts**
+
+```bash
+npm install
+npx hardhat compile
+npx hardhat test
 ```
+
+To deploy, put `PRIVATE_KEY_FUJI`, `PRIVATE_KEY_MATIC` or `PRIVATE_KEY_GOERLI` in a `.env` file and run:
+
+```bash
+npx hardhat run scripts/deployEchoMessaging.ts --network <network>
+```
+
+**Subgraph**
+
+```bash
+cd graph
+npm install
+npm run codegen
+npm run deploy:<network>   # mumbai, fuji or goerli
+```
+
+The deploy scripts in `graph/package.json` point at the original team's Graph account, so change the account and subgraph name first.
+
+**Frontend**
+
+1. Put your contract addresses and subgraph URLs in `frontend/src/constants/constants.js`.
+2. Create `frontend/.env` with `ALCHEMY_ID` and `REACT_APP_MORALIS_API_KEY`.
+3. Run `npm install && npm start` inside `frontend/` and open http://localhost:3000.
+
+## Status and limitations
+
+- Echooo is a hackathon prototype. It has not been audited, so don't use it with real funds.
+- Message contents are encrypted, but who messages whom, and when, is visible on-chain.
+- Private communication keys live in the browser's local storage.
